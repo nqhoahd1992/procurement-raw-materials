@@ -1,0 +1,114 @@
+<ImportExportXml xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" OrganizationVersion="9.2.26062.163" OrganizationSchemaType="Standard" CRMServerServiceabilityVersion="9.2.26062.00163">
+  <Entities></Entities>
+  <Roles></Roles>
+  <Workflows>
+    <Workflow WorkflowId="{d16a8091-3f61-f111-a826-7ced8da16a54}" Name="Parse_Invoice">
+      <JsonFileName>/Workflows/Parse_Invoice-D16A8091-3F61-F111-A826-7CED8DA16A54.json</JsonFileName>
+      <Type>1</Type>
+      <Subprocess>0</Subprocess>
+      <Category>5</Category>
+      <Mode>0</Mode>
+      <Scope>4</Scope>
+      <OnDemand>0</OnDemand>
+      <TriggerOnCreate>0</TriggerOnCreate>
+      <TriggerOnDelete>0</TriggerOnDelete>
+      <AsyncAutodelete>0</AsyncAutodelete>
+      <SyncWorkflowLogOnFailure>0</SyncWorkflowLogOnFailure>
+      <StateCode>1</StateCode>
+      <StatusCode>2</StatusCode>
+      <RunAs>1</RunAs>
+      <IsTransacted>1</IsTransacted>
+      <IntroducedVersion>1.0.0.4</IntroducedVersion>
+      <IsCustomizable>1</IsCustomizable>
+      <BusinessProcessType>0</BusinessProcessType>
+      <IsCustomProcessingStepAllowedForOtherPublishers>1</IsCustomProcessingStepAllowedForOtherPublishers>
+      <ModernFlowType>0</ModernFlowType>
+      <PrimaryEntity>none</PrimaryEntity>
+      <LocalizedNames>
+        <LocalizedName languagecode="1033" description="Parse_Invoice" />
+      </LocalizedNames>
+    </Workflow>
+    <Workflow WorkflowId="{4a7d1ede-b961-f111-a826-7ced8da16a54}" Name="Submit_Invoice">
+      <JsonFileName>/Workflows/Submit_Invoice-4A7D1EDE-B961-F111-A826-7CED8DA16A54.json</JsonFileName>
+      <Type>1</Type>
+      <Subprocess>0</Subprocess>
+      <Category>5</Category>
+      <Mode>0</Mode>
+      <Scope>4</Scope>
+      <OnDemand>0</OnDemand>
+      <TriggerOnCreate>0</TriggerOnCreate>
+      <TriggerOnDelete>0</TriggerOnDelete>
+      <AsyncAutodelete>0</AsyncAutodelete>
+      <SyncWorkflowLogOnFailure>0</SyncWorkflowLogOnFailure>
+      <StateCode>1</StateCode>
+      <StatusCode>2</StatusCode>
+      <RunAs>1</RunAs>
+      <IsTransacted>1</IsTransacted>
+      <IntroducedVersion>1.0.0.4</IntroducedVersion>
+      <IsCustomizable>1</IsCustomizable>
+      <BusinessProcessType>0</BusinessProcessType>
+      <IsCustomProcessingStepAllowedForOtherPublishers>1</IsCustomProcessingStepAllowedForOtherPublishers>
+      <ModernFlowType>0</ModernFlowType>
+      <PrimaryEntity>none</PrimaryEntity>
+      <LocalizedNames>
+        <LocalizedName languagecode="1033" description="Submit_Invoice" />
+      </LocalizedNames>
+    </Workflow>
+  </Workflows>
+  <FieldSecurityProfiles></FieldSecurityProfiles>
+  <Templates />
+  <EntityMaps />
+  <EntityRelationships />
+  <OrganizationSettings />
+  <optionsets />
+  <CustomControls />
+  <EntityDataProviders />
+  <CanvasApps>
+    <CanvasApp>
+      <Name>mbc_rawmaterialprocurement_cf2ab</Name>
+      <AppVersion>2026-06-21T13:50:50Z</AppVersion>
+      <Status>Ready</Status>
+      <CreatedByClientVersion>3.26062.6.0</CreatedByClientVersion>
+      <MinClientVersion>3.26062.6.0</MinClientVersion>
+      <Tags>{"primaryDeviceWidth":"1366","primaryDeviceHeight":"768","supportsPortrait":"true","supportsLandscape":"true","primaryFormFactor":"Tablet","showStatusBar":"false","publisherVersion":"3.26062.6","minimumRequiredApiVersion":"2.2.0","hasComponent":"false","hasUnlockedComponent":"false","isUnifiedRootApp":"false","m365CopilotSettingValue":"0","sienaVersion":"20260619T075729Z-3.26062.6.0"}</Tags>
+      <IsCdsUpgraded>0</IsCdsUpgraded>
+      <GalleryItemId xsi:nil="true"></GalleryItemId>
+      <BackgroundColor>RGBA(0,176,240,1)</BackgroundColor>
+      <DisplayName>Raw Material Procurement</DisplayName>
+      <Description xsi:nil="true"></Description>
+      <CommitMessage xsi:nil="true"></CommitMessage>
+      <Publisher xsi:nil="true"></Publisher>
+      <AuthorizationReferences>[]</AuthorizationReferences>
+      <ConnectionReferences>{"7541983e-81fc-4af2-912d-9a5b9ee39eb2":{"id":"/providers/microsoft.powerapps/apis/shared_sharepointonline","displayName":"SharePoint","iconUri":"https://static.powerapps.com/resource/ppcr/releases/v1.0.1814/1.0.1814.4751/sharepointonline/icon.png","dataSources":["Suppliers","RM User","Raw Materials","RM Procurement Approval Log","RM Procurement Requests","Employee List","RM Procurement Execution Log","RM Procurement Line Items"],"dependencies":[],"dependents":["5ab462ae-bdd8-4f39-a1bf-259f143f78b8"],"parameterHints":{},"parameterHintsV2":{},"isOnPremiseConnection":false,"bypassConsent":false,"dataSets":{"https://maxbiocare.sharepoint.com/sites/Powerapps":{"dataSources":{"Suppliers":{"tableName":"36a318d8-241b-4900-a64f-0d03a2dcc121"},"RM User":{"tableName":"1e2d2129-3bb7-4581-a6f2-91cf8e41a125"},"Raw Materials":{"tableName":"b4a2936d-9563-4386-ac2e-b824e9a07fd3"},"RM Procurement Approval Log":{"tableName":"2ed2f503-69a1-44bb-8a51-158377f779c1"},"RM Procurement Requests":{"tableName":"e1bda0b4-8e8e-4fd1-ac5e-752be9df6f3d"},"Employee List":{"tableName":"fb4a829a-2739-482f-9a5f-45e9a4c78e4c"},"RM Procurement Execution Log":{"tableName":"63b5e96e-1ad3-46f1-bc67-90d9f067301a"},"RM Procurement Line Items":{"tableName":"10526b5f-8cd4-44e3-900e-343dda2e74dd"}}}},"apiTier":"Standard","actions":["providers/PowerPlatform.Governance/Operations/Read","providers/PowerPlatform.Governance/Operations/Write"]},"bc999eb2-65c7-4604-8a3c-8d0f46c0a41e":{"id":"/providers/microsoft.powerapps/apis/shared_logicflows","displayName":"Logic flows","iconUri":"https://conn-afd-prod-endpoint-bmc9bqahasf3grgk.b01.azurefd.net/v1.0.1774/1.0.1774.4397/logicflows/icon.png","dataSources":["Parse_Invoice"],"dependencies":[],"dependents":[],"parameterHints":{"workflowName":{"value":"09c0fa7e-df47-42d3-8f3f-b7a766f0244e"},"workflowEntityId":{"value":"d16a8091-3f61-f111-a826-7ced8da16a54"},"workflowDisplayName":{"value":"Parse_Invoice"}},"parameterHintsV2":{"workflowName":{"value":"09c0fa7e-df47-42d3-8f3f-b7a766f0244e"},"workflowEntityId":{"value":"d16a8091-3f61-f111-a826-7ced8da16a54"},"workflowDisplayName":{"value":"Parse_Invoice"}},"isOnPremiseConnection":false,"bypassConsent":false,"dataSets":{},"apiTier":"Standard","actions":["Run"]},"5ab462ae-bdd8-4f39-a1bf-259f143f78b8":{"id":"/providers/microsoft.powerapps/apis/shared_logicflows","displayName":"Logic flows","iconUri":"https://conn-afd-prod-endpoint-bmc9bqahasf3grgk.b01.azurefd.net/v1.0.1774/1.0.1774.4397/logicflows/icon.png","dataSources":["Submit_Invoice"],"dependencies":["7541983e-81fc-4af2-912d-9a5b9ee39eb2"],"dependents":[],"parameterHints":{"workflowName":{"value":"b30bfe0b-ea1c-42ff-9a46-246e4088adf2"},"workflowEntityId":{"value":"4a7d1ede-b961-f111-a826-7ced8da16a54"},"workflowDisplayName":{"value":"Submit_Invoice"},"7541983e-81fc-4af2-912d-9a5b9ee39eb2":{"value":"shared_sharepointonline"}},"parameterHintsV2":{"workflowName":{"value":"b30bfe0b-ea1c-42ff-9a46-246e4088adf2"},"workflowEntityId":{"value":"4a7d1ede-b961-f111-a826-7ced8da16a54"},"workflowDisplayName":{"value":"Submit_Invoice"},"shared_sharepointonline":{"value":"7541983e-81fc-4af2-912d-9a5b9ee39eb2"}},"isOnPremiseConnection":false,"bypassConsent":false,"dataSets":{},"apiTier":"Standard","actions":["Run"]}}</ConnectionReferences>
+      <DatabaseReferences>{}</DatabaseReferences>
+      <AppComponents>[]</AppComponents>
+      <AppComponentDependencies>[]</AppComponentDependencies>
+      <CanConsumeAppPass>1</CanConsumeAppPass>
+      <CanvasAppType>0</CanvasAppType>
+      <BypassConsent>0</BypassConsent>
+      <AdminControlBypassConsent>0</AdminControlBypassConsent>
+      <EmbeddedApp xsi:nil="true"></EmbeddedApp>
+      <IntroducedVersion>1.0</IntroducedVersion>
+      <CdsDependencies>{"cdsdependencies":[{"dependencyid":"d16a8091-3f61-f111-a826-7ced8da16a54","componenttype":29,"componenttypeplatformname":"Workflow"},{"dependencyid":"4a7d1ede-b961-f111-a826-7ced8da16a54","componenttype":29,"componenttypeplatformname":"Workflow"}]}</CdsDependencies>
+      <IsCustomizable>1</IsCustomizable>
+      <BackgroundImageUri>/CanvasApps/mbc_rawmaterialprocurement_cf2ab_BackgroundImageUri</BackgroundImageUri>
+      <DocumentUri>/CanvasApps/mbc_rawmaterialprocurement_cf2ab_DocumentUri.msapp</DocumentUri>
+      <AdditionalUris>
+        <AdditionalUri>/CanvasApps/mbc_rawmaterialprocurement_cf2ab_AdditionalUris0_identity.json</AdditionalUri>
+      </AdditionalUris>
+    </CanvasApp>
+  </CanvasApps>
+  <connectionreferences>
+    <connectionreference connectionreferencelogicalname="mbc_sharedsharepointonline_7c899">
+      <connectionreferencedisplayname>SharePoint MaxBiocareProcurement-7c899</connectionreferencedisplayname>
+      <connectorid>/providers/Microsoft.PowerApps/apis/shared_sharepointonline</connectorid>
+      <iscustomizable>1</iscustomizable>
+      <promptingbehavior>0</promptingbehavior>
+      <statecode>0</statecode>
+      <statuscode>1</statuscode>
+    </connectionreference>
+  </connectionreferences>
+  <Languages>
+    <Language>1033</Language>
+  </Languages>
+</ImportExportXml>
