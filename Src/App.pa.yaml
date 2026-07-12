@@ -13,9 +13,9 @@ App:
       Set(gCurrentEmployee, LookUp('Employee List', Email = User().Email));
       Set(gCurrentUser,
           If(
-              IsBlank(LookUp(Procurement_User, EmployeeID.Id = gCurrentEmployee.ID)),
+              IsBlank(LookUp('RM User', EmployeeID.Id = gCurrentEmployee.ID)),
               {Role: {Value: "Requester"}},
-              LookUp(Procurement_User, EmployeeID.Id = gCurrentEmployee.ID)
+              LookUp('RM User', EmployeeID.Id = gCurrentEmployee.ID)
           )
       );
       Set(gUserRole, gCurrentUser.Role.Value);
@@ -36,6 +36,11 @@ App:
       Set(gSFU1PendingAttachments, Blank());
       Set(gGRDelegationMode, "I will receive");
       Set(gSFU1DelegationMode, "I will receive");
-      Set(gSharePointAttachmentBase, "https://maxbiocare.sharepoint.com/sites/Powerapps/Lists/Procurement_Requests/Attachments/");
+      Set(gSharePointAttachmentBase, "https://maxbiocare.sharepoint.com/sites/Powerapps/Lists/Raw_Material_Procurement_Requests/Attachments/");
+      ClearCollect(colRawMaterials, FirstN('Raw Materials', 1));
+      ClearCollect(colLineItems, {RowID: 0, MaterialID: 0, MaterialName: "", Unit: "", Quantity: 1});
+      Clear(colLineItems);
+      ClearCollect(colLineItemsDetail, {ID: 0, MaterialName: "", Unit: "", Quantity: 0, ReceivedQty1: 0, BatchNumber1: "", ExpiryDate1: Today(), ReceivedQty2: 0, BatchNumber2: "", ExpiryDate2: Today()});
+      Clear(colLineItemsDetail);
       Set(gAppReady, true)
     Theme: =PowerAppsTheme

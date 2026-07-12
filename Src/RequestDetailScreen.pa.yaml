@@ -3,12 +3,13 @@ Screens:
     Properties:
       LoadingSpinnerColor: =RGBA(56, 96, 178, 1)
       OnVisible: |-
-        =Set(gSelectedRequest, LookUp(Procurement_Requests, ID = gSelectedRequest.ID));
-        ClearCollect(colExecutionLog, Filter(Procurement_ExecutionLog, RequestIDText = Text(gSelectedRequest.ID)));
-        ClearCollect(colApprovalLog, Filter(Procurement_ApprovalLog, RequestIDText = Text(gSelectedRequest.ID)));
-        Set(gGRHasAttachments, CountRows(LookUp(Procurement_ExecutionLog, RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 3).Attachments) > 0);
-        Set(gSFU1HasAttachments, CountRows(LookUp(Procurement_ExecutionLog, RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 4).Attachments) > 0);
-        Set(gSFU2HasAttachments, CountRows(LookUp(Procurement_ExecutionLog, RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 5).Attachments) > 0)
+        =Set(gSelectedRequest, LookUp('RM Procurement Requests', ID = gSelectedRequest.ID));
+        ClearCollect(colLineItemsDetail, Filter('RM Procurement Line Items', RequestIDText = Text(gSelectedRequest.ID)));
+        ClearCollect(colExecutionLog, Filter('RM Procurement Execution Log', RequestIDText = Text(gSelectedRequest.ID)));
+        ClearCollect(colApprovalLog, Filter('RM Procurement Approval Log', RequestIDText = Text(gSelectedRequest.ID)));
+        Set(gGRHasAttachments, CountRows(LookUp('RM Procurement Execution Log', RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 3).Attachments) > 0);
+        Set(gSFU1HasAttachments, CountRows(LookUp('RM Procurement Execution Log', RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 4).Attachments) > 0);
+        Set(gSFU2HasAttachments, CountRows(LookUp('RM Procurement Execution Log', RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 5).Attachments) > 0)
     Children:
       - rectHeader_4:
           Control: Rectangle@2.3.0
@@ -699,6 +700,124 @@ Screens:
                               Size: =11
                               Text: =gSelectedRequest.ProcurementDescription
                               Width: =Parent.Width
+                  - rowLineItemsSection:
+                      Control: GroupContainer@1.5.0
+                      Variant: AutoLayout
+                      Properties:
+                        DropShadow: =DropShadow.None
+                        FillPortions: =0
+                        Height: =24 + 36 + CountRows(colLineItemsDetail) * 36 + 8 + 16
+                        LayoutDirection: =LayoutDirection.Vertical
+                        LayoutGap: =4
+                        LayoutMinHeight: =60
+                        PaddingBottom: =8
+                        PaddingTop: =8
+                        RadiusBottomLeft: =0
+                        RadiusBottomRight: =0
+                        RadiusTopLeft: =0
+                        RadiusTopRight: =0
+                        Width: =Parent.Width
+                      Children:
+                        - lblLineItemsTitle:
+                            Control: Label@2.5.1
+                            Properties:
+                              FontWeight: =FontWeight.Bold
+                              Height: =24
+                              Size: =11
+                              Text: ="Raw Materials"
+                              Width: =Parent.Width
+                        - rowLineItemsColHeader:
+                            Control: GroupContainer@1.5.0
+                            Variant: AutoLayout
+                            Properties:
+                              DropShadow: =DropShadow.None
+                              Fill: =RGBA(225, 223, 214, 1)
+                              FillPortions: =0
+                              Height: =36
+                              LayoutDirection: =LayoutDirection.Horizontal
+                              LayoutJustifyContent: =LayoutJustifyContent.SpaceBetween
+                              PaddingLeft: =8
+                              PaddingRight: =8
+                              RadiusBottomLeft: =0
+                              RadiusBottomRight: =0
+                              Width: =Parent.Width
+                            Children:
+                              - lblDetailColMaterial:
+                                  Control: Label@2.5.1
+                                  Properties:
+                                    Color: =RGBA(68, 68, 65, 1)
+                                    FontWeight: =FontWeight.Semibold
+                                    Height: =36
+                                    Size: =9
+                                    Text: ="Trade Name"
+                                    Width: =Parent.Width * 0.6
+                              - lblDetailColUnit:
+                                  Control: Label@2.5.1
+                                  Properties:
+                                    Color: =RGBA(68, 68, 65, 1)
+                                    FontWeight: =FontWeight.Semibold
+                                    Height: =36
+                                    Size: =9
+                                    Text: ="Unit"
+                                    Width: =Parent.Width * 0.2
+                              - lblDetailColQty:
+                                  Control: Label@2.5.1
+                                  Properties:
+                                    Color: =RGBA(68, 68, 65, 1)
+                                    FontWeight: =FontWeight.Semibold
+                                    Height: =36
+                                    Size: =9
+                                    Text: ="Qty"
+                                    Width: =Parent.Width * 0.2
+                        - galDetailLineItems:
+                            Control: Gallery@2.15.0
+                            Variant: BrowseLayout_Vertical_TwoTextOneImageVariant_ver5.0
+                            Properties:
+                              FillPortions: =0
+                              Height: =CountRows(colLineItemsDetail) * 36
+                              Items: =colLineItemsDetail
+                              ShowScrollbar: =false
+                              TemplateSize: =36
+                              Width: =Parent.Width
+                            Children:
+                              - rectLineItemBg:
+                                  Control: Rectangle@2.3.0
+                                  Properties:
+                                    Fill: =If(Mod(ThisItem.ID, 2) = 0, RGBA(248, 247, 243, 1), RGBA(255, 255, 255, 1))
+                                    Height: =36
+                                    Width: =Parent.Width
+                              - lblDetailMaterialName:
+                                  Control: Label@2.5.1
+                                  Properties:
+                                    Height: =36
+                                    PaddingLeft: =15
+                                    PaddingRight: =15
+                                    Size: =11
+                                    Text: =ThisItem.MaterialName
+                                    Width: =Parent.Width * 0.6
+                              - lblDetailUnit:
+                                  Control: Label@2.5.1
+                                  Properties:
+                                    Color: =RGBA(68, 68, 65, 1)
+                                    Height: =36
+                                    PaddingLeft: =15
+                                    PaddingRight: =15
+                                    Size: =11
+                                    Text: =ThisItem.Unit
+                                    Width: =Parent.Width * 0.2
+                                    X: =Parent.Width * 0.6
+                              - lblDetailQty:
+                                  Control: Label@2.5.1
+                                  Properties:
+                                    Color: =RGBA(68, 68, 65, 1)
+                                    FontWeight: =FontWeight.Semibold
+                                    Height: =36
+                                    PaddingLeft: =15
+                                    PaddingRight: =15
+                                    Size: =11
+                                    Text: =Text(ThisItem.Quantity)
+                                    Width: =Parent.Width * 0.2
+                                    X: =Parent.Width * 0.8
                   - rowInvoiceLink:
                       Control: GroupContainer@1.5.0
                       Variant: AutoLayout
@@ -1162,8 +1281,8 @@ Screens:
                                   Variant: BrowseLayout_Vertical_TwoTextOneImageVariant_ver5.0
                                   Properties:
                                     FillPortions: =0
-                                    Height: =Max(CountRows(LookUp(Procurement_ExecutionLog, RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 3).Attachments) * 36 + 4, 36)
-                                    Items: =LookUp(Procurement_ExecutionLog, RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 3).Attachments
+                                    Height: =Max(CountRows(LookUp('RM Procurement Execution Log', RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 3).Attachments) * 36 + 4, 36)
+                                    Items: =LookUp('RM Procurement Execution Log', RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 3).Attachments
                                     ShowScrollbar: =false
                                     TemplateSize: =36
                                     Width: =Parent.Width
@@ -1442,8 +1561,8 @@ Screens:
                                   Variant: BrowseLayout_Vertical_TwoTextOneImageVariant_ver5.0
                                   Properties:
                                     FillPortions: =0
-                                    Height: =Max(CountRows(LookUp(Procurement_ExecutionLog, RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 4).Attachments) * 36 + 4, 36)
-                                    Items: =LookUp(Procurement_ExecutionLog, RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 4).Attachments
+                                    Height: =Max(CountRows(LookUp('RM Procurement Execution Log', RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 4).Attachments) * 36 + 4, 36)
+                                    Items: =LookUp('RM Procurement Execution Log', RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 4).Attachments
                                     ShowScrollbar: =false
                                     TemplateSize: =36
                                     Width: =Parent.Width
@@ -1520,7 +1639,7 @@ Screens:
                                     FontWeight: =FontWeight.Semibold
                                     Height: =24
                                     Size: =10
-                                    Text: =Concat(LookUp(Procurement_ExecutionLog, RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 5).Attachments, DisplayName, " | ")
+                                    Text: =Concat(LookUp('RM Procurement Execution Log', RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 5).Attachments, DisplayName, " | ")
                                     Width: =Parent.Width
                         - rowCreditNote:
                             Control: GroupContainer@1.5.0

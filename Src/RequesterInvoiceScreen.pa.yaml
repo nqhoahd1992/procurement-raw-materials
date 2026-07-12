@@ -6,7 +6,7 @@ Screens:
         =Set(gHasInvoiceResult, false);
         Set(gInvoiceResult, Blank());
         Set(gPendingNewAttName, "");
-        Set(gSelectedRequest, LookUp(Procurement_Requests, ID = gSelectedRequest.ID))
+        Set(gSelectedRequest, LookUp('RM Procurement Requests', ID = gSelectedRequest.ID))
     Children:
       - rectHeader_RIS:
           Control: Rectangle@2.3.0
@@ -358,11 +358,11 @@ Screens:
                         BasePaletteColor: =RGBA(163, 45, 45, 1)
                         OnSelect: |-
                           =With(
-                              {wPatched: Patch(Procurement_Requests, gSelectedRequest, {RequesterInvoiceURL: ""})},
+                              {wPatched: Patch('RM Procurement Requests', gSelectedRequest, {RequesterInvoiceURL: ""})},
                               If(
                                   IsBlank(wPatched.ID),
                                   Notify("Failed to remove. Please try again.", NotificationType.Error),
-                                  Set(gSelectedRequest, LookUp(Procurement_Requests, ID = gSelectedRequest.ID));
+                                  Set(gSelectedRequest, LookUp('RM Procurement Requests', ID = gSelectedRequest.ID));
                                   Notify("Invoice removed.", NotificationType.Success)
                               )
                           )
@@ -407,7 +407,7 @@ Screens:
                       Variant: Classic
                       Layout: Vertical
                       Properties:
-                        DataSource: =Procurement_Requests
+                        DataSource: ='RM Procurement Requests'
                         Height: =120
                         Item: =gSelectedRequest
                         LayoutMinWidth: =100
@@ -417,7 +417,7 @@ Screens:
                           =With(
                               {wURL: gSharePointAttachmentBase & Text(gSelectedRequest.ID) & "/" & EncodeUrl(gPendingNewAttName)},
                               With(
-                                  {wReq: Patch(Procurement_Requests, gSelectedRequest, {RequesterInvoiceURL: wURL})},
+                                  {wReq: Patch('RM Procurement Requests', gSelectedRequest, {RequesterInvoiceURL: wURL})},
                                   If(
                                       IsBlank(wReq.ID),
                                       Notify("Failed to save. Please try again.", NotificationType.Error),
@@ -426,7 +426,7 @@ Screens:
                                           gSelectedRequest.ID,
                                           wURL
                                       );
-                                      Set(gSelectedRequest, LookUp(Procurement_Requests, ID = gSelectedRequest.ID));
+                                      Set(gSelectedRequest, LookUp('RM Procurement Requests', ID = gSelectedRequest.ID));
                                       Notify("Invoice submitted. Procurement has been notified.", NotificationType.Success);
                                       Navigate(HomeScreen)
                                   )

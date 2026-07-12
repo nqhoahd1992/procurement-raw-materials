@@ -703,8 +703,8 @@ Screens:
                                       Notify("Please select a decision", NotificationType.Error),
                                       With(
                                           {wLog: Patch(
-                                              Procurement_ApprovalLog,
-                                              Defaults(Procurement_ApprovalLog),
+                                              'RM Procurement Approval Log',
+                                              Defaults('RM Procurement Approval Log'),
                                               {
                                                   Title: "Step 2 - " & rdoApproved.Selected.Value & " - " & gSelectedRequest.Title,
                                                   RequestID: {Id: gSelectedRequest.ID, Value: gSelectedRequest.Title},
@@ -720,7 +720,7 @@ Screens:
                                               Notify("Failed to save approval log. Please try again.", NotificationType.Error),
                                               With(
                                                   {wReq: Patch(
-                                                      Procurement_Requests,
+                                                      'RM Procurement Requests',
                                                       gSelectedRequest,
                                                       {
                                                           Status: {Value: If(

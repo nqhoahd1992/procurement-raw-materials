@@ -344,7 +344,7 @@ Screens:
                         Size: =11
                         Text: |-
                           =With(
-                              {wSummary: LookUp(Procurement_ExecutionLog, RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 1).SupplierSummary},
+                              {wSummary: LookUp('RM Procurement Execution Log', RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 1).SupplierSummary},
                               If(IsBlank(wSummary), "—", wSummary)
                           )
                         VerticalAlign: =VerticalAlign.Top
@@ -707,7 +707,7 @@ Screens:
                                   Notify("Accounting Notes is required", NotificationType.Error),
                                   With(
                                       {wPatched: Patch(
-                                          Procurement_Requests,
+                                          'RM Procurement Requests',
                                           gSelectedRequest,
                                           {
                                               Status: {Value: "Completed"},
@@ -720,8 +720,8 @@ Screens:
                                           Notify("Failed to update status. Please try again.", NotificationType.Error),
                                           With(
                                               {wLog: Patch(
-                                                  Procurement_ExecutionLog,
-                                                  Defaults(Procurement_ExecutionLog),
+                                                  'RM Procurement Execution Log',
+                                                  Defaults('RM Procurement Execution Log'),
                                                   {
                                                       Title: "Step 2 - Accounting Handover - " & gSelectedRequest.Title,
                                                       RequestID: {Id: gSelectedRequest.ID, Value: gSelectedRequest.Title},

@@ -6,7 +6,8 @@ Screens:
         =Set(gSFU1LogEntry, Blank());
         Set(gSFU1PendingAttachments, Blank());
         NewForm(frmSFU1Log_SFU);
-        Set(gSelectedRequest, LookUp(Procurement_Requests, ID = gSelectedRequest.ID));
+        Set(gSelectedRequest, LookUp('RM Procurement Requests', ID = gSelectedRequest.ID));
+        ClearCollect(colLineItemsDetail, Filter('RM Procurement Line Items', RequestIDText = Text(gSelectedRequest.ID)));
         Set(gSFU1DelegationMode, If(IsBlank(gSelectedRequest.SFU1AssignedToID) || gSelectedRequest.SFU1AssignedToID.Id = 0 || gSelectedRequest.SFU1AssignedToID.Id = gCurrentEmployee.ID, "I will receive", "Assign to someone else"));
         Set(locCreditNoteURL_SFU, "");
         Set(gPendingCreditNoteName_SFU, "")
@@ -458,7 +459,7 @@ Screens:
                   RadiusBottomRight: =0
                   RadiusTopLeft: =0
                   RadiusTopRight: =0
-                  Visible: =IsBlank(LookUp(Procurement_ExecutionLog, RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 4))
+                  Visible: =IsBlank(LookUp('RM Procurement Execution Log', RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 4))
                   Width: =Parent.Width
                 Children:
                   - lblStep1Header_SFU:
@@ -496,7 +497,7 @@ Screens:
                   RadiusTopRight: =0
                   Visible: |-
                     =gSelectedRequest.RequesterEmail = gCurrentEmployee.Email
-                    && IsBlank(LookUp(Procurement_ExecutionLog, RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 4))
+                    && IsBlank(LookUp('RM Procurement Execution Log', RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 4))
                   Width: =Parent.Width
                 Children:
                   - lblDelegationHeader_SFU:
@@ -543,7 +544,7 @@ Screens:
                                     )
                                 );
                                 Set(gSFU1DelegationMode, "I will receive");
-                                Set(gSelectedRequest, Patch(Procurement_Requests, LookUp(Procurement_Requests, ID = gSelectedRequest.ID), {SFU1AssignedToID: Blank()}))
+                                Set(gSelectedRequest, Patch('RM Procurement Requests', LookUp('RM Procurement Requests', ID = gSelectedRequest.ID), {SFU1AssignedToID: Blank()}))
                               Text: ="I will receive"
                               Width: =160
                         - btnAssignToOther_SFU:
@@ -622,7 +623,7 @@ Screens:
                   RadiusTopLeft: =0
                   RadiusTopRight: =0
                   Visible: |-
-                    =IsBlank(LookUp(Procurement_ExecutionLog, RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 4))
+                    =IsBlank(LookUp('RM Procurement Execution Log', RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 4))
                     && gSFU1DelegationMode = "I will receive"
                   Width: =Parent.Width
                 Children:
@@ -660,7 +661,7 @@ Screens:
                   RadiusTopLeft: =0
                   RadiusTopRight: =0
                   Visible: |-
-                    =IsBlank(LookUp(Procurement_ExecutionLog, RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 4))
+                    =IsBlank(LookUp('RM Procurement Execution Log', RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 4))
                     && gSFU1DelegationMode = "I will receive"
                   Width: =Parent.Width
                 Children:
@@ -697,7 +698,7 @@ Screens:
                   RadiusTopLeft: =0
                   RadiusTopRight: =0
                   Visible: |-
-                    =IsBlank(LookUp(Procurement_ExecutionLog, RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 4))
+                    =IsBlank(LookUp('RM Procurement Execution Log', RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 4))
                     && gSFU1DelegationMode = "I will receive"
                   Width: =Parent.Width
                 Children:
@@ -733,7 +734,7 @@ Screens:
                   RadiusTopLeft: =0
                   RadiusTopRight: =0
                   Visible: |-
-                    =IsBlank(LookUp(Procurement_ExecutionLog, RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 4))
+                    =IsBlank(LookUp('RM Procurement Execution Log', RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 4))
                     && gSFU1DelegationMode = "I will receive"
                   Width: =Parent.Width
                 Children:
@@ -769,7 +770,7 @@ Screens:
                   RadiusTopLeft: =0
                   RadiusTopRight: =0
                   Visible: |-
-                    =IsBlank(LookUp(Procurement_ExecutionLog, RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 4))
+                    =IsBlank(LookUp('RM Procurement Execution Log', RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 4))
                     && gSFU1DelegationMode = "I will receive"
                   Width: =Parent.Width
                 Children:
@@ -805,7 +806,7 @@ Screens:
                   RadiusTopLeft: =0
                   RadiusTopRight: =0
                   Visible: |-
-                    =IsBlank(LookUp(Procurement_ExecutionLog, RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 4))
+                    =IsBlank(LookUp('RM Procurement Execution Log', RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 4))
                     && gSFU1DelegationMode = "I will receive"
                   Width: =Parent.Width
                 Children:
@@ -839,7 +840,7 @@ Screens:
                   RadiusTopLeft: =0
                   RadiusTopRight: =0
                   Visible: |-
-                    =IsBlank(LookUp(Procurement_ExecutionLog, RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 4))
+                    =IsBlank(LookUp('RM Procurement Execution Log', RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 4))
                     && gSFU1DelegationMode = "I will receive"
                   Width: =Parent.Width
                 Children:
@@ -898,7 +899,7 @@ Screens:
                             Properties:
                               Height: =40
                               InputTextPlaceholder: ="Choose an option"
-                              Items: =Choices(Procurement_Requests.FollowUpReceiptStatus)
+                              Items: =Choices('RM Procurement Requests'.FollowUpReceiptStatus)
                               Width: =Parent.Width
                   - rowStep1AcceptanceDecision_SFU:
                       Control: GroupContainer@1.5.0
@@ -911,7 +912,7 @@ Screens:
                         RadiusBottomRight: =0
                         RadiusTopLeft: =0
                         RadiusTopRight: =0
-                        Visible: =IsBlank(LookUp(Procurement_ExecutionLog, RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 4))
+                        Visible: =IsBlank(LookUp('RM Procurement Execution Log', RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 4))
                         Width: =Parent.Width
                         X: =40
                         Y: =40
@@ -929,8 +930,201 @@ Screens:
                             Properties:
                               Height: =40
                               InputTextPlaceholder: ="Choose an option"
-                              Items: =Choices(Procurement_Requests.FollowUpAcceptanceDecision)
+                              Items: =Choices('RM Procurement Requests'.FollowUpAcceptanceDecision)
                               Width: =Parent.Width
+            - rowStep1LineItems_SFU:
+                Control: GroupContainer@1.5.0
+                Variant: AutoLayout
+                Properties:
+                  DropShadow: =DropShadow.None
+                  FillPortions: =0
+                  Height: =40 + 36 + 4 + CountRows(colLineItemsDetail) * 56 + 8 + 60
+                  LayoutDirection: =LayoutDirection.Vertical
+                  LayoutGap: =4
+                  PaddingBottom: =8
+                  PaddingLeft: =20
+                  PaddingRight: =20
+                  PaddingTop: =8
+                  RadiusBottomLeft: =0
+                  RadiusBottomRight: =0
+                  RadiusTopLeft: =0
+                  RadiusTopRight: =0
+                  Visible: =IsBlank(LookUp('RM Procurement Execution Log', RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 4))
+                  Width: =Parent.Width
+                Children:
+                  - lblLineItemsHeader_SFU:
+                      Control: Label@2.5.1
+                      Properties:
+                        FontWeight: =FontWeight.Bold
+                        Height: =24
+                        Size: =12
+                        Text: ="Raw Material Receipt Details *"
+                        Width: =Parent.Width
+                  - lblLineItemsNote_SFU:
+                      Control: Label@2.5.1
+                      Properties:
+                        Color: =RGBA(133, 79, 11, 1)
+                        PaddingTop: =0
+                        Size: =10
+                        Text: ="Enter actual received quantity, batch number and expiry date for each item"
+                        Width: =Parent.Width
+                  - rowLineItemsColHeader_SFU:
+                      Control: GroupContainer@1.5.0
+                      Variant: AutoLayout
+                      Properties:
+                        DropShadow: =DropShadow.None
+                        Fill: =RGBA(225, 223, 214, 1)
+                        FillPortions: =0
+                        Height: =36
+                        LayoutDirection: =LayoutDirection.Horizontal
+                        PaddingLeft: =8
+                        PaddingRight: =8
+                        RadiusBottomLeft: =0
+                        RadiusBottomRight: =0
+                        Width: =Parent.Width
+                      Children:
+                        - lblGRColName_1:
+                            Control: Label@2.5.1
+                            Properties:
+                              Color: =RGBA(68, 68, 65, 1)
+                              FontWeight: =FontWeight.Semibold
+                              Height: =36
+                              Size: =9
+                              Text: ="Trade Name"
+                              Width: =Parent.Width * 0.25
+                        - lblGRColUnit_1:
+                            Control: Label@2.5.1
+                            Properties:
+                              Color: =RGBA(68, 68, 65, 1)
+                              FontWeight: =FontWeight.Semibold
+                              Height: =36
+                              Size: =9
+                              Text: ="Unit"
+                              Width: =Parent.Width * 0.08
+                        - lblGRColRecQtyR1:
+                            Control: Label@2.5.1
+                            Properties:
+                              Align: =Align.Center
+                              Color: =RGBA(68, 68, 65, 1)
+                              FontWeight: =FontWeight.Semibold
+                              Height: =36
+                              Size: =9
+                              Text: ="Received Quantity R1"
+                              Width: =Parent.Width * 0.12
+                        - lblGRColRecQtyR1_1:
+                            Control: Label@2.5.1
+                            Properties:
+                              Align: =Align.Center
+                              Color: =RGBA(68, 68, 65, 1)
+                              FontWeight: =FontWeight.Semibold
+                              Height: =36
+                              Size: =9
+                              Text: ="Received Quantity R2 *"
+                              Width: =Parent.Width * 0.12
+                        - lblGRColBatch_1:
+                            Control: Label@2.5.1
+                            Properties:
+                              Color: =RGBA(68, 68, 65, 1)
+                              FontWeight: =FontWeight.Semibold
+                              Height: =36
+                              PaddingLeft: =16
+                              Size: =9
+                              Text: ="Batch No *"
+                              Width: =Parent.Width * 0.18 - 8
+                        - lblGRColExp_1:
+                            Control: Label@2.5.1
+                            Properties:
+                              Color: =RGBA(68, 68, 65, 1)
+                              FontWeight: =FontWeight.Semibold
+                              Height: =36
+                              PaddingLeft: =16
+                              PaddingRight: =16
+                              Size: =9
+                              Text: ="Expiry Date *"
+                              Width: =Parent.Width * 0.25
+                  - galLineItems_SFU:
+                      Control: Gallery@2.15.0
+                      Variant: BrowseLayout_Vertical_TwoTextOneImageVariant_ver5.0
+                      Properties:
+                        FillPortions: =0
+                        Height: =CountRows(colLineItemsDetail) * 56 + 12
+                        Items: =colLineItemsDetail
+                        ShowScrollbar: =false
+                        TemplatePadding: =4
+                        TemplateSize: =56
+                        Width: =Parent.Width
+                        X: =40
+                        Y: =40
+                      Children:
+                        - rectSFUItemBg:
+                            Control: Rectangle@2.3.0
+                            Properties:
+                              Fill: =If(Mod(ThisItem.ID, 2) = 0, RGBA(248, 247, 243, 1), RGBA(255, 255, 255, 1))
+                              Height: =56
+                              Width: =Parent.Width
+                        - lblSFUItemName:
+                            Control: Label@2.5.1
+                            Properties:
+                              Height: =48
+                              PaddingLeft: =8
+                              Size: =11
+                              Text: =ThisItem.MaterialName
+                              Width: =Parent.Width * 0.25
+                              Y: =4
+                        - lblSFUItemUnit:
+                            Control: Label@2.5.1
+                            Properties:
+                              Color: =RGBA(136, 135, 128, 1)
+                              Height: =48
+                              Size: =11
+                              Text: =ThisItem.Unit
+                              Width: =Parent.Width * 0.08
+                              X: =Parent.Width * 0.25
+                              Y: =4
+                        - lblSFURound1Qty:
+                            Control: Label@2.5.1
+                            Properties:
+                              Align: =Align.Center
+                              Color: =RGBA(136, 135, 128, 1)
+                              Height: =48
+                              Size: =11
+                              Text: =If(IsBlank(ThisItem.ReceivedQty1), "-", Text(ThisItem.ReceivedQty1))
+                              Width: =Parent.Width * 0.1
+                              X: =445
+                              Y: =4
+                        - txtSFURecQty:
+                            Control: TextInput@0.0.54
+                            Properties:
+                              Align: =Align.Center
+                              Value: =If(IsBlank(ThisItem.ReceivedQty2) || ThisItem.ReceivedQty2 = 0, "", Text(ThisItem.ReceivedQty2))
+                              Height: =40
+                              OnChange: |-
+                                =UpdateIf(colLineItemsDetail, ID = ThisItem.ID, {ReceivedQty2: Value(Self.Value)})
+                              Placeholder: ="0"
+                              Width: =Parent.Width * 0.12 - 8
+                              X: =590
+                              Y: =8
+                        - txtSFUBatch:
+                            Control: TextInput@0.0.54
+                            Properties:
+                              Value: =If(IsBlank(ThisItem.BatchNumber2), "", ThisItem.BatchNumber2)
+                              Height: =40
+                              OnChange: |-
+                                =UpdateIf(colLineItemsDetail, ID = ThisItem.ID, {BatchNumber2: Self.Value})
+                              Placeholder: ="Batch no."
+                              Width: =Parent.Width * 0.18 - 16
+                              X: =754
+                              Y: =8
+                        - dpSFUExpiry:
+                            Control: DatePicker@0.0.46
+                            Properties:
+                              Height: =40
+                              OnChange: |-
+                                =UpdateIf(colLineItemsDetail, ID = ThisItem.ID, {ExpiryDate2: Self.SelectedDate})
+                              Placeholder: ="Expiry date"
+                              Width: =Parent.Width * 0.25 - 8
+                              X: =Parent.Width * 0.75
+                              Y: =8
             - rowStep1Remarks_SFU:
                 Control: GroupContainer@1.5.0
                 Variant: AutoLayout
@@ -948,7 +1142,7 @@ Screens:
                   RadiusTopLeft: =0
                   RadiusTopRight: =0
                   Visible: |-
-                    =IsBlank(LookUp(Procurement_ExecutionLog, RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 4))
+                    =IsBlank(LookUp('RM Procurement Execution Log', RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 4))
                     && gSFU1DelegationMode = "I will receive"
                   Width: =Parent.Width
                 Children:
@@ -983,7 +1177,7 @@ Screens:
                   RadiusTopLeft: =0
                   RadiusTopRight: =0
                   Visible: |-
-                    =IsBlank(LookUp(Procurement_ExecutionLog, RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 4))
+                    =IsBlank(LookUp('RM Procurement Execution Log', RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 4))
                     && gSFU1DelegationMode = "I will receive"
                   Width: =Parent.Width
                   X: =40
@@ -994,7 +1188,7 @@ Screens:
                       Layout: Vertical
                       Properties:
                         BorderStyle: =BorderStyle.None
-                        DataSource: =Procurement_ExecutionLog
+                        DataSource: ='RM Procurement Execution Log'
                         Height: =140
                         Item: =gSFU1LogEntry
                         LayoutMinHeight: =200
@@ -1002,7 +1196,7 @@ Screens:
                           =Notify("Receipt saved, but photo upload failed. Please contact IT with reference: " & gSelectedRequest.Title, NotificationType.Warning)
                         SnapToColumns: =false
                         Visible: |-
-                          =IsBlank(LookUp(Procurement_ExecutionLog, RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 4))
+                          =IsBlank(LookUp('RM Procurement Execution Log', RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 4))
                           && gSFU1DelegationMode = "I will receive"
                         Width: =Parent.Width
                         X: =40
@@ -1074,7 +1268,7 @@ Screens:
                   RadiusBottomRight: =0
                   RadiusTopLeft: =0
                   RadiusTopRight: =0
-                  Visible: =Not(IsBlank(LookUp(Procurement_ExecutionLog, RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 4)))
+                  Visible: =Not(IsBlank(LookUp('RM Procurement Execution Log', RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 4)))
                   Width: =Parent.Width
                 Children:
                   - lblGR2Header_SFU:
@@ -1102,7 +1296,7 @@ Screens:
                   RadiusBottomRight: =0
                   RadiusTopLeft: =0
                   RadiusTopRight: =0
-                  Visible: =Not(IsBlank(LookUp(Procurement_ExecutionLog, RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 4)))
+                  Visible: =Not(IsBlank(LookUp('RM Procurement Execution Log', RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 4)))
                   Width: =Parent.Width
                 Children:
                   - colGR2ReceivedBy_SFU:
@@ -1238,7 +1432,7 @@ Screens:
                   RadiusBottomRight: =0
                   RadiusTopLeft: =0
                   RadiusTopRight: =0
-                  Visible: =Not(IsBlank(LookUp(Procurement_ExecutionLog, RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 4))) && Not(IsBlank(gSelectedRequest.CreditNote))
+                  Visible: =Not(IsBlank(LookUp('RM Procurement Execution Log', RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 4))) && Not(IsBlank(gSelectedRequest.CreditNote))
                   Width: =Parent.Width
                 Children:
                   - lblGR2CreditNoteLabel_SFU:
@@ -1273,7 +1467,7 @@ Screens:
                   RadiusBottomRight: =0
                   RadiusTopLeft: =0
                   RadiusTopRight: =0
-                  Visible: =Not(IsBlank(LookUp(Procurement_ExecutionLog, RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 4))) && Not(IsBlank(gSelectedRequest.FollowUpRemarks))
+                  Visible: =Not(IsBlank(LookUp('RM Procurement Execution Log', RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 4))) && Not(IsBlank(gSelectedRequest.FollowUpRemarks))
                   Width: =Parent.Width
                 Children:
                   - lblGR2RemarksLabel_SFU:
@@ -1310,7 +1504,7 @@ Screens:
                   RadiusBottomRight: =0
                   RadiusTopLeft: =0
                   RadiusTopRight: =0
-                  Visible: =Not(IsBlank(LookUp(Procurement_ExecutionLog, RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 4))) && IsBlank(LookUp(Procurement_ExecutionLog, RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 5))
+                  Visible: =Not(IsBlank(LookUp('RM Procurement Execution Log', RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 4))) && IsBlank(LookUp('RM Procurement Execution Log', RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 5))
                   Width: =Parent.Width
                 Children:
                   - lblStep2Header_SFU:
@@ -1346,8 +1540,8 @@ Screens:
                   RadiusTopLeft: =0
                   RadiusTopRight: =0
                   Visible: |-
-                    =Not(IsBlank(LookUp(Procurement_ExecutionLog, RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 4))) &&
-                    IsBlank(LookUp(Procurement_ExecutionLog, RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 5)) &&
+                    =Not(IsBlank(LookUp('RM Procurement Execution Log', RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 4))) &&
+                    IsBlank(LookUp('RM Procurement Execution Log', RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 5)) &&
                     gSelectedRequest.FollowUpAcceptanceDecision.Value = "Accepted with Adjustment"
                   Width: =Parent.Width
                 Children:
@@ -1371,7 +1565,7 @@ Screens:
                       Variant: Classic
                       Layout: Vertical
                       Properties:
-                        DataSource: =Procurement_Requests
+                        DataSource: ='RM Procurement Requests'
                         Height: =120
                         Item: =gSelectedRequest
                         LayoutMinWidth: =100
@@ -1383,7 +1577,7 @@ Screens:
                           );
                           With(
                               {wPatched: Patch(
-                                  Procurement_Requests,
+                                  'RM Procurement Requests',
                                   gSelectedRequest,
                                   {
                                       Status: {Value: If(!gSelectedRequest.InvoiceSubmitted, "Pending Invoice", "Pending Accounting")},
@@ -1397,8 +1591,8 @@ Screens:
                                   Notify("Failed to submit. Please try again.", NotificationType.Error),
                                   With(
                                       {wLog: Patch(
-                                          Procurement_ExecutionLog,
-                                          Defaults(Procurement_ExecutionLog),
+                                          'RM Procurement Execution Log',
+                                          Defaults('RM Procurement Execution Log'),
                                           {
                                               Title: "Step 5 - Supplier Follow-up Procurement - " & gSelectedRequest.Title,
                                               RequestID: {Id: gSelectedRequest.ID, Value: gSelectedRequest.Title},
@@ -1458,7 +1652,7 @@ Screens:
                   RadiusBottomRight: =0
                   RadiusTopLeft: =0
                   RadiusTopRight: =0
-                  Visible: =Not(IsBlank(LookUp(Procurement_ExecutionLog, RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 4))) && IsBlank(LookUp(Procurement_ExecutionLog, RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 5))
+                  Visible: =Not(IsBlank(LookUp('RM Procurement Execution Log', RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 4))) && IsBlank(LookUp('RM Procurement Execution Log', RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 5))
                   Width: =Parent.Width
                 Children:
                   - lblFollowUpNotesLabel_SFU:
@@ -1494,7 +1688,7 @@ Screens:
                   RadiusBottomRight: =0
                   RadiusTopLeft: =0
                   RadiusTopRight: =0
-                  Visible: =Not(IsBlank(LookUp(Procurement_ExecutionLog, RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 5)))
+                  Visible: =Not(IsBlank(LookUp('RM Procurement Execution Log', RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 5)))
                   Width: =Parent.Width
                 Children:
                   - lblCompletedBanner_SFU:
@@ -1569,7 +1763,7 @@ Screens:
                         Height: =36
                         OnSelect: =Navigate(HomeScreen)
                         Text: ="Cancel"
-                        Visible: =IsBlank(LookUp(Procurement_ExecutionLog, RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 5))
+                        Visible: =IsBlank(LookUp('RM Procurement Execution Log', RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 5))
                         Width: =120
                         X: =40
                         Y: =40
@@ -1595,7 +1789,7 @@ Screens:
                               )
                             );
                             With(
-                              {wPatched: Patch(Procurement_Requests, LookUp(Procurement_Requests, ID = gSelectedRequest.ID), {SFU1AssignedToID: {Id: ddAssignReceiver_SFU.Selected.ID, Value: ddAssignReceiver_SFU.Selected.Title}})},
+                              {wPatched: Patch('RM Procurement Requests', LookUp('RM Procurement Requests', ID = gSelectedRequest.ID), {SFU1AssignedToID: {Id: ddAssignReceiver_SFU.Selected.ID, Value: ddAssignReceiver_SFU.Selected.Title}})},
                               If(
                                 IsBlank(wPatched.ID),
                                 Notify("Failed to save assignment. Please try again.", NotificationType.Error),
@@ -1624,7 +1818,7 @@ Screens:
                         Height: =36
                         OnSelect: |-
                           =With(
-                              {wLatest: LookUp(Procurement_Requests, ID = gSelectedRequest.ID)},
+                              {wLatest: LookUp('RM Procurement Requests', ID = gSelectedRequest.ID)},
                               If(
                                   Not(
                                       wLatest.RequesterEmail = gCurrentEmployee.Email && IsBlank(wLatest.SFU1AssignedToID)
@@ -1642,10 +1836,19 @@ Screens:
                                           IsBlank(txtRemarks2_SFU.Value) ||
                                           CountRows(attSFU1Photos.Attachments) = 0,
                                           Notify("Please fill in all required fields", NotificationType.Error),
+                                          If(
+                                          CountRows(Filter(colLineItemsDetail, ReceivedQty2 > 0)) = 0,
+                                          Notify("Please enter received quantity for at least one material", NotificationType.Error),
+                                          If(
+                                          CountRows(Filter(colLineItemsDetail, ReceivedQty2 > 0 && IsBlank(BatchNumber2))) > 0,
+                                          Notify("Please enter batch number for all received materials", NotificationType.Error),
+                                          If(
+                                          CountRows(Filter(colLineItemsDetail, ReceivedQty2 > 0 && IsBlank(ExpiryDate2))) > 0,
+                                          Notify("Please enter expiry date for all received materials", NotificationType.Error),
                                           With(
                                               {
                                                   wPatched: Patch(
-                                                      Procurement_Requests,
+                                                      'RM Procurement Requests',
                                                       gSelectedRequest,
                                                       {
                                                           Status: {Value: If(
@@ -1672,8 +1875,8 @@ Screens:
                                                   Notify("Failed to submit. Please try again.", NotificationType.Error),
                                                   With(
                                                       {wLog: Patch(
-                                                          Procurement_ExecutionLog,
-                                                          Defaults(Procurement_ExecutionLog),
+                                                          'RM Procurement Execution Log',
+                                                          Defaults('RM Procurement Execution Log'),
                                                           {
                                                               Title: "Step 4 - Supplier Follow-up Requester - " & gSelectedRequest.Title,
                                                               RequestID: {Id: gSelectedRequest.ID, Value: gSelectedRequest.Title},
@@ -1691,16 +1894,31 @@ Screens:
                                                           Set(gSFU1LogEntry, wLog);
                                                           EditForm(frmSFU1Log_SFU);
                                                           SubmitForm(frmSFU1Log_SFU);
+                                                          ForAll(
+                                                              colLineItemsDetail,
+                                                              Patch(
+                                                                  'RM Procurement Line Items',
+                                                                  {ID: ThisRecord.ID},
+                                                                  {
+                                                                      ReceivedQty2: ThisRecord.ReceivedQty2,
+                                                                      BatchNumber2: If(ThisRecord.ReceivedQty2 > 0, ThisRecord.BatchNumber2, ""),
+                                                                      ExpiryDate2: If(ThisRecord.ReceivedQty2 > 0, ThisRecord.ExpiryDate2, Blank())
+                                                                  }
+                                                              )
+                                                          );
                                                           Switch(
                                                               ddAcceptanceDecision2_SFU.Selected.Value,
                                                               "Accepted", Notify("Submitted. Request is now " & If(!wLatest.InvoiceSubmitted, "Pending Invoice.", "Pending Accounting."), NotificationType.Success),
                                                               "Accepted with Adjustment", Notify("Submitted. Request is now " & If(!wLatest.InvoiceSubmitted, "Pending Invoice.", "Pending Supplier Follow-up."), NotificationType.Success)
                                                           );
-                                                          Refresh(Procurement_Requests);
+                                                          Refresh('RM Procurement Requests');
                                                           Navigate(HomeScreen)
                                                       )
                                                   )
                                               )
+                                          )
+                                          )
+                                          )
                                           )
                                       )
                                   )
@@ -1708,7 +1926,7 @@ Screens:
                           )
                         Text: ="Submit →"
                         Visible: |-
-                          =IsBlank(LookUp(Procurement_ExecutionLog, RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 4))
+                          =IsBlank(LookUp('RM Procurement Execution Log', RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 4))
                           && gSFU1DelegationMode = "I will receive"
                         Width: =160
                         X: =40
@@ -1731,7 +1949,7 @@ Screens:
                                   ),
                                   With(
                                       {wPatched: Patch(
-                                          Procurement_Requests,
+                                          'RM Procurement Requests',
                                           gSelectedRequest,
                                           {
                                               Status: {Value: If(!gSelectedRequest.InvoiceSubmitted, "Pending Invoice", "Pending Accounting")},
@@ -1745,8 +1963,8 @@ Screens:
                                           Notify("Failed to submit. Please try again.", NotificationType.Error),
                                           With(
                                               {wLog: Patch(
-                                                  Procurement_ExecutionLog,
-                                                  Defaults(Procurement_ExecutionLog),
+                                                  'RM Procurement Execution Log',
+                                                  Defaults('RM Procurement Execution Log'),
                                                   {
                                                       Title: "Step 5 - Supplier Follow-up Procurement - " & gSelectedRequest.Title,
                                                       RequestID: {Id: gSelectedRequest.ID, Value: gSelectedRequest.Title},
@@ -1760,7 +1978,7 @@ Screens:
                                               If(
                                                   IsBlank(wLog.ID),
                                                   Notify("Failed to save execution log. Please try again.", NotificationType.Error),
-                                                  Refresh(Procurement_Requests);
+                                                  Refresh('RM Procurement Requests');
                                                   Notify("Follow-up completed. Request is now " & If(!gSelectedRequest.InvoiceSubmitted, "Pending Invoice.", "Pending Accounting."), NotificationType.Success);
                                                   Navigate(HomeScreen)
                                               )
@@ -1771,8 +1989,8 @@ Screens:
                           )
                         Text: ="Complete Follow-up →"
                         Visible: |-
-                          =Not(IsBlank(LookUp(Procurement_ExecutionLog, RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 4))) &&
-                            IsBlank(LookUp(Procurement_ExecutionLog, RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 5)) &&
+                          =Not(IsBlank(LookUp('RM Procurement Execution Log', RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 4))) &&
+                            IsBlank(LookUp('RM Procurement Execution Log', RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 5)) &&
                             (gCurrentUser.Role.Value = "Procurement" || gCurrentUser.Role.Value = "Admin")
                         Width: =200
                         X: =40

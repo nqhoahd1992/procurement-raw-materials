@@ -407,7 +407,7 @@ Screens:
                   RadiusTopRight: =0
                   Visible: |-
                     =rdoDecision_PE.Selected.Value = "Proceed" &&
-                    Not(IsBlank(LookUp(Procurement_ApprovalLog, RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 3).ApprovalConditions))
+                    Not(IsBlank(LookUp('RM Procurement Approval Log', RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 3).ApprovalConditions))
                   Width: =Parent.Width
                 Children:
                   - lblConditionsTitle_PE:
@@ -426,7 +426,7 @@ Screens:
                         Height: =50
                         Overflow: =Overflow.Scroll
                         Size: =11
-                        Text: =LookUp(Procurement_ApprovalLog, RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 3).ApprovalConditions
+                        Text: =LookUp('RM Procurement Approval Log', RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 3).ApprovalConditions
                         VerticalAlign: =VerticalAlign.Top
                         Width: =Parent.Width - 40
             - rowChecklistHeader_PE:
@@ -781,7 +781,7 @@ Screens:
                       Variant: Classic
                       Layout: Vertical
                       Properties:
-                        DataSource: =Procurement_Requests
+                        DataSource: ='RM Procurement Requests'
                         Height: =100
                         Item: =gSelectedRequest
                         LayoutMinHeight: =16
@@ -804,7 +804,7 @@ Screens:
                               },
                               With(
                                   {wReq: Patch(
-                                      Procurement_Requests,
+                                      'RM Procurement Requests',
                                       gSelectedRequest,
                                       {
                                           Status: {Value: "Goods Receipt & Acceptance"},
@@ -821,8 +821,8 @@ Screens:
                                       IsBlank(wReq.ID),
                                       Notify("Failed to submit. Please try again.", NotificationType.Error),
                                       Patch(
-                                          Procurement_ExecutionLog,
-                                          Defaults(Procurement_ExecutionLog),
+                                          'RM Procurement Execution Log',
+                                          Defaults('RM Procurement Execution Log'),
                                           {
                                               Title: "Step 1 - Procurement Execution (" & If(gPendingPath = "B", "Deferred Invoice", "Direct Invoice") & ") - " & gSelectedRequest.Title,
                                               RequestID: {Id: gSelectedRequest.ID, Value: gSelectedRequest.Title},
@@ -986,7 +986,7 @@ Screens:
                       Variant: Classic
                       Layout: Vertical
                       Properties:
-                        DataSource: =Procurement_Requests
+                        DataSource: ='RM Procurement Requests'
                         Item: =gSelectedRequest
                         LayoutMinHeight: =100
                         LayoutMinWidth: =16
@@ -1004,7 +1004,7 @@ Screens:
                               },
                               With(
                                   {wReq: Patch(
-                                      Procurement_Requests,
+                                      'RM Procurement Requests',
                                       gSelectedRequest,
                                       {
                                           Status: {Value: "Goods Receipt & Acceptance"},
@@ -1021,8 +1021,8 @@ Screens:
                                       IsBlank(wReq.ID),
                                       Notify("Failed to submit. Please try again.", NotificationType.Error),
                                       Patch(
-                                          Procurement_ExecutionLog,
-                                          Defaults(Procurement_ExecutionLog),
+                                          'RM Procurement Execution Log',
+                                          Defaults('RM Procurement Execution Log'),
                                           {
                                               Title: "Step 1 - Procurement Execution (" & If(wInvoiceCorrect, "Via Requester", "Deferred Invoice") & ") - " & gSelectedRequest.Title,
                                               RequestID: {Id: gSelectedRequest.ID, Value: gSelectedRequest.Title},
@@ -1221,7 +1221,7 @@ Screens:
                       Variant: Classic
                       Layout: Vertical
                       Properties:
-                        DataSource: =Procurement_Requests
+                        DataSource: ='RM Procurement Requests'
                         Height: =120
                         Item: =gSelectedRequest
                         LayoutMinWidth: =100
@@ -1814,7 +1814,7 @@ Screens:
                       Properties:
                         Height: =40
                         InputTextPlaceholder: ="Choose an option"
-                        Items: =Filter(Procurement_User, Role.Value = "Accounting")
+                        Items: =Filter('RM User', Role.Value = "Accounting")
                         Width: =Parent.Width - 40
                       Children:
                         - EmployeeID_AH:
@@ -1898,7 +1898,7 @@ Screens:
                                   Notify("Please enter a rejection reason", NotificationType.Error),
                                   With(
                                       {wReq: Patch(
-                                          Procurement_Requests,
+                                          'RM Procurement Requests',
                                           gSelectedRequest,
                                           {
                                               Status: {Value: "Rejected"},
@@ -1910,8 +1910,8 @@ Screens:
                                           IsBlank(wReq.ID),
                                           Notify("Failed to submit. Please try again.", NotificationType.Error),
                                           Patch(
-                                              Procurement_ExecutionLog,
-                                              Defaults(Procurement_ExecutionLog),
+                                              'RM Procurement Execution Log',
+                                              Defaults('RM Procurement Execution Log'),
                                               {
                                                   Title: "Step 1 - Procurement Rejected - " & gSelectedRequest.Title,
                                                   RequestID: {Id: gSelectedRequest.ID, Value: gSelectedRequest.Title},
