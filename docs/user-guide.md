@@ -334,7 +334,7 @@ Bấm "I will receive" khi đang có người được giao → gọi flow với
 - "Damaged or incorrect items reported to Procurement (if applicable)"
 
 ### Bảng nhận từng nguyên liệu (Raw Materials, bắt buộc)
-Danh sách raw material của yêu cầu (Trade Name, Unit, Qty đã đặt), mỗi dòng cần nhập:
+Danh sách raw material của yêu cầu (Trade Name kèm dòng phụ nhỏ màu xám hiện Category · Supplier, Unit, Qty đã đặt), mỗi dòng cần nhập:
 - **Received Qty** — số lượng thực nhận
 - **Batch Number** — bắt buộc nếu Received Qty > 0
 - **Expiry Date** — bắt buộc nếu Received Qty > 0
@@ -390,7 +390,7 @@ Nếu log Bước 2 đã tồn tại, hiện banner xanh **"Supplier Follow-up C
 
 Hiển thị toàn bộ dữ liệu của yêu cầu ở dạng chỉ xem:
 - Thông tin cơ bản: Requester, Procurement Type, Purchase Accordance, Cost Center, Delivery Location, Required Delivery Date, Estimated Cost, Budget Reference.
-- **Raw Materials** — bảng danh sách nguyên liệu của yêu cầu (Trade Name, Unit, Qty), chỉ xem.
+- **Raw Materials** — bảng danh sách nguyên liệu của yêu cầu (Trade Name, Category, Supplier, Unit, Qty), chỉ xem.
 - **Escalated to Executive**: "Yes"/"No" — cho biết yêu cầu có bị bỏ qua Manager Review không.
 - Invoice Type (màu xanh nếu "Official Invoice", cam nếu "Proforma Invoice").
 - Link Invoice của Requester (nếu invoice qua Requester) và Official Invoice Link (nếu Procurement xử lý) — bấm để mở file.

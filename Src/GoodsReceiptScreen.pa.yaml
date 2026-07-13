@@ -522,7 +522,7 @@ Screens:
                 Properties:
                   DropShadow: =DropShadow.None
                   FillPortions: =0
-                  Height: =40 + 36 + 4 + CountRows(colLineItemsDetail) * 56 + 8 + 60
+                  Height: =40 + 36 + 4 + 36 + 4 + CountRows(colLineItemsDetail) * 100 + 8 + 60
                   LayoutDirection: =LayoutDirection.Vertical
                   LayoutGap: =4
                   PaddingBottom: =8
@@ -549,7 +549,7 @@ Screens:
                         Color: =RGBA(133, 79, 11, 1)
                         PaddingTop: =0
                         Size: =10
-                        Text: ="Enter actual received quantity, batch number and expiry date for each item"
+                        Text: ="Enter actual received quantity, batch number, expiry date, QC number, RM/PK code and Link to COA for each item"
                         Width: =Parent.Width
                   - rowLineItemsColHeaderGR:
                       Control: GroupContainer@1.5.0
@@ -615,33 +615,91 @@ Screens:
                               Size: =9
                               Text: ="Expiry Date *"
                               Width: =Parent.Width * 0.25
+                  - rowLineItemsColHeaderGR2:
+                      Control: GroupContainer@1.5.0
+                      Variant: AutoLayout
+                      Properties:
+                        DropShadow: =DropShadow.None
+                        Fill: =RGBA(225, 223, 214, 1)
+                        FillPortions: =0
+                        Height: =36
+                        LayoutDirection: =LayoutDirection.Horizontal
+                        PaddingLeft: =8
+                        PaddingRight: =8
+                        RadiusBottomLeft: =0
+                        RadiusBottomRight: =0
+                        Width: =Parent.Width
+                      Children:
+                        - lblGRColQC:
+                            Control: Label@2.5.1
+                            Properties:
+                              Color: =RGBA(68, 68, 65, 1)
+                              FontWeight: =FontWeight.Semibold
+                              Height: =36
+                              Size: =9
+                              Text: ="QC Number *"
+                              Width: =Parent.Width * 0.33
+                        - lblGRColRMPK:
+                            Control: Label@2.5.1
+                            Properties:
+                              Color: =RGBA(68, 68, 65, 1)
+                              FontWeight: =FontWeight.Semibold
+                              Height: =36
+                              PaddingLeft: =16
+                              Size: =9
+                              Text: ="RM/PK Code *"
+                              Width: =Parent.Width * 0.33
+                        - lblGRColCOA:
+                            Control: Label@2.5.1
+                            Properties:
+                              Color: =RGBA(68, 68, 65, 1)
+                              FontWeight: =FontWeight.Semibold
+                              Height: =36
+                              PaddingLeft: =16
+                              PaddingRight: =16
+                              Size: =9
+                              Text: ="Link to COA *"
+                              Width: =Parent.Width * 0.34
                   - galLineItemsGR:
                       Control: Gallery@2.15.0
                       Variant: BrowseLayout_Vertical_TwoTextOneImageVariant_ver5.0
                       Properties:
                         FillPortions: =0
-                        Height: =CountRows(colLineItemsDetail) * 56 + 12
+                        Height: =CountRows(colLineItemsDetail) * 100 + 12
                         Items: =colLineItemsDetail
                         ShowScrollbar: =false
                         TemplatePadding: =4
-                        TemplateSize: =56
+                        TemplateSize: =100
                         Width: =Parent.Width
                       Children:
                         - rectGRItemBg:
                             Control: Rectangle@2.3.0
                             Properties:
                               Fill: =If(Mod(ThisItem.ID, 2) = 0, RGBA(248, 247, 243, 1), RGBA(255, 255, 255, 1))
-                              Height: =56
+                              Height: =100
                               Width: =Parent.Width
                         - lblGRItemName:
                             Control: Label@2.5.1
                             Properties:
-                              Height: =48
+                              Height: =24
                               PaddingLeft: =8
                               Size: =11
                               Text: =ThisItem.MaterialName
                               Width: =Parent.Width * 0.25
+                              Wrap: =false
                               Y: =4
+                        - lblGRItemSubtitle:
+                            Control: Label@2.5.1
+                            Properties:
+                              Color: =RGBA(136, 135, 128, 1)
+                              Height: =18
+                              PaddingLeft: =8
+                              Size: =8
+                              Text: |-
+                                =With({wMat: LookUp('Raw Materials', ID = ThisItem.MaterialID.Id)}, If(IsBlank(wMat), "", wMat.Category & " · " & wMat.Supplier))
+                              Width: =Parent.Width * 0.25
+                              Wrap: =false
+                              Y: =28
                         - lblGRItemUnit:
                             Control: Label@2.5.1
                             Properties:
@@ -652,16 +710,6 @@ Screens:
                               Width: =Parent.Width * 0.08
                               X: =Parent.Width * 0.25
                               Y: =4
-                        - dpGRExpiry:
-                            Control: DatePicker@0.0.46
-                            Properties:
-                              Height: =40
-                              OnChange: |-
-                                =UpdateIf(colLineItemsDetail, ID = ThisItem.ID, {ExpiryDate1: Self.SelectedDate})
-                              Placeholder: ="Expiry date"
-                              Width: =Parent.Width * 0.25 - 8
-                              X: =1
-                              Y: =8
                         - txtGRRecQty:
                             Control: TextInput@0.0.54
                             Properties:
@@ -672,7 +720,7 @@ Screens:
                               Placeholder: ="0"
                               Value: =If(IsBlank(ThisItem.ReceivedQty1) || ThisItem.ReceivedQty1 = 0, "", Text(ThisItem.ReceivedQty1))
                               Width: =Parent.Width * 0.12 - 8
-                              X: =1
+                              X: =Parent.Width * 0.33 + 1
                               Y: =8
                         - txtGRBatch:
                             Control: TextInput@0.0.54
@@ -683,8 +731,51 @@ Screens:
                               Placeholder: ="Batch no."
                               Value: =If(IsBlank(ThisItem.BatchNumber1), "", ThisItem.BatchNumber1)
                               Width: =Parent.Width * 0.3 - 16
-                              X: =1
+                              X: =Parent.Width * 0.45 + 16
                               Y: =8
+                        - dpGRExpiry:
+                            Control: DatePicker@0.0.46
+                            Properties:
+                              Height: =40
+                              OnChange: |-
+                                =UpdateIf(colLineItemsDetail, ID = ThisItem.ID, {ExpiryDate1: Self.SelectedDate})
+                              Placeholder: ="Expiry date"
+                              Width: =Parent.Width * 0.25 - 8
+                              X: =Parent.Width * 0.75 + 16
+                              Y: =8
+                        - txtGRQCNumber:
+                            Control: TextInput@0.0.54
+                            Properties:
+                              Height: =40
+                              OnChange: |-
+                                =UpdateIf(colLineItemsDetail, ID = ThisItem.ID, {QCNumber1: Self.Value})
+                              Placeholder: ="QC number"
+                              Value: =If(IsBlank(ThisItem.QCNumber1), "", ThisItem.QCNumber1)
+                              Width: =Parent.Width * 0.33 - 8
+                              X: =1
+                              Y: =52
+                        - txtGRRMPKCode:
+                            Control: TextInput@0.0.54
+                            Properties:
+                              Height: =40
+                              OnChange: |-
+                                =UpdateIf(colLineItemsDetail, ID = ThisItem.ID, {RMPKCode1: Self.Value})
+                              Placeholder: ="RM/PK code"
+                              Value: =If(IsBlank(ThisItem.RMPKCode1), "", ThisItem.RMPKCode1)
+                              Width: =Parent.Width * 0.33 - 16
+                              X: =Parent.Width * 0.33 + 8
+                              Y: =52
+                        - txtGRCOALink:
+                            Control: TextInput@0.0.54
+                            Properties:
+                              Height: =40
+                              OnChange: |-
+                                =UpdateIf(colLineItemsDetail, ID = ThisItem.ID, {COALink1: Self.Value})
+                              Placeholder: ="Link to COA (URL)"
+                              Value: =If(IsBlank(ThisItem.COALink1), "", ThisItem.COALink1)
+                              Width: =Parent.Width * 0.34 - 16
+                              X: =Parent.Width * 0.66 + 8
+                              Y: =52
             - rowReceiptFields_GR:
                 Control: GroupContainer@1.5.0
                 Variant: AutoLayout
@@ -1056,6 +1147,15 @@ Screens:
                                           If(
                                           CountRows(Filter(colLineItemsDetail, ReceivedQty1 > 0 && IsBlank(ExpiryDate1))) > 0,
                                           Notify("Please enter expiry date for all received materials", NotificationType.Error),
+                                          If(
+                                          CountRows(Filter(colLineItemsDetail, ReceivedQty1 > 0 && IsBlank(QCNumber1))) > 0,
+                                          Notify("Please enter QC number for all received materials", NotificationType.Error),
+                                          If(
+                                          CountRows(Filter(colLineItemsDetail, ReceivedQty1 > 0 && IsBlank(RMPKCode1))) > 0,
+                                          Notify("Please enter RM/PK code for all received materials", NotificationType.Error),
+                                          If(
+                                          CountRows(Filter(colLineItemsDetail, ReceivedQty1 > 0 && IsBlank(COALink1))) > 0,
+                                          Notify("Please enter Link to COA for all received materials", NotificationType.Error),
                                           With(
                                               {
                                                   wPatched: Patch(
@@ -1110,7 +1210,10 @@ Screens:
                                                                   {
                                                                       ReceivedQty1: ThisRecord.ReceivedQty1,
                                                                       BatchNumber1: If(ThisRecord.ReceivedQty1 > 0, ThisRecord.BatchNumber1, ""),
-                                                                      ExpiryDate1: If(ThisRecord.ReceivedQty1 > 0, ThisRecord.ExpiryDate1, Blank())
+                                                                      ExpiryDate1: If(ThisRecord.ReceivedQty1 > 0, ThisRecord.ExpiryDate1, Blank()),
+                                                                      QCNumber1: If(ThisRecord.ReceivedQty1 > 0, ThisRecord.QCNumber1, ""),
+                                                                      RMPKCode1: If(ThisRecord.ReceivedQty1 > 0, ThisRecord.RMPKCode1, ""),
+                                                                      COALink1: If(ThisRecord.ReceivedQty1 > 0, ThisRecord.COALink1, "")
                                                                   }
                                                               )
                                                           );
@@ -1124,6 +1227,9 @@ Screens:
                                                       )
                                                   )
                                               )
+                                          )
+                                          )
+                                          )
                                           )
                                           )
                                           )

@@ -25,6 +25,7 @@ All data lives in **SharePoint Online** (`maxbiocare.sharepoint.com/sites/Powera
 - `'RM Procurement Approval Log'` — manager/executive decisions (StepNumber 2 = Manager, 3 = Executive).
 - `'RM Procurement Execution Log'` — procurement/goods-receipt/follow-up/invoice step records (StepNumber 1 = Procurement Execution, 2 = Accounting Handover, 3 = Goods Receipt, 4 = Supplier Follow-up Requester, 5 = Supplier Follow-up Procurement, 6 = Invoice Submission).
 - `'Employee List'`, `Project_List` (cross-app list from the sibling `project-list` app).
+- `Product_Database_SKU_Master` — external product-SKU catalog, used only by `RequestFormScreen`'s optional multi-select `cmbSKU` picker (`SelectMultiple: =true`, writes `'RM Procurement Requests'.RelatedSKU` — a multi-value Lookup column — via `ForAll(cmbSKU.SelectedItems, {Id: ID, Value: Title})`). Not used anywhere else in this app.
 
 Lists that **no longer exist in the app's code** (removed in a prior refactor — do not reintroduce without checking with the user first): `Procurement_InvoiceData`, `Suppliers`. If either still exists on SharePoint it is currently orphaned/unused by this app.
 
@@ -74,13 +75,11 @@ If `gCurrentEmployee.ID` **or** `gCurrentUser.ID` is blank, the user sees an "ac
 Requests move through a `Status` choice field. Each screen patches `'RM Procurement Requests'.Status` and writes a log row. The status string is also the value of the `HomeScreen` filter buttons and the gallery color coding.
 
 ```
-RequestFormScreen (Requester submits, must add ≥1 raw-material line item)
-   │  Auto-skip to Executive if: PurchaseAccordance = "Urgent"/"Unplanned",
-   │  OR (EstimatedCost > 5000 AND Currency = "AUD")  → sets SkippedManagerReview
+RequestFormScreen (Requester submits, must add ≥1 raw-material line item, must pick a Manager Approver)
+   │  Always Status = "Pending Manager", SkippedManagerReview = false (no more auto-skip-to-Executive path)
    ▼
 Pending Manager ──(ManagerReviewScreen)──┐
-   │ "Approved (within budget)" → Pending Procurement
-   │ otherwise                   → Pending Executive
+   │ Any decision (Approved (within budget) / Needs clarification / Exceeds budget) → Pending Executive
    ▼
 Pending Executive ──(ExecutiveApprovalScreen)──┐
    │ Reject → Rejected
@@ -117,6 +116,10 @@ Completed
 ```
 
 Routing relies on these status strings being exact and consistent across `HomeScreen` (filters + gallery `Items` per-role filter), each action screen, and the `Switch`/`If` color maps. **When changing status names or the flow, update every screen that references the string** — there is no shared constant.
+
+`SkippedManagerReview` on `'RM Procurement Requests'` and the `ExecutiveApprovalScreen` "Manager Review Skipped" banner (`rowManagerSkipped`, gated on `gSelectedRequest.SkippedManagerReview`) are now **write-only false going forward** — `RequestFormScreen` always writes `false` since every request goes through both approval levels. The field/banner are kept only so older requests submitted before this change (where it may be `true`) still display correctly; don't remove them.
+
+`CostCenter` and `DeliveryLocation` on `RequestFormScreen` are no longer user-selectable — both are hardcoded to `"Port Melbourne Warehouse"` (read-only labels `lblCostCenterValue_1`/`lblDeliveryLocationValue_1`), and `InvoiceRegion` is hardcoded to `"AU"` accordingly. `Currency` is a manual `ddCurrency_1` dropdown (`AUD`/`USD`, default `AUD`) — no longer derived from Cost Center.
 
 ## Role-based visibility (HomeScreen)
 

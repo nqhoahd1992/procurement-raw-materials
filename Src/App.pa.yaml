@@ -34,7 +34,7 @@ App:
       ClearCollect(colRawMaterials, FirstN('Raw Materials', 1));
       ClearCollect(colLineItems, {RowID: 0, MaterialID: 0, MaterialName: "", Unit: "", Quantity: 1});
       Clear(colLineItems);
-      ClearCollect(colLineItemsDetail, {ID: 0, MaterialName: "", Unit: "", Quantity: 0, ReceivedQty1: 0, BatchNumber1: "", ExpiryDate1: Today(), ReceivedQty2: 0, BatchNumber2: "", ExpiryDate2: Today()});
+      ClearCollect(colLineItemsDetail, {ID: 0, MaterialName: "", Unit: "", Quantity: 0, ReceivedQty1: 0, BatchNumber1: "", ExpiryDate1: Today(), QCNumber1: "", RMPKCode1: "", COALink1: "", ReceivedQty2: 0, BatchNumber2: "", ExpiryDate2: Today(), QCNumber2: "", RMPKCode2: "", COALink2: ""});
       Clear(colLineItemsDetail);
       Set(gAppReady, true)
     Theme: =PowerAppsTheme

@@ -17,15 +17,17 @@ Authoritative data model for the Max Biocare Raw Materials Procurement app, reco
 
 ## `'RM Procurement Requests'` — central request record
 
-Required ⚠: `Status`, `RequesterEmail`, `ProcurementType`, `ProcurementDescription`, `PurchaseAccordance`, `EstimatedCost`, `Currency`, `RequiredDeliveryDate`, `DeliveryLocation`, `RequesterID`, `InvoiceRegion`, `CostCenter`.
+Required ⚠: `Status`, `RequesterEmail`, `ProcurementType`, `ProcurementDescription`, `PurchaseAccordance`, `EstimatedCost`, `Currency`, `RequiredDeliveryDate`, `DeliveryLocation`, `RequesterID`, `InvoiceRegion`, `CostCenter`, `ManagerApproverID`.
 
 Does **not** have a `Category`, `PreferredSupplier`, or `Department` column (all removed) — Category is now per raw-material (see `'Raw Materials'` below), Supplier no longer has a request-level "preferred" picker at all, and Department was dropped entirely since this app is now an internal Production-department-only workflow (no longer needs to record which department a request came from).
 
 **Linking a request to a Project is optional.** `RequestFormScreen` has a `rdoHasProject` Radio ("Related to a Project?", `Items: =["No", "Yes"]` — defaults to "No", first item) gating the `ddProject_1` picker (`Project_List`, sourced directly — this app must have `Project_List` added as a data source in Studio, a separate Power Apps canvas app from `project-list`, same site). `ddProject_1` and its label/lookup-link are only `Visible` when `rdoHasProject.Selected.Value = "Yes"`, and submit only requires it in that case: `If(rdoHasProject.Selected.Value = "Yes" && IsBlank(ddProject_1.Selected), <error>, ...)`.
 
-When `rdoHasProject = "Yes"` and a project is selected, `Cost Center` (`ddCostCenter_1`, an ordinary `ComboBox`) auto-fills via `DefaultSelectedItems: =Filter(Choices('RM Procurement Requests'.CostCenter), rdoHasProject.Selected.Value = "Yes" && Value = ddProject_1.Selected.CostCenter.Value)` and goes **read-only**: `DisplayMode: =If(Not(rdoHasProject.Selected.Value = "Yes"), DisplayMode.Edit, If(IsBlank(ddProject_1.Selected), DisplayMode.Disabled, DisplayMode.View))`. When `rdoHasProject = "No"` (or "Yes" but no project chosen yet), it stays a normal editable dropdown sourced from `Choices('RM Procurement Requests'.CostCenter)` — the user picks manually.
+`CostCenter` and `DeliveryLocation` are **no longer user-selectable** — both are hardcoded to `"Port Melbourne Warehouse"` on submit (shown as read-only labels `lblCostCenterValue_1`/`lblDeliveryLocationValue_1`), regardless of whether the request is linked to a Project. `InvoiceRegion` is likewise hardcoded to `"AU"` on submit. The old per-Project Cost Center auto-fill and the Cost-Center-driven region/currency `Switch` lookups no longer exist.
 
-`Currency` is **never directly picked by the user** — it's a read-only `Label` (`lblCurrencyValue_1`, sits beside `txtEstimatedCost_1` in `colEstimatedCostRow`) computed purely from whichever `Cost Center` is currently set (whether auto-filled from a project or manually chosen): `Switch(ddCostCenter_1.Selected.Value, "Office Melbourne (Head Quarter)", "AUD", "Port Melbourne Warehouse", "AUD", "Max Biocare Research Park - Natural Inspirations@Yinnar", "AUD", "Max Biocare Research Park - Mar-Nuka Bay", "AUD", "Malay Warehouse", "MYR", "Singapore Warehouse", "SGD")`. Same warehouse-to-region mapping as `InvoiceRegion` below, just a currency code instead of a country code — kept as a separate duplicated `Switch` (this app's convention: no shared constants) since Patch also needs it standalone.
+`Currency` is a manual dropdown (`ddCurrency_1`, `ModernCombobox`, sits beside `txtEstimatedCost_1` in `colEstimatedCostRow`) with exactly 2 options — `AUD` / `USD` — defaulting to `AUD`. It is no longer derived from Cost Center.
+
+`RelatedSKU` is optional and **multi-value**: `cmbSKU` (`ModernCombobox`, `SelectMultiple: =true`, sits in its own row above the Raw Materials section) lets the requester link the request to one or more product SKUs, sourced from `Product_Database_SKU_Master` — a data source not otherwise used anywhere else in this app. Written on submit as `ForAll(cmbSKU.SelectedItems, {Id: ID, Value: Title})` (a table of `{Id,Value}`, matching a multi-value SharePoint Lookup column) — **not** `cmbSKU.Selected` (single-select shape). Empty table if nothing is selected.
 
 | Column | Type | Notes |
 |---|---|---|
@@ -33,19 +35,20 @@ When `rdoHasProject = "Yes"` and a project is selected, `Cost Center` (`ddCostCe
 | `Status` ⚠ | Choice | **Drives the workflow** — value list below |
 | `RequesterEmail` ⚠ | Text | `User().Email`; "my requests" filter key |
 | `ProjectID` | Text | The related `project-list` project's business key (`Project_List.ProjectID`), set from `ddProject_1` when `rdoHasProject = "Yes"`; blank when the request isn't tied to a project |
+| `RelatedSKU` | Lookup→Product_Database_SKU_Master (multi) | Optional, multi-value; set from `cmbSKU` — see note above. Empty if nothing selected |
 | `ProcurementType` ⚠ | Choice | `Invoice Supplied`, `To be sourced by Procurement` |
 | `InvoiceType` | Choice | `Official Invoice`, `Proforma Invoice`; blank unless `ProcurementType = "Invoice Supplied"` |
 | `ProcurementDescription` ⚠ | Text (multiline) | |
-| `PurchaseAccordance` ⚠ | Choice | incl. `Urgent`, `Unplanned` (auto-escalate to Executive) |
+| `PurchaseAccordance` ⚠ | Choice | business classification (e.g. `Urgent`, `Unplanned`, `Normal`) — no longer affects routing; every request always goes through both Manager and Executive approval |
 | `EstimatedCost` ⚠ | Number | |
-| `Currency` ⚠ | Text | Confirmed Text (not Choice) via Studio's type-check — plain string values `AUD`/`MYR`/`SGD`. Never directly picked by the user; always computed from `Cost Center` via a `Switch` lookup (see note above) and written as a plain string on submit, no `{Value:}` wrapper |
+| `Currency` ⚠ | Text | Confirmed Text (not Choice) via Studio's type-check. Manual dropdown (`ddCurrency_1`): `AUD` or `USD`, default `AUD` — no longer derived from Cost Center |
 | `BudgetReference` | Text | |
 | `RequiredDeliveryDate` ⚠ | Date | |
-| `DeliveryLocation` ⚠ | Choice | Independent from `CostCenter` below — delivery destination for goods, not the warehouse/office used for invoice filing |
-| `CostCenter` ⚠ | Choice | 6 values: `Office Melbourne (Head Quarter)`, `Port Melbourne Warehouse`, `Max Biocare Research Park - Natural Inspirations@Yinnar`, `Max Biocare Research Park - Mar-Nuka Bay`, `Malay Warehouse`, `Singapore Warehouse`. `ddCostCenter_1` auto-fills/read-only from the selected Project's `CostCenter` when linked, otherwise a normal editable dropdown sourced from `Choices('RM Procurement Requests'.CostCenter)`. `InvoiceRegion` and `Currency` are both auto-derived from it via `Switch` lookups, never separately picked |
+| `DeliveryLocation` ⚠ | Choice | Hardcoded to `"Port Melbourne Warehouse"` on submit (read-only label `lblDeliveryLocationValue_1`) — no longer user-selectable |
+| `CostCenter` ⚠ | Choice | Hardcoded to `"Port Melbourne Warehouse"` on submit (read-only label `lblCostCenterValue_1`) — no longer user-selectable, no longer tied to the linked Project |
 | `RequesterID` ⚠ | Lookup→Employee List | `{Id,Value}` (→Title) |
-| `ManagerApproverID` | Lookup→Employee List | blank when manager review skipped |
-| `SkippedManagerReview` | Yes/No | true when Urgent/Unplanned **or** (EstimatedCost > 5000 AND cost-center-derived region = AU) |
+| `ManagerApproverID` ⚠ | Lookup→Employee List | always set — every request requires a Manager Approver (no more skip-to-Executive path) |
+| `SkippedManagerReview` | Yes/No | always written `false` on submit now — every request goes through both Manager and Executive approval. Kept only so older requests submitted before this change (where it may be `true`) still display correctly on `ExecutiveApprovalScreen`/`RequestDetailScreen` |
 | `InvoiceMode` | Choice | `Direct`, `Deferred`, `ViaRequester` — set by Procurement Execution |
 | `InvoiceSubmitted` | Yes/No | true once the official invoice has been processed inline (drives whether Goods Receipt/Supplier Follow-up route to `Pending Invoice` or `Pending Accounting`) |
 | `RequesterInvoiceURL` | Text (URL) | set when the Requester uploads the invoice (`ProcurementType = "Invoice Supplied"`) or re-uploads via `RequesterInvoiceScreen` |
@@ -76,7 +79,7 @@ When `rdoHasProject = "Yes"` and a project is selected, `Cost Center` (`ddCostCe
 | `FollowUpReceiptAt` | DateTime | |
 | `SupplierFollowUpNotes` | Text (multiline) | |
 | `FollowUpCompletedAt` | DateTime | |
-| `InvoiceRegion` ⚠ | Choice | Country code (`AU`/`MY`/`SG`) used to file the invoice into the correct storage folder. **Not directly user-selected** — auto-derived on submit from `ddCostCenter_1.Selected.Value` via a `Switch` lookup table in `RequestFormScreen.pa.yaml` (warehouse/office → country) |
+| `InvoiceRegion` ⚠ | Choice | Country code used to file the invoice into the correct storage folder. **Not user-selected** — hardcoded to `"AU"` on submit, since `CostCenter` is now always `"Port Melbourne Warehouse"` |
 | `Attachments` | Attachments | invoice/supporting files; written via `Form1`+`SubmitForm` (Patch can't write attachments) |
 
 ### `Status` choice values and routing (exact strings — used as literals across all screens)
@@ -107,13 +110,25 @@ Required ⚠: none enforced by schema, but the app always writes `RequestID`, `R
 | `ReceivedQty1` | Number | Goods Receipt round-1 received quantity |
 | `BatchNumber1` | Text | Goods Receipt round-1 batch number |
 | `ExpiryDate1` | Date | Goods Receipt round-1 expiry date |
+| `QCNumber1` | Text | Goods Receipt round-1 QC number |
+| `RMPKCode1` | Text | Goods Receipt round-1 RM/PK code |
+| `COALink1` | Text | Goods Receipt round-1 Link to COA (URL) |
 | `ReceivedQty2` | Number | Supplier Follow-up round-2 received quantity |
 | `BatchNumber2` | Text | Supplier Follow-up round-2 batch number |
 | `ExpiryDate2` | Date | Supplier Follow-up round-2 expiry date |
+| `QCNumber2` | Text | Supplier Follow-up round-2 QC number |
+| `RMPKCode2` | Text | Supplier Follow-up round-2 RM/PK code |
+| `COALink2` | Text | Supplier Follow-up round-2 Link to COA (URL) |
 
 **How it's populated**: `RequestFormScreen` builds a working collection `colLineItems` (`{RowID, MaterialID, MaterialName, Unit, Quantity}`) via `galLineItems`/`btnAddLineItem`/`ddMaterial_1`/`ddUnit_1`/`txtQty_1`/`btnRemoveItem_1`. Submit requires ≥1 row, every row's `MaterialID <> 0`, non-blank `Unit`, and `Quantity > 0`. After the request `Patch` succeeds, a `ForAll(colLineItems, Patch('RM Procurement Line Items', Defaults(...), {...}))` writes one row per material, then `Clear(colLineItems)`.
 
-**How it's read back**: `GoodsReceiptScreen`, `SupplierFollowUpScreen`, `RequestDetailScreen` each load `colLineItemsDetail` via `ClearCollect(colLineItemsDetail, Filter('RM Procurement Line Items', RequestIDText = Text(gSelectedRequest.ID)))` on `OnVisible`, then patch back the round-1/round-2 received-quantity/batch/expiry fields per row during Goods Receipt / Supplier Follow-up.
+**How it's read back**: `GoodsReceiptScreen`, `SupplierFollowUpScreen`, `RequestDetailScreen` each load `colLineItemsDetail` via `ClearCollect(colLineItemsDetail, Filter('RM Procurement Line Items', RequestIDText = Text(gSelectedRequest.ID)))` on `OnVisible`, then patch back the round-1/round-2 received-quantity/batch/expiry fields per row during Goods Receipt / Supplier Follow-up. `colLineItemsDetail` itself does **not** carry `Category`/`Supplier` (those live on `'Raw Materials'`, not on the line-item row) — each of these 3 screens re-looks them up per row via `LookUp('Raw Materials', ID = ThisItem.MaterialID.Id)` to display them:
+- `RequestDetailScreen` (read-only, less crowded) shows them as full **Category**/**Supplier** columns alongside Trade Name/Unit/Qty.
+- `GoodsReceiptScreen`/`SupplierFollowUpScreen` (data-entry rows already packed with Received Qty/Batch/Expiry/QC Number/RM-PK Code/Link to COA inputs) instead show a small grey `"<Category> · <Supplier>"` subtitle line under the trade name, to avoid squeezing the input columns.
+
+Both `GoodsReceiptScreen` (`galLineItemsGR`) and `SupplierFollowUpScreen` Step 1 (`galLineItems_SFU`) render their per-material receiving row as two stacked lines per item (`TemplateSize: 100`): row 1 = Received Qty / Batch No / Expiry Date (round-1/round-2 as applicable); row 2 = QC Number / RM-PK Code / Link to COA. All 5 companion fields of `ReceivedQty1`/`ReceivedQty2` (`BatchNumber`/`ExpiryDate`/`QCNumber`/`RMPKCode`/`COALink`, suffixed `1` or `2`) are required on submit for every row where the corresponding received quantity is `> 0` — `btnSubmit_GR.OnSelect` / `btnSubmitStep1_SFU.OnSelect` validate each individually before patching.
+
+All of these labels set `Wrap: =false` — every raw-material line-items Gallery in this app uses a fixed `TemplateSize` per row (e.g. `RequestDetailScreen`'s `rowLineItemsSection.Height` formula assumes exactly 36px per `colLineItemsDetail` row). A long Category/Supplier value wrapping to a second line would get clipped against that fixed row height instead of growing it (standard Power Apps Gallery rows can't have a per-item variable height), so text is truncated to one line rather than allowed to wrap.
 
 ---
 

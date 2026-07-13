@@ -694,11 +694,7 @@ Screens:
                                                       'RM Procurement Requests',
                                                       gSelectedRequest,
                                                       {
-                                                          Status: {Value: If(
-                                                              rdoApproved.Selected.Value = "Approved (within budget)",
-                                                              "Pending Procurement",
-                                                              "Pending Executive"
-                                                          )}
+                                                          Status: {Value: "Pending Executive"}
                                                       }
                                                   )},
                                                   If(

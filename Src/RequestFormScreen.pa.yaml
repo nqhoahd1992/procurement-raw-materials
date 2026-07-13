@@ -78,10 +78,8 @@ Screens:
                           =Reset(rdoHasProject);
                           Reset(ddProject_1);
                           Reset(txtDescription_1);
-                          Reset(ddCostCenter_1);
                           Reset(ddPurchaseAccordance_2);
                           Reset(txtEstimatedCost_1);
-                          Reset(ddDeliveryLocation_1);
                           Reset(txtBudgetRef_1);
                           Reset(dpDeliveryDate_1);
                           Reset(ddManagerApprover_1);
@@ -104,7 +102,6 @@ Screens:
                               Notify("Please select the Project this request is for", NotificationType.Error),
                               If(
                               IsBlank(txtDescription_1.Value) ||
-                              IsBlank(ddDeliveryLocation_1.Selected) ||
                               IsBlank(dpDeliveryDate_1.SelectedDate) ||
                               IsBlank(rdoProcurementType_1.Selected),
                               Notify("Please fill in all required fields", NotificationType.Error),
@@ -112,12 +109,9 @@ Screens:
                                   IsBlank(ddPurchaseAccordance_2.Selected),
                                   Notify("Please fill in all required fields", NotificationType.Error),
                                   If(
-                                      IsBlank(ddCostCenter_1.Selected),
-                                      Notify("Please select a Cost Center", NotificationType.Error),
+                                      IsBlank(txtEstimatedCost_1.Value) || Not(IsNumeric(txtEstimatedCost_1.Value)),
+                                      Notify("Estimated Cost is required and must be a number", NotificationType.Error),
                                       If(
-                                          IsBlank(txtEstimatedCost_1.Value) || Not(IsNumeric(txtEstimatedCost_1.Value)),
-                                          Notify("Estimated Cost is required and must be a number", NotificationType.Error),
-                                          If(
                                               rdoProcurementType_1.Selected.Value = "Invoice Supplied" &&
                                               IsBlank(rdoInvoiceType_1.Selected),
                                               Notify("Please select an invoice type", NotificationType.Error),
@@ -126,9 +120,6 @@ Screens:
                                                   CountRows(DataCardValue15.Attachments) = 0,
                                                   Notify("Please attach the invoice file before submitting", NotificationType.Error),
                                                   If(
-                                                      Not(ddPurchaseAccordance_2.Selected.Value = "Urgent" ||
-                                                          ddPurchaseAccordance_2.Selected.Value = "Unplanned" ||
-                                                          (Value(txtEstimatedCost_1.Value) > 5000 && Switch(ddCostCenter_1.Selected.Value, "Office Melbourne (Head Quarter)", "AU", "Port Melbourne Warehouse", "AU", "Max Biocare Research Park - Natural Inspirations@Yinnar", "AU", "Max Biocare Research Park - Mar-Nuka Bay", "AU", "Malay Warehouse", "MY", "Singapore Warehouse", "SG") = "AU")) &&
                                                       IsBlank(ddManagerApprover_1.Selected),
                                                       Notify("Please select a Manager Approver", NotificationType.Error),
                                                       If(
@@ -153,29 +144,14 @@ Screens:
                                                                       RequesterID: {Id: gCurrentEmployee.ID, Value: gCurrentEmployee.Title},
                                                                       RequesterEmail: User().Email,
                                                                       ProjectID: ddProject_1.Selected.ProjectID,
+                                                                      RelatedSKU: ForAll(cmbSKU.SelectedItems, {Id: ID, Value: Title}),
                                                                       ProcurementDescription: txtDescription_1.Value,
                                                                       BudgetReference: txtBudgetRef_1.Value,
-                                                                      DeliveryLocation: {Value: ddDeliveryLocation_1.Selected.Value},
+                                                                      DeliveryLocation: {Value: "Port Melbourne Warehouse"},
                                                                       PurchaseAccordance: {Value: ddPurchaseAccordance_2.Selected.Value},
-                                                                      CostCenter: {Value: ddCostCenter_1.Selected.Value},
-                                                                      InvoiceRegion: {Value: Switch(
-                                                                          ddCostCenter_1.Selected.Value,
-                                                                          "Office Melbourne (Head Quarter)", "AU",
-                                                                          "Port Melbourne Warehouse", "AU",
-                                                                          "Max Biocare Research Park - Natural Inspirations@Yinnar", "AU",
-                                                                          "Max Biocare Research Park - Mar-Nuka Bay", "AU",
-                                                                          "Malay Warehouse", "MY",
-                                                                          "Singapore Warehouse", "SG"
-                                                                      )},
-                                                                      Currency: Switch(
-                                                                          ddCostCenter_1.Selected.Value,
-                                                                          "Office Melbourne (Head Quarter)", "AUD",
-                                                                          "Port Melbourne Warehouse", "AUD",
-                                                                          "Max Biocare Research Park - Natural Inspirations@Yinnar", "AUD",
-                                                                          "Max Biocare Research Park - Mar-Nuka Bay", "AUD",
-                                                                          "Malay Warehouse", "MYR",
-                                                                          "Singapore Warehouse", "SGD"
-                                                                      ),
+                                                                      CostCenter: {Value: "Port Melbourne Warehouse"},
+                                                                      InvoiceRegion: {Value: "AU"},
+                                                                      Currency: ddCurrency_1.Selected.Value,
                                                                       EstimatedCost: Value(txtEstimatedCost_1.Value),
                                                                       RequiredDeliveryDate: dpDeliveryDate_1.SelectedDate,
                                                                       ProcurementType: {Value: rdoProcurementType_1.Selected.Value},
@@ -184,23 +160,9 @@ Screens:
                                                                           {Value: rdoInvoiceType_1.Selected.Value},
                                                                           Blank()
                                                                       ),
-                                                                      ManagerApproverID: If(
-                                                                          Not(ddPurchaseAccordance_2.Selected.Value = "Urgent" ||
-                                                                              ddPurchaseAccordance_2.Selected.Value = "Unplanned" ||
-                                                                              (Value(txtEstimatedCost_1.Value) > 5000 && Switch(ddCostCenter_1.Selected.Value, "Office Melbourne (Head Quarter)", "AU", "Port Melbourne Warehouse", "AU", "Max Biocare Research Park - Natural Inspirations@Yinnar", "AU", "Max Biocare Research Park - Mar-Nuka Bay", "AU", "Malay Warehouse", "MY", "Singapore Warehouse", "SG") = "AU")),
-                                                                          {Id: ddManagerApprover_1.Selected.EmployeeID.Id, Value: ddManagerApprover_1.Selected.EmployeeID.Value},
-                                                                          Blank()
-                                                                      ),
-                                                                      SkippedManagerReview: ddPurchaseAccordance_2.Selected.Value = "Urgent" ||
-                                                                                            ddPurchaseAccordance_2.Selected.Value = "Unplanned" ||
-                                                                                            (Value(txtEstimatedCost_1.Value) > 5000 && Switch(ddCostCenter_1.Selected.Value, "Office Melbourne (Head Quarter)", "AU", "Port Melbourne Warehouse", "AU", "Max Biocare Research Park - Natural Inspirations@Yinnar", "AU", "Max Biocare Research Park - Mar-Nuka Bay", "AU", "Malay Warehouse", "MY", "Singapore Warehouse", "SG") = "AU"),
-                                                                      Status: {Value: If(
-                                                                          ddPurchaseAccordance_2.Selected.Value = "Urgent" ||
-                                                                          ddPurchaseAccordance_2.Selected.Value = "Unplanned" ||
-                                                                          (Value(txtEstimatedCost_1.Value) > 5000 && Switch(ddCostCenter_1.Selected.Value, "Office Melbourne (Head Quarter)", "AU", "Port Melbourne Warehouse", "AU", "Max Biocare Research Park - Natural Inspirations@Yinnar", "AU", "Max Biocare Research Park - Mar-Nuka Bay", "AU", "Malay Warehouse", "MY", "Singapore Warehouse", "SG") = "AU"),
-                                                                          "Pending Executive",
-                                                                          "Pending Manager"
-                                                                      )}
+                                                                      ManagerApproverID: {Id: ddManagerApprover_1.Selected.EmployeeID.Id, Value: ddManagerApprover_1.Selected.EmployeeID.Value},
+                                                                      SkippedManagerReview: false,
+                                                                      Status: {Value: "Pending Manager"}
                                                                   }
                                                               )
                                                           },
@@ -239,7 +201,6 @@ Screens:
                                       )
                                   )
                               )
-                          )
                           )
                         Text: ="Submit Request →"
                         Width: =200
@@ -551,10 +512,8 @@ Screens:
                           Reset(rdoHasProject);
                           Reset(ddProject_1);
                           Reset(txtDescription_1);
-                          Reset(ddCostCenter_1);
                           Reset(ddPurchaseAccordance_2);
                           Reset(txtEstimatedCost_1);
-                          Reset(ddDeliveryLocation_1);
                           Reset(txtBudgetRef_1);
                           Reset(dpDeliveryDate_1);
                           Reset(ddManagerApprover_1);
@@ -714,26 +673,20 @@ Screens:
                               FontWeight: =FontWeight.Semibold
                               Height: =24
                               Size: =11
-                              Text: ="Cost Center *"
+                              Text: ="Cost Center"
                               Width: =Parent.Width
                               X: =40
                               Y: =40
-                        - ddCostCenter_1:
-                            Control: ModernCombobox@1.1.1
+                        - lblCostCenterValue_1:
+                            Control: Label@2.5.1
                             Properties:
-                              AllowExternalSelectedItems: =false
-                              DefaultSelectedItems: =Filter(Choices('RM Procurement Requests'.CostCenter), rdoHasProject.Selected.Value = "Yes" && Value = ddProject_1.Selected.CostCenter.Value)
-                              DisplayMode: =If(Not(rdoHasProject.Selected.Value = "Yes"), DisplayMode.Edit, If(IsBlank(ddProject_1.Selected), DisplayMode.Disabled, DisplayMode.View))
-                              FontWeight: =""
+                              Fill: =RGBA(214, 221, 224, 1)
+                              FontWeight: =FontWeight.Semibold
                               Height: =40
-                              InputTextPlaceholder: ="Choose an option"
-                              ItemDisplayText: =ThisItem.Value
-                              Items: =Choices('RM Procurement Requests'.CostCenter)
-                              SelectMultiple: =false
-                              Size: =0
+                              PaddingLeft: =8
+                              Size: =10
+                              Text: ="Port Melbourne Warehouse"
                               Width: =Parent.Width
-                              X: =40
-                              Y: =40
                   - colDeliveryLoc:
                       Control: GroupContainer@1.5.0
                       Variant: AutoLayout
@@ -755,19 +708,17 @@ Screens:
                               FontWeight: =FontWeight.Semibold
                               Height: =24
                               Size: =11
-                              Text: ="Delivery Location *"
+                              Text: ="Delivery Location"
                               Width: =Parent.Width
-                        - ddDeliveryLocation_1:
-                            Control: ModernCombobox@1.1.1
+                        - lblDeliveryLocationValue_1:
+                            Control: Label@2.5.1
                             Properties:
-                              AllowExternalSelectedItems: =false
-                              FontWeight: =""
+                              Fill: =RGBA(214, 221, 224, 1)
+                              FontWeight: =FontWeight.Semibold
                               Height: =40
-                              InputTextPlaceholder: ="Choose an option"
-                              ItemDisplayText: =ThisItem.Value
-                              Items: =Choices('RM Procurement Requests'.DeliveryLocation)
-                              SelectMultiple: =false
-                              Size: =0
+                              PaddingLeft: =8
+                              Size: =10
+                              Text: ="Port Melbourne Warehouse"
                               Width: =Parent.Width
                   - colDeliveryDate:
                       Control: GroupContainer@1.5.0
@@ -864,25 +815,19 @@ Screens:
                                     LayoutMinWidth: =120
                                     Placeholder: ="Please enter an amount"
                                     Width: =Parent.Width
-                              - lblCurrencyValue_1:
-                                  Control: Label@2.5.1
+                              - ddCurrency_1:
+                                  Control: ModernCombobox@1.1.1
                                   Properties:
-                                    Align: =Align.Center
-                                    Fill: =RGBA(214, 221, 224, 1)
-                                    FontWeight: =FontWeight.Semibold
-                                    LayoutMinHeight: =16
-                                    LayoutMinWidth: =16
-                                    Size: =10
-                                    Text: |-
-                                      =Switch(
-                                          ddCostCenter_1.Selected.Value,
-                                          "Office Melbourne (Head Quarter)", "AUD",
-                                          "Port Melbourne Warehouse", "AUD",
-                                          "Max Biocare Research Park - Natural Inspirations@Yinnar", "AUD",
-                                          "Max Biocare Research Park - Mar-Nuka Bay", "AUD",
-                                          "Malay Warehouse", "MYR",
-                                          "Singapore Warehouse", "SGD"
-                                      )
+                                    AllowExternalSelectedItems: =false
+                                    DefaultSelectedItems: |-
+                                      =Table({Value: "AUD"})
+                                    FontWeight: =""
+                                    Height: =40
+                                    InputTextPlaceholder: ="Choose an option"
+                                    ItemDisplayText: =ThisItem.Value
+                                    Items: =["AUD", "USD"]
+                                    SelectMultiple: =false
+                                    Size: =0
                                     Width: =100
                   - colBudgetRef:
                       Control: GroupContainer@1.5.0
@@ -958,6 +903,59 @@ Screens:
                               Height: =40
                               LayoutMinHeight: =80
                               Mode: ='TextInputCanvas.Mode'.Multiline
+                              Width: =Parent.Width
+            - rowRelatedSKU:
+                Control: GroupContainer@1.5.0
+                Variant: AutoLayout
+                Properties:
+                  DropShadow: =DropShadow.None
+                  LayoutDirection: =LayoutDirection.Horizontal
+                  LayoutGap: =20
+                  LayoutMinHeight: =80
+                  PaddingBottom: =8
+                  PaddingLeft: =20
+                  PaddingRight: =20
+                  PaddingTop: =8
+                  RadiusBottomLeft: =0
+                  RadiusBottomRight: =0
+                  RadiusTopLeft: =0
+                  RadiusTopRight: =0
+                  Width: =Parent.Width
+                Children:
+                  - colSKU:
+                      Control: GroupContainer@1.5.0
+                      Variant: AutoLayout
+                      Properties:
+                        DropShadow: =DropShadow.None
+                        LayoutDirection: =LayoutDirection.Vertical
+                        LayoutGap: =4
+                        RadiusBottomLeft: =0
+                        RadiusBottomRight: =0
+                        RadiusTopLeft: =0
+                        RadiusTopRight: =0
+                        Width: =280
+                        X: =40
+                        Y: =40
+                      Children:
+                        - lblSKULabel:
+                            Control: Label@2.5.1
+                            Properties:
+                              FontWeight: =FontWeight.Semibold
+                              Height: =24
+                              Size: =11
+                              Text: ="Related Product SKU"
+                              Width: =Parent.Width
+                        - cmbSKU:
+                            Control: ModernCombobox@1.1.1
+                            Properties:
+                              AllowExternalSelectedItems: =false
+                              FontWeight: =""
+                              Height: =40
+                              InputTextPlaceholder: ="Choose one or more products"
+                              ItemDisplayText: =ThisItem.Title
+                              Items: =Sort(Product_Database_SKU_Master, Title, SortOrder.Ascending)
+                              SelectMultiple: =true
+                              Size: =0
                               Width: =Parent.Width
             - rowGalLineItems:
                 Control: GroupContainer@1.5.0
@@ -1153,6 +1151,7 @@ Screens:
                                     Size: =10
                                     Text: =If(IsBlank(ddMaterial_1.Selected), "—", ddMaterial_1.Selected.Code)
                                     Width: =90
+                                    Wrap: =false
                               - lblLineItemCategory_1:
                                   Control: Label@2.5.1
                                   Properties:
@@ -1162,6 +1161,7 @@ Screens:
                                     Size: =10
                                     Text: =If(IsBlank(ddMaterial_1.Selected), "—", ddMaterial_1.Selected.Category)
                                     Width: =110
+                                    Wrap: =false
                               - lblLineItemSupplier_1:
                                   Control: Label@2.5.1
                                   Properties:
@@ -1170,6 +1170,7 @@ Screens:
                                     PaddingRight: =8
                                     Size: =10
                                     Text: =If(IsBlank(ddMaterial_1.Selected), "—", ddMaterial_1.Selected.Supplier)
+                                    Wrap: =false
                               - ddUnit_1:
                                   Control: ComboBox@0.0.51
                                   Properties:
@@ -1177,7 +1178,7 @@ Screens:
                                       =If(IsBlank(ThisItem.Unit), Blank(), Table({Value: ThisItem.Unit}))
                                     Height: =36
                                     InputTextPlaceholder: ="Select an option"
-                                    Items: =["pcs", "kg", "box", "set", "liter", "meter"]
+                                    Items: =["Kg", "g", "L", "ml"]
                                     OnChange: |-
                                       =UpdateIf(colLineItems, RowID = ThisItem.RowID, {Unit: Self.Selected.Value})
                                     Width: =90
@@ -1214,10 +1215,6 @@ Screens:
                   RadiusBottomRight: =0
                   RadiusTopLeft: =0
                   RadiusTopRight: =0
-                  Visible: |-
-                    =Not(ddPurchaseAccordance_2.Selected.Value = "Urgent" ||
-                        ddPurchaseAccordance_2.Selected.Value = "Unplanned" ||
-                        (Value(txtEstimatedCost_1.Value) > 5000 && Switch(ddCostCenter_1.Selected.Value, "Office Melbourne (Head Quarter)", "AU", "Port Melbourne Warehouse", "AU", "Max Biocare Research Park - Natural Inspirations@Yinnar", "AU", "Max Biocare Research Park - Mar-Nuka Bay", "AU", "Malay Warehouse", "MY", "Singapore Warehouse", "SG") = "AU"))
                   Width: =Parent.Width
                 Children:
                   - lblManagerApproverLabel_1:
@@ -1239,34 +1236,6 @@ Screens:
                         Items: =Sort(Filter('RM User', Role.Value = "Manager" && IsActive), EmployeeID.Value, SortOrder.Ascending)
                         SelectMultiple: =false
                         Size: =0
-                        Width: =Parent.Width - 40
-            - rowEscalation:
-                Control: GroupContainer@1.5.0
-                Variant: AutoLayout
-                Properties:
-                  DropShadow: =DropShadow.None
-                  LayoutDirection: =LayoutDirection.Vertical
-                  PaddingBottom: =8
-                  PaddingLeft: =20
-                  PaddingRight: =20
-                  PaddingTop: =8
-                  RadiusBottomLeft: =0
-                  RadiusBottomRight: =0
-                  RadiusTopLeft: =0
-                  RadiusTopRight: =0
-                  Visible: |-
-                    =ddPurchaseAccordance_2.Selected.Value = "Urgent" ||
-                    ddPurchaseAccordance_2.Selected.Value = "Unplanned" ||
-                    (Value(txtEstimatedCost_1.Value) > 5000 && Switch(ddCostCenter_1.Selected.Value, "Office Melbourne (Head Quarter)", "AU", "Port Melbourne Warehouse", "AU", "Max Biocare Research Park - Natural Inspirations@Yinnar", "AU", "Max Biocare Research Park - Mar-Nuka Bay", "AU", "Malay Warehouse", "MY", "Singapore Warehouse", "SG") = "AU")
-                  Width: =Parent.Width
-                Children:
-                  - lblEscalationNotice_1:
-                      Control: Label@2.5.1
-                      Properties:
-                        Color: =RGBA(133, 79, 11, 1)
-                        Fill: =RGBA(250, 238, 218, 1)
-                        Size: =11
-                        Text: ="⚠ This request will be escalated directly to Executive approval"
                         Width: =Parent.Width - 40
       - lblUserInfo_1:
           Control: Label@2.5.1
