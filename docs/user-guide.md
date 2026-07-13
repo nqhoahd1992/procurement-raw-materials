@@ -7,15 +7,11 @@ Tài liệu này mô tả các **case (tình huống) sử dụng** của ứng 
 ## 1. Tổng quan luồng xử lý (Status flow)
 
 ```
-RequestFormScreen (Requester tạo yêu cầu, phải thêm ít nhất 1 raw material)
-   │
-   │  Tự động nhảy sang Executive nếu:
-   │  - Purchase Accordance = "Urgent" hoặc "Unplanned", HOẶC
-   │  - Estimated Cost > 5000 VÀ khu vực cost center = AU
+RequestFormScreen (Requester tạo yêu cầu, phải thêm ít nhất 1 raw material, phải chọn Manager Approver)
+   │  Luôn bắt đầu ở "Pending Manager" — mọi yêu cầu đều qua đủ 2 cấp duyệt (Manager rồi Executive)
    ▼
 Pending Manager ──(ManagerReviewScreen)
-   │ "Approved (within budget)"        → Pending Procurement
-   │ "Needs clarification" / "Exceeds budget / unplanned" → Pending Executive
+   │ Bất kỳ quyết định nào (Approved (within budget) / Needs clarification / Exceeds budget / unplanned) → Pending Executive
    ▼
 Pending Executive ──(ExecutiveApprovalScreen)
    │ "Reject"                          → Rejected
@@ -99,14 +95,16 @@ Mở **RequestFormScreen** để tạo yêu cầu mới. Chỉ hiển thị cho 
 
 ### Các trường bắt buộc (*)
 1. **Procurement Type*** — radio: "Invoice Supplied" / "To be sourced by Procurement"
-2. **Purchase Accordance*** — ví dụ: "Urgent", "Unplanned", "Standard"…
-3. **Cost Center*** — khu vực hóa đơn
-4. **Delivery Location***
+2. **Purchase Accordance*** — ví dụ: "Urgent", "Unplanned", "Standard"… (chỉ mang tính phân loại, không còn ảnh hưởng đến việc duyệt)
+3. **Cost Center** — cố định "Port Melbourne Warehouse", chỉ xem, không chọn được
+4. **Delivery Location** — cố định "Port Melbourne Warehouse", chỉ xem, không chọn được
 5. **Required Delivery Date*** — chọn ngày
 6. **Estimated Cost*** — phải là số
-7. **Currency***
+7. **Currency*** — dropdown chỉ 2 lựa chọn: "AUD" / "USD" (mặc định AUD)
 8. **Procurement Description***
 9. **Budget Reference** — không bắt buộc
+10. **Related Product SKU** — không bắt buộc, cho phép chọn **nhiều** SKU từ danh mục sản phẩm liên quan
+11. **Select Manager Approver*** — bắt buộc chọn người quản lý phê duyệt cho **mọi** yêu cầu (không còn trường hợp bỏ qua)
 
 ### Case: Raw Materials (bắt buộc ít nhất 1 dòng)
 Bảng thêm nguyên liệu (**"+ Add Material"**), mỗi dòng gồm:
@@ -122,27 +120,19 @@ Hiện thêm:
 - **Invoice Type*** — radio: "Official Invoice" / "Proforma Invoice"
 - **Attach Invoice File*** — bắt buộc đính kèm 1 file
 
-### Case: Không phải Urgent/Unplanned và chi phí ≤ 5000 AUD
-Hiện thêm **Select Manager Approver*** — bắt buộc chọn người quản lý phê duyệt.
-
-### Case: Yêu cầu được escalate thẳng lên Executive
-Nếu Purchase Accordance = "Urgent" hoặc "Unplanned" hoặc Estimated Cost > 5000 AUD → hiện banner cam:
-> "⚠ This request will be escalated directly to Executive approval"
-Không cần chọn Manager Approver.
-
 ### Lỗi thường gặp khi Submit
 - "Please fill in all required fields"
 - "Estimated Cost is required and must be a number"
 - "Please select an invoice type"
 - "Please attach the invoice file before submitting"
-- "Please select a Manager Approver"
+- "Please select a Manager Approver" — luôn bắt buộc, cho mọi yêu cầu
 - "Please add at least one raw material" — chưa thêm dòng nguyên liệu nào
 - "Please select a material for all rows" — có dòng chưa chọn Trade Name
 - "Please select a unit for all rows" — có dòng chưa chọn Unit
 - "Please enter a valid quantity for all rows" — có dòng Qty trống hoặc ≤ 0
 
 ### Kết quả sau khi Submit
-- Trạng thái mới: "Pending Manager" hoặc "Pending Executive" (theo logic escalate trên).
+- Trạng thái mới luôn là **"Pending Manager"** — mọi yêu cầu đều đi qua đủ Manager rồi Executive, không còn trường hợp nhảy thẳng lên Executive.
 - Thông báo: "Request submitted successfully" → về HomeScreen.
 
 ---
@@ -165,11 +155,7 @@ Toàn bộ thông tin yêu cầu: người tạo, chi phí, cost center, loại 
 - **Manager Decision*** — radio: "Approved (within budget)" / "Needs clarification" / "Exceeds budget / unplanned"
 
 ### Case theo quyết định
-| Quyết định | Trạng thái tiếp theo |
-|---|---|
-| Approved (within budget) | Pending Procurement |
-| Needs clarification | Pending Executive |
-| Exceeds budget / unplanned | Pending Executive |
+Dù chọn quyết định nào ("Approved (within budget)" / "Needs clarification" / "Exceeds budget / unplanned"), yêu cầu **luôn chuyển sang "Pending Executive"** — Manager không còn có thể duyệt thẳng sang Pending Procurement mà bỏ qua Executive. Quyết định chỉ mang tính ghi nhận lý do/kết quả review của Manager.
 
 ### Lỗi thường gặp
 "Please complete all checklist items", "Manager Remarks is required", "Please select a decision".
@@ -178,16 +164,13 @@ Toàn bộ thông tin yêu cầu: người tạo, chi phí, cost center, loại 
 
 ## 5. ExecutiveApprovalScreen — Ban điều hành duyệt (Executive)
 
-**Ai dùng:** Executive, khi yêu cầu ở trạng thái "Pending Executive" (do Manager chuyển lên hoặc auto-escalate).
+**Ai dùng:** Executive, khi yêu cầu ở trạng thái "Pending Executive" — mọi yêu cầu đều qua Manager trước khi tới đây (không còn đường nhảy thẳng).
 
-### Case: Manager Review bị bỏ qua (SkippedManagerReview = true)
-Hiện banner cam **"⚡ Manager Review Skipped"** kèm lý do:
-- "Reason: Urgent purchase"
-- "Reason: Unplanned purchase"
-- "Reason: Estimated cost exceeds threshold (AUD 5,000)"
-
-### Case: Manager đã review
+### Case: Manager đã review (mọi yêu cầu mới)
 Hiện lại tóm tắt Manager Remarks, Manager Decision và 4 checklist đã tick (chỉ xem).
+
+### Case: Manager Review bị bỏ qua — chỉ còn xảy ra với yêu cầu cũ
+Banner cam **"⚡ Manager Review Skipped"** (kèm lý do "Urgent purchase" / "Unplanned purchase" / "Estimated cost exceeds threshold") chỉ hiện với các yêu cầu được tạo **trước** khi quy trình đổi sang "luôn 2 cấp duyệt" — những yêu cầu này từng được escalate thẳng lên Executive và không có review của Manager. Yêu cầu tạo mới sẽ không bao giờ thấy banner này.
 
 ### Trường nhập
 - **Executive Decision*** — radio: "Approve" / "Approve with conditions" / "Reject"
@@ -334,12 +317,11 @@ Bấm "I will receive" khi đang có người được giao → gọi flow với
 - "Damaged or incorrect items reported to Procurement (if applicable)"
 
 ### Bảng nhận từng nguyên liệu (Raw Materials, bắt buộc)
-Danh sách raw material của yêu cầu (Trade Name kèm dòng phụ nhỏ màu xám hiện Category · Supplier, Unit, Qty đã đặt), mỗi dòng cần nhập:
-- **Received Qty** — số lượng thực nhận
-- **Batch Number** — bắt buộc nếu Received Qty > 0
-- **Expiry Date** — bắt buộc nếu Received Qty > 0
+Danh sách raw material của yêu cầu (Trade Name kèm dòng phụ nhỏ màu xám hiện Category · Supplier, Unit, Qty đã đặt). Mỗi dòng hiển thị 2 dòng nhập liệu:
+- Dòng 1: **Received Qty** (số lượng thực nhận), **Batch Number** (bắt buộc nếu Received Qty > 0), **Expiry Date** (bắt buộc nếu Received Qty > 0)
+- Dòng 2: **QC Number** (bắt buộc nếu Received Qty > 0), **RM/PK Code** (bắt buộc nếu Received Qty > 0), **Link to COA** (bắt buộc nếu Received Qty > 0)
 
-Lỗi thường gặp: "Please enter received quantity for at least one material", "Please enter batch number for all received materials", "Please enter expiry date for all received materials".
+Lỗi thường gặp: "Please enter received quantity for at least one material", "Please enter batch number for all received materials", "Please enter expiry date for all received materials", "Please enter QC number for all received materials", "Please enter RM/PK code for all received materials", "Please enter Link to COA for all received materials".
 
 ### Trường nhập
 - **Receipt Date*** — chọn ngày
@@ -367,7 +349,7 @@ Hiện lại: Received By, Receipt Date, Receipt Status, Acceptance Decision, Re
 ### Round 2 — Bước 1: Requester nhận hàng lần 2
 - Cách phân công giống GoodsReceiptScreen: **"I will receive"** / **"Assign to someone else"** + **"Save Assignment"** (gọi flow với notificationType = "SupplierFollowUp"). Danh sách chọn cũng chỉ hiện nhân viên đã có trong `RM User`.
 - Checklist * giống Goods Receipt (5 mục).
-- **Bảng nhận từng nguyên liệu (bắt buộc)** — giống GoodsReceiptScreen: mỗi dòng raw material nhập lại **Received Qty**, **Batch Number** (bắt buộc nếu Received Qty > 0), **Expiry Date** (bắt buộc nếu Received Qty > 0).
+- **Bảng nhận từng nguyên liệu (bắt buộc)** — giống GoodsReceiptScreen: mỗi dòng raw material nhập lại **Received Qty**, **Batch Number**, **Expiry Date**, **QC Number**, **RM/PK Code**, **Link to COA** (5 trường sau đều bắt buộc nếu Received Qty > 0).
 - Trường: **Receipt Date***, **Receipt Status*** (theo danh mục FollowUpReceiptStatus riêng), **Acceptance Decision*** (FollowUpAcceptanceDecision — ví dụ "Accepted" / "Accepted with Adjustment"), **Remarks***, **Round 2 Receipt Photos*** (bắt buộc).
 
 ### Case theo Acceptance Decision Round 2
@@ -389,9 +371,10 @@ Nếu log Bước 2 đã tồn tại, hiện banner xanh **"Supplier Follow-up C
 **Ai dùng:** Mọi vai trò, khi bấm vào 1 request từ Home (trừ trường hợp Procurement mở request "Pending Invoice" sẽ vào InvoiceSubmissionScreen thẳng).
 
 Hiển thị toàn bộ dữ liệu của yêu cầu ở dạng chỉ xem:
-- Thông tin cơ bản: Requester, Procurement Type, Purchase Accordance, Cost Center, Delivery Location, Required Delivery Date, Estimated Cost, Budget Reference.
+- Thông tin cơ bản: Requester, Procurement Type, Purchase Accordance, Cost Center (luôn "Port Melbourne Warehouse"), Delivery Location (luôn "Port Melbourne Warehouse"), Required Delivery Date, Estimated Cost, Budget Reference.
+- **Related Product SKU** — danh sách SKU sản phẩm liên quan (nếu có chọn khi tạo yêu cầu); hiện "—" nếu không chọn SKU nào.
 - **Raw Materials** — bảng danh sách nguyên liệu của yêu cầu (Trade Name, Category, Supplier, Unit, Qty), chỉ xem.
-- **Escalated to Executive**: "Yes"/"No" — cho biết yêu cầu có bị bỏ qua Manager Review không.
+- **Escalated to Executive**: "Yes"/"No" — chỉ có ý nghĩa với yêu cầu cũ (trước khi đổi sang luôn 2 cấp duyệt); yêu cầu mới luôn là "No".
 - Invoice Type (màu xanh nếu "Official Invoice", cam nếu "Proforma Invoice").
 - Link Invoice của Requester (nếu invoice qua Requester) và Official Invoice Link (nếu Procurement xử lý) — bấm để mở file.
 - Approval Conditions (Executive) — nếu có điều kiện phê duyệt.
