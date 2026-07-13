@@ -13,7 +13,7 @@ Screens:
             Height: =Parent.Height - 60
             Size: =12
             Text: =If(gAppReady, "⚠ Your account was not found in the system. Please contact your administrator.", "Checking your account...")
-            Visible: =Not(gAppReady) || IsBlank(gCurrentEmployee.ID)
+            Visible: =Not(gAppReady) || IsBlank(gCurrentEmployee.ID) || IsBlank(gCurrentUser.ID)
             Width: =Parent.Width
             Y: =60
       - rectHeader:
@@ -65,7 +65,7 @@ Screens:
             RadiusBottomRight: =0
             RadiusTopLeft: =0
             RadiusTopRight: =0
-            Visible: =Not(IsBlank(gCurrentEmployee.ID))
+            Visible: =Not(IsBlank(gCurrentEmployee.ID)) && Not(IsBlank(gCurrentUser.ID))
             Width: =Parent.Width
             Y: =60
           Children:
@@ -111,7 +111,7 @@ Screens:
             RadiusBottomRight: =0
             RadiusTopLeft: =0
             RadiusTopRight: =0
-            Visible: =Not(IsBlank(gCurrentEmployee.ID))
+            Visible: =Not(IsBlank(gCurrentEmployee.ID)) && Not(IsBlank(gCurrentUser.ID))
             Width: =Parent.Width
             Y: =140
           Children:
@@ -332,7 +332,7 @@ Screens:
             BorderColor: =RGBA(0, 0, 0, 0)
             Fill: =RGBA(210, 209, 199, 1)
             Height: =1
-            Visible: =Not(IsBlank(gCurrentEmployee.ID))
+            Visible: =Not(IsBlank(gCurrentEmployee.ID)) && Not(IsBlank(gCurrentUser.ID))
             Width: =Parent.Width
             Y: =188
       - galRequests:
@@ -380,7 +380,7 @@ Screens:
               )
             OnSelect: =Set(gSelectedRequest, ThisItem); If(ThisItem.Status.Value = "Pending Invoice" && (gCurrentUser.Role.Value = "Procurement" || gCurrentUser.Role.Value = "Admin"), Navigate(InvoiceSubmissionScreen), Navigate(RequestDetailScreen))
             TemplateSize: =80
-            Visible: =Not(IsBlank(gCurrentEmployee.ID))
+            Visible: =Not(IsBlank(gCurrentEmployee.ID)) && Not(IsBlank(gCurrentUser.ID))
             Width: =Parent.Width
             Y: =188
           Children:

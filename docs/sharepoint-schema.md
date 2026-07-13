@@ -19,11 +19,11 @@ Authoritative data model for the Max Biocare Raw Materials Procurement app, reco
 
 Required ⚠: `Status`, `RequesterEmail`, `ProcurementType`, `ProcurementDescription`, `PurchaseAccordance`, `EstimatedCost`, `Currency`, `RequiredDeliveryDate`, `DeliveryLocation`, `RequesterID`, `InvoiceRegion`, `CostCenter`.
 
-Does **not** have a `Category` or `PreferredSupplier` column (both removed) — Category is now per raw-material (see `'Raw Materials'` below) and Supplier no longer has a request-level "preferred" picker at all; supplier is expected to live per raw-material once that catalog column is wired into the UI.
+Does **not** have a `Category`, `PreferredSupplier`, or `Department` column (all removed) — Category is now per raw-material (see `'Raw Materials'` below), Supplier no longer has a request-level "preferred" picker at all, and Department was dropped entirely since this app is now an internal Production-department-only workflow (no longer needs to record which department a request came from).
 
 **Linking a request to a Project is optional.** `RequestFormScreen` has a `rdoHasProject` Radio ("Related to a Project?", `Items: =["No", "Yes"]` — defaults to "No", first item) gating the `ddProject_1` picker (`Project_List`, sourced directly — this app must have `Project_List` added as a data source in Studio, a separate Power Apps canvas app from `project-list`, same site). `ddProject_1` and its label/lookup-link are only `Visible` when `rdoHasProject.Selected.Value = "Yes"`, and submit only requires it in that case: `If(rdoHasProject.Selected.Value = "Yes" && IsBlank(ddProject_1.Selected), <error>, ...)`.
 
-When `rdoHasProject = "Yes"` and a project is selected, `Department` (`ddDepartment_1`) and `Cost Center` (`ddCostCenter_1`) — both ordinary `ComboBox` controls — auto-fill via `DefaultSelectedItems: =Filter(Choices(<source>), rdoHasProject.Selected.Value = "Yes" && Value = ddProject_1.Selected.<ProjectField>)` and go **read-only**: `DisplayMode: =If(Not(rdoHasProject.Selected.Value = "Yes"), DisplayMode.Edit, If(IsBlank(ddProject_1.Selected), DisplayMode.Disabled, DisplayMode.View))`. When `rdoHasProject = "No"` (or "Yes" but no project chosen yet), both stay normal editable dropdowns — the user picks manually, matching Project's own value sets so the two apps stay conceptually aligned even when not linked. `<source>` differs per field: `ddDepartment_1` sources `Choices('Employee List'.Department)` (Department itself is plain Text on `'RM Procurement Requests'`, not a Choice column — options only, same as `project-list`); `ddCostCenter_1` sources `Choices('RM Procurement Requests'.CostCenter)` (a real Choice column here).
+When `rdoHasProject = "Yes"` and a project is selected, `Cost Center` (`ddCostCenter_1`, an ordinary `ComboBox`) auto-fills via `DefaultSelectedItems: =Filter(Choices('RM Procurement Requests'.CostCenter), rdoHasProject.Selected.Value = "Yes" && Value = ddProject_1.Selected.CostCenter.Value)` and goes **read-only**: `DisplayMode: =If(Not(rdoHasProject.Selected.Value = "Yes"), DisplayMode.Edit, If(IsBlank(ddProject_1.Selected), DisplayMode.Disabled, DisplayMode.View))`. When `rdoHasProject = "No"` (or "Yes" but no project chosen yet), it stays a normal editable dropdown sourced from `Choices('RM Procurement Requests'.CostCenter)` — the user picks manually.
 
 `Currency` is **never directly picked by the user** — it's a read-only `Label` (`lblCurrencyValue_1`, sits beside `txtEstimatedCost_1` in `colEstimatedCostRow`) computed purely from whichever `Cost Center` is currently set (whether auto-filled from a project or manually chosen): `Switch(ddCostCenter_1.Selected.Value, "Office Melbourne (Head Quarter)", "AUD", "Port Melbourne Warehouse", "AUD", "Max Biocare Research Park - Natural Inspirations@Yinnar", "AUD", "Max Biocare Research Park - Mar-Nuka Bay", "AUD", "Malay Warehouse", "MYR", "Singapore Warehouse", "SGD")`. Same warehouse-to-region mapping as `InvoiceRegion` below, just a currency code instead of a country code — kept as a separate duplicated `Switch` (this app's convention: no shared constants) since Patch also needs it standalone.
 
@@ -33,7 +33,6 @@ When `rdoHasProject = "Yes"` and a project is selected, `Department` (`ddDepartm
 | `Status` ⚠ | Choice | **Drives the workflow** — value list below |
 | `RequesterEmail` ⚠ | Text | `User().Email`; "my requests" filter key |
 | `ProjectID` | Text | The related `project-list` project's business key (`Project_List.ProjectID`), set from `ddProject_1` when `rdoHasProject = "Yes"`; blank when the request isn't tied to a project |
-| `Department` ⚠* | Text | Plain text (\*not required in schema, but set on submit) — picker options from `Choices('Employee List'.Department)`. `ddDepartment_1` auto-fills/read-only from the selected Project's `Department` when linked, otherwise a normal editable dropdown |
 | `ProcurementType` ⚠ | Choice | `Invoice Supplied`, `To be sourced by Procurement` |
 | `InvoiceType` | Choice | `Official Invoice`, `Proforma Invoice`; blank unless `ProcurementType = "Invoice Supplied"` |
 | `ProcurementDescription` ⚠ | Text (multiline) | |
@@ -120,32 +119,35 @@ Required ⚠: none enforced by schema, but the app always writes `RequestID`, `R
 
 ## `'Raw Materials'` — raw-material catalog
 
-Only these columns are currently referenced anywhere in the app's Power Fx (confirmed by a repo-wide search); if more columns exist on the SharePoint list (e.g. a per-material Supplier, INCI, CAS number) they are **not yet wired into the UI**:
+Only these columns are currently referenced anywhere in the app's Power Fx (confirmed by a repo-wide search); if more columns exist on the SharePoint list (e.g. INCI, CAS number) they are **not yet wired into the UI**:
 
 | Column | Type | Notes |
 |---|---|---|
 | `ID` | Number (system) | used as `MaterialID` |
-| `Tiêu đề` (Title) | Text | trade name — shown as the picker's display column (`FieldName: "Title"`); copied into `RM Procurement Line Items.MaterialName` on add |
+| `Tiêu đề` (Title) | Text | trade name — shown as the picker's display column (`ItemDisplayText: =ThisItem.Title`); copied into `RM Procurement Line Items.MaterialName` on add |
 | `Code` | Text | shown read-only next to the material picker once a material is selected |
 | `Category` | Text | shown read-only next to the material picker once a material is selected. **Not a Choice column** — read directly as `ddMaterial_1.Selected.Category`, no `.Value` |
+| `Supplier` | Text | shown read-only next to the material picker once a material is selected — the raw material's own supplier, now the only place supplier information lives (the request-level `PreferredSupplier` field was removed) |
 
 Loaded via `ClearCollect(colRawMaterials, 'Raw Materials')` on `RequestFormScreen.OnVisible`; `App.OnStart` only preloads `FirstN('Raw Materials', 1)` as a lightweight schema-shape seed before the user navigates anywhere.
 
 ---
 
-## `'RM User'` — role assignment
+## `'RM User'` — role assignment & app membership gate
 
 Required ⚠: `Role`, `IsActive`, `EmployeeID`.
 
 | Column | Type | Notes |
 |---|---|---|
 | `Tiêu đề` (Title) | Text | |
-| `Role` ⚠ | Choice | `Requester`, `Manager`, `Executive`, `Procurement`, `Accounting`, `Admin` |
+| `Role` ⚠ | Choice | `Requester`, `Manager`, `Executive`, `Procurement`, `Accounting`, `Admin` — **`Requester` must be added as an explicit Choice option on this SharePoint column** (List settings → `Role` column → edit choices). This is a SharePoint schema change, not something any `.pa.yaml` edit can do. |
 | `IsActive` ⚠ | Yes/No | default true; manager picker filters `Role.Value="Manager" && IsActive` |
 | `EmployeeID` ⚠ | Lookup→Employee List | `{Id,Value}` (→Title) |
 | `Note` | Text | |
 
-Resolved in `App.OnStart` → `gCurrentUser` / `gUserRole`. Employees absent here default to role `Requester`.
+Resolved in `App.OnStart` → `gCurrentUser` / `gUserRole` via `LookUp('RM User', EmployeeID.Id = gCurrentEmployee.ID)`. **This list is now the app's membership gate**: an employee must have a matching row here (any `Role`, including `Requester`) or `gCurrentUser` is blank and `HomeScreen` shows the "account not found" message instead of the app — being in `Employee List` alone is no longer enough (that was the old, tenant-wide behavior). There is no synthetic `Requester` fallback anymore; every requester needs a real `'RM User'` row.
+
+Because of this gate, `GoodsReceiptScreen.ddAssignReceiver_GR` and `SupplierFollowUpScreen.ddAssignReceiver_SFU` (the "Assign to someone else" pickers) are filtered to only show `Employee List` rows that have an active `'RM User'` row: `Filter('Employee List', ID in ForAll(Filter('RM User', IsActive), EmployeeID.Id))`. This prevents assigning a Goods Receipt / Supplier Follow-up task to someone who wouldn't be able to log in to act on it.
 
 ---
 
@@ -199,7 +201,7 @@ Required ⚠: none.
 |---|---|---|
 | `Tiêu đề` (Title) | Text | employee display name |
 | `Email` | Text | matched against `User().Email` in `App.OnStart` (`LookUp('Employee List', Email = User().Email)`). Elsewhere in the app the same column is read as `.email` (lowercase) — e.g. `LookUp('Employee List', ID = ...).email`, `ddAssignReceiver_GR.Selected.email`. Power Fx matches SharePoint column names case-insensitively so both forms work against the same column; keep both spellings in mind if this column is ever renamed |
-| `Department` | Choice | options-only source for `ddDepartment_1` via `Choices('Employee List'.Department)` |
+| `Department` | Choice | **No longer read anywhere in the app** — `ddDepartment_1` and the request-level `Department` field were both removed (this app is now an internal Production-department-only workflow) |
 | `JobTitle` | Text | |
 | `City` | Text | |
 | `Country` | Text | |

@@ -21,7 +21,7 @@ All data lives in **SharePoint Online** (`maxbiocare.sharepoint.com/sites/Powera
 - `'RM Procurement Requests'` — the central request record (status, approvers, costs, invoice, goods-receipt, follow-up fields). No longer carries `Category` or `PreferredSupplier` — both moved to the per-material line-item level (see `'Raw Materials'` below).
 - `'RM Procurement Line Items'` — one row per raw material on a request (`MaterialID`/`MaterialName`, `Unit`, `Quantity`, plus Goods-Receipt/Supplier-Follow-Up round-1 and round-2 received-quantity/batch/expiry fields).
 - `'Raw Materials'` — the raw-material catalog. Only `ID`, `Title` (trade name), `Code`, and `Category` are currently wired into the app; other catalog columns that may exist on SharePoint are not yet referenced anywhere in this code.
-- `'RM User'` — maps an employee to a `Role` (Requester / Manager / Executive / Procurement / Accounting / Admin).
+- `'RM User'` — maps an employee to a `Role` (Requester / Manager / Executive / Procurement / Accounting / Admin). **This list is now also the app's membership gate** — an employee must have a row here to use the app at all (see "Global state" and the membership note below). `Requester` must exist as an actual selectable value in this list's `Role` Choice column on SharePoint — that's a SharePoint list-settings change (List settings → `Role` column → edit choices), not something a `.pa.yaml` change can do. Because of this gate, the Goods Receipt / Supplier Follow-up "Assign to someone else" pickers (`ddAssignReceiver_GR`/`ddAssignReceiver_SFU`) are filtered to `Employee List` rows whose `ID` is among active `'RM User'` rows' `EmployeeID.Id` — an employee can only be assigned a receiving task if they can actually log into the app to perform it. Don't widen these pickers back to the full `Employee List` without re-adding some other way for the assignee to gain access.
 - `'RM Procurement Approval Log'` — manager/executive decisions (StepNumber 2 = Manager, 3 = Executive).
 - `'RM Procurement Execution Log'` — procurement/goods-receipt/follow-up/invoice step records (StepNumber 1 = Procurement Execution, 2 = Accounting Handover, 3 = Goods Receipt, 4 = Supplier Follow-up Requester, 5 = Supplier Follow-up Procurement, 6 = Invoice Submission).
 - `'Employee List'`, `Project_List` (cross-app list from the sibling `project-list` app).
@@ -55,7 +55,7 @@ Invoice-reminder flows (called from `RequesterInvoiceScreen` and `InvoiceSubmiss
 ## Global state (set in App.OnStart)
 
 - `gCurrentEmployee` — row from `Employee List` matched by `User().Email`.
-- `gCurrentUser` / `gUserRole` — row from `'RM User'`; defaults to role `"Requester"` if not found.
+- `gCurrentUser` / `gUserRole` — row from `'RM User'` matched by `EmployeeID.Id = gCurrentEmployee.ID`. **Blank if the employee has no `'RM User'` row** — there is no more synthetic `"Requester"` fallback; a real `'RM User'` row (with `Role = "Requester"`) is required for ordinary requesters too, same as every other role.
 - `gIsSpecialRole` — true for Manager/Executive/Procurement/Accounting/Admin (drives toolbar/filter visibility).
 - `gSelectedRequest` — the request being viewed/acted on (set before `Navigate`).
 - `gParsingInvoice`, `gHasInvoiceResult`, `gInvoiceResult`, `gShowRejectReason`.
@@ -67,7 +67,7 @@ Invoice-reminder flows (called from `RequesterInvoiceScreen` and `InvoiceSubmiss
 - `colLineItemsDetail` — per-request line items loaded from `'RM Procurement Line Items'` for viewing/receiving on GoodsReceiptScreen / SupplierFollowUpScreen / RequestDetailScreen / AccountingScreen-adjacent screens; carries the round-1/round-2 `ReceivedQty`/`BatchNumber`/`ExpiryDate` fields.
 - `gStatusFilter` — set in `HomeScreen.OnVisible`, **not** in `App.OnStart`.
 
-If `gCurrentEmployee.ID` is blank, the user sees an "account not found" message and no UI — the app is membership-gated by the `Employee List`.
+If `gCurrentEmployee.ID` **or** `gCurrentUser.ID` is blank, the user sees an "account not found" message and no UI (`HomeScreen`'s `lblNoRole` + every other `HomeScreen` container check `Not(IsBlank(gCurrentEmployee.ID)) && Not(IsBlank(gCurrentUser.ID))`). The app is membership-gated by **both** `Employee List` (must exist there) **and** `'RM User'` (must have an explicit role row there) — being in `Employee List` alone (the old behavior, tenant-wide) is no longer sufficient.
 
 ## The workflow — this is the core domain model
 
@@ -127,7 +127,7 @@ The gallery `Items` filters `'RM Procurement Requests'` differently per `gUserRo
 - **Executive / Admin** → all requests, unfiltered.
 - **Requester (default, and any unrecognized role)** → own requests (`RequesterEmail = User().Email`), plus requests where they're the current Goods Receipt or Supplier Follow-up assignee (`GRAssignedToID.Id = gCurrentEmployee.ID || SFU1AssignedToID.Id = gCurrentEmployee.ID`).
 
-Filter buttons and "+ New Request" are **not** role-gated — every signed-in user (`Not(IsBlank(gCurrentEmployee.ID))`) sees the same filter bar and "+ New Request" button; only the underlying gallery `Items` differ per role. Keep the per-role `Items` filter in sync when adding new statuses, but don't assume the buttons themselves need per-role `Visible` logic — they currently don't have any.
+Filter buttons and "+ New Request" are **not** role-gated — every user who passes the membership gate (`Not(IsBlank(gCurrentEmployee.ID)) && Not(IsBlank(gCurrentUser.ID))`) sees the same filter bar and "+ New Request" button; only the underlying gallery `Items` differ per role. Keep the per-role `Items` filter in sync when adding new statuses, but don't assume the buttons themselves need per-role `Visible` logic — they currently don't have any.
 
 ## Conventions
 

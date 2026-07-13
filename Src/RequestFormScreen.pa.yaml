@@ -77,7 +77,6 @@ Screens:
                         OnSelect: |-
                           =Reset(rdoHasProject);
                           Reset(ddProject_1);
-                          Reset(ddDepartment_1);
                           Reset(txtDescription_1);
                           Reset(ddCostCenter_1);
                           Reset(ddPurchaseAccordance_2);
@@ -104,7 +103,6 @@ Screens:
                               rdoHasProject.Selected.Value = "Yes" && IsBlank(ddProject_1.Selected),
                               Notify("Please select the Project this request is for", NotificationType.Error),
                               If(
-                              IsBlank(ddDepartment_1.Selected) ||
                               IsBlank(txtDescription_1.Value) ||
                               IsBlank(ddDeliveryLocation_1.Selected) ||
                               IsBlank(dpDeliveryDate_1.SelectedDate) ||
@@ -155,7 +153,6 @@ Screens:
                                                                       RequesterID: {Id: gCurrentEmployee.ID, Value: gCurrentEmployee.Title},
                                                                       RequesterEmail: User().Email,
                                                                       ProjectID: ddProject_1.Selected.ProjectID,
-                                                                      Department: ddDepartment_1.Selected.Value,
                                                                       ProcurementDescription: txtDescription_1.Value,
                                                                       BudgetReference: txtBudgetRef_1.Value,
                                                                       DeliveryLocation: {Value: ddDeliveryLocation_1.Selected.Value},
@@ -444,59 +441,6 @@ Screens:
                               Width: =Parent.Width
                               X: =40
                               Y: =40
-            - rowDept:
-                Control: GroupContainer@1.5.0
-                Variant: AutoLayout
-                Properties:
-                  DropShadow: =DropShadow.None
-                  LayoutDirection: =LayoutDirection.Horizontal
-                  LayoutGap: =20
-                  PaddingBottom: =8
-                  PaddingLeft: =20
-                  PaddingRight: =20
-                  PaddingTop: =8
-                  RadiusBottomLeft: =0
-                  RadiusBottomRight: =0
-                  RadiusTopLeft: =0
-                  RadiusTopRight: =0
-                  Width: =Parent.Width
-                Children:
-                  - colDept:
-                      Control: GroupContainer@1.5.0
-                      Variant: AutoLayout
-                      Properties:
-                        DropShadow: =DropShadow.None
-                        LayoutDirection: =LayoutDirection.Vertical
-                        LayoutGap: =4
-                        LayoutMinHeight: =80
-                        RadiusBottomLeft: =0
-                        RadiusBottomRight: =0
-                        RadiusTopLeft: =0
-                        RadiusTopRight: =0
-                        Width: =Parent.Width
-                      Children:
-                        - lblDepartmentLabel_1:
-                            Control: Label@2.5.1
-                            Properties:
-                              FontWeight: =FontWeight.Semibold
-                              Height: =24
-                              Size: =11
-                              Text: ="Department *"
-                              Width: =Parent.Width
-                        - ddDepartment_1:
-                            Control: ModernCombobox@1.1.1
-                            Properties:
-                              AllowExternalSelectedItems: =false
-                              DefaultSelectedItems: =Filter(Choices('Employee List'.Department), rdoHasProject.Selected.Value = "Yes" && Value = ddProject_1.Selected.Department)
-                              DisplayMode: =If(Not(rdoHasProject.Selected.Value = "Yes"), DisplayMode.Edit, If(IsBlank(ddProject_1.Selected), DisplayMode.Disabled, DisplayMode.View))
-                              FontWeight: =""
-                              Height: =40
-                              InputTextPlaceholder: ="Choose an option"
-                              ItemDisplayText: =ThisItem.Value
-                              Items: =Choices('Employee List'.Department)
-                              SelectMultiple: =false
-                              Size: =0
-                              Width: =Parent.Width
             - rowProcurementType:
                 Control: GroupContainer@1.5.0
                 Variant: AutoLayout
@@ -606,7 +550,6 @@ Screens:
                           );
                           Reset(rdoHasProject);
                           Reset(ddProject_1);
-                          Reset(ddDepartment_1);
                           Reset(txtDescription_1);
                           Reset(ddCostCenter_1);
                           Reset(ddPurchaseAccordance_2);

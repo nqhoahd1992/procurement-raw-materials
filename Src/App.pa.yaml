@@ -11,13 +11,7 @@ App:
     OnStart: |-
       =Set(gAppReady, false);
       Set(gCurrentEmployee, LookUp('Employee List', Email = User().Email));
-      Set(gCurrentUser,
-          If(
-              IsBlank(LookUp('RM User', EmployeeID.Id = gCurrentEmployee.ID)),
-              {Role: {Value: "Requester"}},
-              LookUp('RM User', EmployeeID.Id = gCurrentEmployee.ID)
-          )
-      );
+      Set(gCurrentUser, LookUp('RM User', EmployeeID.Id = gCurrentEmployee.ID));
       Set(gUserRole, gCurrentUser.Role.Value);
       Set(gShowRejectReason, false);
       Set(gParsingInvoice, false);

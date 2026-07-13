@@ -167,37 +167,6 @@ Screens:
                               Size: =11
                               Text: =gSelectedRequest.Currency & " " & Text(gSelectedRequest.EstimatedCost, "#,###")
                               Width: =240
-                  - colDept_GR:
-                      Control: GroupContainer@1.5.0
-                      Variant: AutoLayout
-                      Properties:
-                        DropShadow: =DropShadow.None
-                        LayoutDirection: =LayoutDirection.Vertical
-                        LayoutGap: =2
-                        RadiusBottomLeft: =0
-                        RadiusBottomRight: =0
-                        RadiusTopLeft: =0
-                        RadiusTopRight: =0
-                        Width: =600
-                      Children:
-                        - lblInfoDeptLabel_GR:
-                            Control: Label@2.5.1
-                            Properties:
-                              Color: =RGBA(136, 135, 128, 1)
-                              Height: =18
-                              PaddingLeft: =0
-                              Size: =9
-                              Text: ="Department"
-                              Width: =600
-                        - lblInfoDeptValue_GR:
-                            Control: Label@2.5.1
-                            Properties:
-                              FontWeight: =FontWeight.Semibold
-                              Height: =20
-                              PaddingLeft: =0
-                              Size: =11
-                              Text: =gSelectedRequest.Department
-                              Width: =600
       - conScrollable_GR:
           Control: GroupContainer@1.5.0
           Variant: AutoLayout
@@ -321,7 +290,7 @@ Screens:
                             Properties:
                               Height: =40
                               InputTextPlaceholder: ="Select an employee"
-                              Items: =Sort('Employee List', Title, SortOrder.Ascending)
+                              Items: =Sort(Filter('Employee List', ID in ForAll(Filter('RM User', IsActive), EmployeeID.Id)), Title, SortOrder.Ascending)
                               Width: =Parent.Width
                             Children:
                               - Title_DelegateGR:

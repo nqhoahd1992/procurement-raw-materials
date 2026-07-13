@@ -56,6 +56,13 @@ Completed
 
 **Mọi vai trò** đăng nhập vào đều thấy trang này đầu tiên.
 
+### Điều kiện truy cập
+Đây là quy trình nội bộ (không còn dùng cho toàn bộ tenant) — nhân viên phải có **cả hai**:
+1. Một dòng trong `Employee List`.
+2. Một dòng trong `RM User` gán Role (kể cả Role "Requester" — mọi người dùng, kể cả Requester thường, đều phải được thêm thủ công vào `RM User`).
+
+Nếu thiếu 1 trong 2, màn hình hiện thông báo: *"⚠ Your account was not found in the system. Please contact your administrator."* và không hiển thị bất kỳ nội dung nào khác.
+
 ### Hiển thị theo vai trò
 - Tiêu đề danh sách: "My Requests" (Requester/Manager), "All Requests" (Executive/Admin), "Procurement Requests" (Procurement), "Accounting Requests" (Accounting).
 - Góc trên phải: tên nhân viên + vai trò, ví dụ "John Smith | Manager".
@@ -91,20 +98,19 @@ Mở **RequestFormScreen** để tạo yêu cầu mới. Chỉ hiển thị cho 
 **Ai dùng:** Bất kỳ nhân viên nào muốn tạo yêu cầu mua hàng.
 
 ### Các trường bắt buộc (*)
-1. **Department*** — chọn từ danh sách phòng ban
-2. **Procurement Type*** — radio: "Invoice Supplied" / "To be sourced by Procurement"
-3. **Purchase Accordance*** — ví dụ: "Urgent", "Unplanned", "Standard"…
-4. **Cost Center*** — khu vực hóa đơn
-5. **Delivery Location***
-6. **Required Delivery Date*** — chọn ngày
-7. **Estimated Cost*** — phải là số
-8. **Currency***
-9. **Procurement Description***
-10. **Budget Reference** — không bắt buộc
+1. **Procurement Type*** — radio: "Invoice Supplied" / "To be sourced by Procurement"
+2. **Purchase Accordance*** — ví dụ: "Urgent", "Unplanned", "Standard"…
+3. **Cost Center*** — khu vực hóa đơn
+4. **Delivery Location***
+5. **Required Delivery Date*** — chọn ngày
+6. **Estimated Cost*** — phải là số
+7. **Currency***
+8. **Procurement Description***
+9. **Budget Reference** — không bắt buộc
 
 ### Case: Raw Materials (bắt buộc ít nhất 1 dòng)
 Bảng thêm nguyên liệu (**"+ Add Material"**), mỗi dòng gồm:
-- **Trade Name*** — chọn từ danh mục `Raw Materials`; sau khi chọn sẽ hiện thêm **Code** và **Category** của nguyên liệu đó (chỉ xem).
+- **Trade Name*** — chọn từ danh mục `Raw Materials`; sau khi chọn sẽ hiện thêm **Code**, **Category** và **Supplier** của nguyên liệu đó (chỉ xem).
 - **Unit*** — dropdown: "pcs", "kg", "box", "set", "liter", "meter".
 - **Qty*** — số lượng, phải > 0.
 - Nút **✕** để xóa dòng.
@@ -311,7 +317,7 @@ Luôn chuyển trạng thái sang **"Completed"** — đây là màn hình duy n
 ### Case: Phân công người nhận hàng (chỉ hiện nếu chưa có log Round 1)
 Hai nút chuyển đổi:
 - **"I will receive"** — Requester tự nhận, mở checklist bên dưới.
-- **"Assign to someone else"** — hiện **"Assign to *"** (chọn nhân viên) + nút **"Save Assignment"**.
+- **"Assign to someone else"** — hiện **"Assign to *"** (chọn nhân viên) + nút **"Save Assignment"**. Danh sách chọn **chỉ hiện nhân viên đã có trong `RM User`** (đã được cấp quyền dùng app) — vì app hiện giới hạn truy cập theo `RM User`, không thể giao việc cho người chưa có quyền vào app.
   - Khi lưu: gửi thông báo (email + Teams Adaptive Card) tới người được giao qua flow `Procurement_Notify_Receipt_Assignee` (notificationType = "GoodsReceipt").
 
 ### Case: Người được giao bị hủy phân công (assignee đang làm mà bị đổi)
@@ -359,7 +365,7 @@ Lỗi thường gặp: "Please enter received quantity for at least one material
 Hiện lại: Received By, Receipt Date, Receipt Status, Acceptance Decision, Remarks của lần nhận hàng đầu.
 
 ### Round 2 — Bước 1: Requester nhận hàng lần 2
-- Cách phân công giống GoodsReceiptScreen: **"I will receive"** / **"Assign to someone else"** + **"Save Assignment"** (gọi flow với notificationType = "SupplierFollowUp").
+- Cách phân công giống GoodsReceiptScreen: **"I will receive"** / **"Assign to someone else"** + **"Save Assignment"** (gọi flow với notificationType = "SupplierFollowUp"). Danh sách chọn cũng chỉ hiện nhân viên đã có trong `RM User`.
 - Checklist * giống Goods Receipt (5 mục).
 - **Bảng nhận từng nguyên liệu (bắt buộc)** — giống GoodsReceiptScreen: mỗi dòng raw material nhập lại **Received Qty**, **Batch Number** (bắt buộc nếu Received Qty > 0), **Expiry Date** (bắt buộc nếu Received Qty > 0).
 - Trường: **Receipt Date***, **Receipt Status*** (theo danh mục FollowUpReceiptStatus riêng), **Acceptance Decision*** (FollowUpAcceptanceDecision — ví dụ "Accepted" / "Accepted with Adjustment"), **Remarks***, **Round 2 Receipt Photos*** (bắt buộc).
@@ -383,7 +389,7 @@ Nếu log Bước 2 đã tồn tại, hiện banner xanh **"Supplier Follow-up C
 **Ai dùng:** Mọi vai trò, khi bấm vào 1 request từ Home (trừ trường hợp Procurement mở request "Pending Invoice" sẽ vào InvoiceSubmissionScreen thẳng).
 
 Hiển thị toàn bộ dữ liệu của yêu cầu ở dạng chỉ xem:
-- Thông tin cơ bản: Requester, Department, Procurement Type, Purchase Accordance, Cost Center, Delivery Location, Required Delivery Date, Estimated Cost, Budget Reference.
+- Thông tin cơ bản: Requester, Procurement Type, Purchase Accordance, Cost Center, Delivery Location, Required Delivery Date, Estimated Cost, Budget Reference.
 - **Raw Materials** — bảng danh sách nguyên liệu của yêu cầu (Trade Name, Unit, Qty), chỉ xem.
 - **Escalated to Executive**: "Yes"/"No" — cho biết yêu cầu có bị bỏ qua Manager Review không.
 - Invoice Type (màu xanh nếu "Official Invoice", cam nếu "Proforma Invoice").
