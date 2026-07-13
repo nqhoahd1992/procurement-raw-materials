@@ -1,6 +1,6 @@
 # SharePoint Lists & Flows — Schema Reference
 
-Authoritative data model for the Max Biocare Procurement Procedure app, reconstructed from the unpacked `References/DataSources.json`. Site: `maxbiocare.sharepoint.com/sites/Powerapps`.
+Authoritative data model for the Max Biocare Raw Materials Procurement app, reconstructed from `Src/*.pa.yaml`. Site: `maxbiocare.sharepoint.com/sites/Powerapps`.
 
 > Only **custom / app-relevant columns** are listed. Every SharePoint list also carries the standard system columns (`ID`, `Created`, `Modified`, `Author`, `Editor`, `Attachments`, content-type, moderation, etc.) — omitted here for clarity. Update this file whenever a SharePoint column is added/renamed.
 
@@ -10,66 +10,68 @@ Authoritative data model for the Max Biocare Procurement Procedure app, reconstr
 - **Choice** columns: write `{Value: "..."}`, read `Col.Value`.
 - **Lookup / Person** columns: write `{Id: ..., Value: ...}`, read `Col.Value` / `Col.Id`. (These are SharePoint *lookup* columns pointing at another list — `Col.Value` resolves to the target's Title or ID per the `OdataQueryName` noted below.)
 - **Required** columns are flagged ⚠ — a `Patch` that omits them fails.
-- `RequestIDText` (plain-text copy of the request ID) is the delegable join key for log lookups: `LookUp(Procurement_ExecutionLog, RequestIDText = Text(request.ID) && StepNumber = N)`.
+- `RequestIDText` (plain-text copy of the request ID) is the delegable join key for log lookups: `LookUp('RM Procurement Execution Log', RequestIDText = Text(request.ID) && StepNumber = N)`.
+- List names all carry an `RM ` prefix and contain spaces, so they're always single-quoted in Power Fx: `'RM Procurement Requests'`, `'RM Procurement Line Items'`, `'RM User'`, `'RM Procurement Approval Log'`, `'RM Procurement Execution Log'`.
 
 ---
 
-## `Procurement_Requests` — central request record
+## `'RM Procurement Requests'` — central request record
 
-Required ⚠: `Status`, `RequesterEmail`, `ProcurementType`, `ProcurementDescription`, `Category`, `PurchaseAccordance`, `EstimatedCost`, `Currency`, `RequiredDeliveryDate`, `DeliveryLocation`, `RequesterID`, `InvoiceRegion`, `CostCenter`.
+Required ⚠: `Status`, `RequesterEmail`, `ProcurementType`, `ProcurementDescription`, `PurchaseAccordance`, `EstimatedCost`, `Currency`, `RequiredDeliveryDate`, `DeliveryLocation`, `RequesterID`, `InvoiceRegion`, `CostCenter`.
 
-**Not yet created on SharePoint**: `CostCenter` (**Choice**, same 6 values as `project-list`'s `Project_List.CostCenter` — see screenshot-derived list in the row below) and `ProjectID` (Text). **`Department` and `Currency` both stay their existing live types, no SharePoint change needed** — `Department` is (and always was) plain Text, picker options sourced from `Choices('Employee List'.Department)`, same convention as `project-list`'s own `Project_List.Department`. `Currency` is confirmed **Text** on the live list (Studio's own type-check settled this: writing `{Value: ...}` to it threw `expected Text, found Record` — so it's Text, not Choice as an earlier pass here assumed).
+Does **not** have a `Category` or `PreferredSupplier` column (both removed) — Category is now per raw-material (see `'Raw Materials'` below) and Supplier no longer has a request-level "preferred" picker at all; supplier is expected to live per raw-material once that catalog column is wired into the UI.
 
 **Linking a request to a Project is optional.** `RequestFormScreen` has a `rdoHasProject` Radio ("Related to a Project?", `Items: =["No", "Yes"]` — defaults to "No", first item) gating the `ddProject_1` picker (`Project_List`, sourced directly — this app must have `Project_List` added as a data source in Studio, a separate Power Apps canvas app from `project-list`, same site). `ddProject_1` and its label/lookup-link are only `Visible` when `rdoHasProject.Selected.Value = "Yes"`, and submit only requires it in that case: `If(rdoHasProject.Selected.Value = "Yes" && IsBlank(ddProject_1.Selected), <error>, ...)`.
 
-When `rdoHasProject = "Yes"` and a project is selected, `Department` (`ddDepartment_1`) and `Cost Center` (`ddCostCenter_1`) — both ordinary `ComboBox` controls — auto-fill via `DefaultSelectedItems: =Filter(Choices(<source>), rdoHasProject.Selected.Value = "Yes" && Value = ddProject_1.Selected.<ProjectField>)` and go **read-only**: `DisplayMode: =If(Not(rdoHasProject.Selected.Value = "Yes"), DisplayMode.Edit, If(IsBlank(ddProject_1.Selected), DisplayMode.Disabled, DisplayMode.View))`. When `rdoHasProject = "No"` (or "Yes" but no project chosen yet), both stay normal editable dropdowns — the user picks manually, matching Project's own value sets so the two apps stay conceptually aligned even when not linked. `<source>` differs per field: `ddDepartment_1` sources `Choices('Employee List'.Department)` (Department itself is plain Text on `Procurement_Requests`, not a Choice column — options only, same as `project-list`); `ddCostCenter_1` sources `Choices(Procurement_Requests.CostCenter)` (a real Choice column here).
+When `rdoHasProject = "Yes"` and a project is selected, `Department` (`ddDepartment_1`) and `Cost Center` (`ddCostCenter_1`) — both ordinary `ComboBox` controls — auto-fill via `DefaultSelectedItems: =Filter(Choices(<source>), rdoHasProject.Selected.Value = "Yes" && Value = ddProject_1.Selected.<ProjectField>)` and go **read-only**: `DisplayMode: =If(Not(rdoHasProject.Selected.Value = "Yes"), DisplayMode.Edit, If(IsBlank(ddProject_1.Selected), DisplayMode.Disabled, DisplayMode.View))`. When `rdoHasProject = "No"` (or "Yes" but no project chosen yet), both stay normal editable dropdowns — the user picks manually, matching Project's own value sets so the two apps stay conceptually aligned even when not linked. `<source>` differs per field: `ddDepartment_1` sources `Choices('Employee List'.Department)` (Department itself is plain Text on `'RM Procurement Requests'`, not a Choice column — options only, same as `project-list`); `ddCostCenter_1` sources `Choices('RM Procurement Requests'.CostCenter)` (a real Choice column here).
 
-`Currency` is **never directly picked by the user** in either branch — it's a read-only `Label` (`lblCurrencyValue_1`, sits beside `txtEstimatedCost_1` in `colEstimatedCostRow`, mirroring `project-list/CreateProjectScreen.pa.yaml`'s `colBudgetAmountRow` layout) computed purely from whichever `Cost Center` is currently set (whether auto-filled from a project or manually chosen): `Switch(ddCostCenter_1.Selected.Value, "Office Melbourne (Head Quarter)", "AUD", "Port Melbourne Warehouse", "AUD", "Max Biocare Research Park - Natural Inspirations@Yinnar", "AUD", "Max Biocare Research Park - Mar-Nuka Bay", "AUD", "Malay Warehouse", "MYR", "Singapore Warehouse", "SGD")`. Same warehouse-to-region mapping as `InvoiceRegion` below, just a currency code instead of a country code — kept as a separate duplicated `Switch` (this app's convention: no shared constants) since Patch also needs it standalone.
+`Currency` is **never directly picked by the user** — it's a read-only `Label` (`lblCurrencyValue_1`, sits beside `txtEstimatedCost_1` in `colEstimatedCostRow`) computed purely from whichever `Cost Center` is currently set (whether auto-filled from a project or manually chosen): `Switch(ddCostCenter_1.Selected.Value, "Office Melbourne (Head Quarter)", "AUD", "Port Melbourne Warehouse", "AUD", "Max Biocare Research Park - Natural Inspirations@Yinnar", "AUD", "Max Biocare Research Park - Mar-Nuka Bay", "AUD", "Malay Warehouse", "MYR", "Singapore Warehouse", "SGD")`. Same warehouse-to-region mapping as `InvoiceRegion` below, just a currency code instead of a country code — kept as a separate duplicated `Switch` (this app's convention: no shared constants) since Patch also needs it standalone.
 
 | Column | Type | Notes |
 |---|---|---|
-| `Tiêu đề` (Title) | Text | Auto-built: `<employee> - <Category> - <dd/mm/yyyy>` |
+| `Tiêu đề` (Title) | Text | Auto-built: `<employee> - <dd/mm/yyyy>` (no longer includes Category — see removal note above) |
 | `Status` ⚠ | Choice | **Drives the workflow** — value list below |
 | `RequesterEmail` ⚠ | Text | `User().Email`; "my requests" filter key |
-| `ProjectID` | Text | **New, not yet created on SharePoint** — the related `project-list` project's business key (`Project_List.ProjectID`, e.g. `PROJ-AU-QA-2026-017`), set from `ddProject_1` when `rdoHasProject = "Yes"`; blank when the request isn't tied to a project. Also the join column the future `Project_SyncActualCost` flow was already waiting on (see `project-list/CLAUDE.md` §Next) |
-| `Department` ⚠* | Text | Plain text (\*not required in schema, but set on submit) — picker options from `Choices('Employee List'.Department)`, same convention as `project-list`. `ddDepartment_1` auto-fills/read-only from the selected Project's `Department` when linked, otherwise a normal editable dropdown |
-| `ProcurementType` ⚠ | Choice | incl. `Invoice Supplied` |
-| `InvoiceType` | Choice | incl. `Official Invoice`; blank unless ProcurementType = Invoice Supplied |
-| `InvoiceLink` | Text (URL) | Original/uploaded invoice link |
-| `OfficialInvoiceLink` | Text (URL) | Final official invoice link set by Procurement |
+| `ProjectID` | Text | The related `project-list` project's business key (`Project_List.ProjectID`), set from `ddProject_1` when `rdoHasProject = "Yes"`; blank when the request isn't tied to a project |
+| `Department` ⚠* | Text | Plain text (\*not required in schema, but set on submit) — picker options from `Choices('Employee List'.Department)`. `ddDepartment_1` auto-fills/read-only from the selected Project's `Department` when linked, otherwise a normal editable dropdown |
+| `ProcurementType` ⚠ | Choice | `Invoice Supplied`, `To be sourced by Procurement` |
+| `InvoiceType` | Choice | `Official Invoice`, `Proforma Invoice`; blank unless `ProcurementType = "Invoice Supplied"` |
 | `ProcurementDescription` ⚠ | Text (multiline) | |
-| `Category` ⚠ | Choice | |
-| `PreferredSupplier` | Text | Supplier title |
 | `PurchaseAccordance` ⚠ | Choice | incl. `Urgent`, `Unplanned` (auto-escalate to Executive) |
 | `EstimatedCost` ⚠ | Number | |
 | `Currency` ⚠ | Text | Confirmed Text (not Choice) via Studio's type-check — plain string values `AUD`/`MYR`/`SGD`. Never directly picked by the user; always computed from `Cost Center` via a `Switch` lookup (see note above) and written as a plain string on submit, no `{Value:}` wrapper |
 | `BudgetReference` | Text | |
 | `RequiredDeliveryDate` ⚠ | Date | |
 | `DeliveryLocation` ⚠ | Choice | Independent from `CostCenter` below — delivery destination for goods, not the warehouse/office used for invoice filing |
-| `CostCenter` ⚠ | Choice | **New, not yet created on SharePoint** — same 6 values as `project-list`'s `Project_List.CostCenter`: `Office Melbourne (Head Quarter)`, `Port Melbourne Warehouse`, `Max Biocare Research Park - Natural Inspirations@Yinnar`, `Max Biocare Research Park - Mar-Nuka Bay`, `Malay Warehouse`, `Singapore Warehouse`. `ddCostCenter_1` auto-fills/read-only from the selected Project's `CostCenter` when linked, otherwise a normal editable dropdown sourced from `Choices(Procurement_Requests.CostCenter)`. `InvoiceRegion` and `Currency` are both auto-derived from it via `Switch` lookups, never separately picked |
+| `CostCenter` ⚠ | Choice | 6 values: `Office Melbourne (Head Quarter)`, `Port Melbourne Warehouse`, `Max Biocare Research Park - Natural Inspirations@Yinnar`, `Max Biocare Research Park - Mar-Nuka Bay`, `Malay Warehouse`, `Singapore Warehouse`. `ddCostCenter_1` auto-fills/read-only from the selected Project's `CostCenter` when linked, otherwise a normal editable dropdown sourced from `Choices('RM Procurement Requests'.CostCenter)`. `InvoiceRegion` and `Currency` are both auto-derived from it via `Switch` lookups, never separately picked |
 | `RequesterID` ⚠ | Lookup→Employee List | `{Id,Value}` (→Title) |
 | `ManagerApproverID` | Lookup→Employee List | blank when manager review skipped |
-| `SkippedManagerReview` | Yes/No | true when Urgent/Unplanned **or** (EstimatedCost > 5000 AND Currency = AUD) |
+| `SkippedManagerReview` | Yes/No | true when Urgent/Unplanned **or** (EstimatedCost > 5000 AND cost-center-derived region = AU) |
+| `InvoiceMode` | Choice | `Direct`, `Deferred`, `ViaRequester` — set by Procurement Execution |
+| `InvoiceSubmitted` | Yes/No | true once the official invoice has been processed inline (drives whether Goods Receipt/Supplier Follow-up route to `Pending Invoice` or `Pending Accounting`) |
+| `RequesterInvoiceURL` | Text (URL) | set when the Requester uploads the invoice (`ProcurementType = "Invoice Supplied"`) or re-uploads via `RequesterInvoiceScreen` |
+| `OrderConfirmationURL` | Text (URL) | Deferred-invoice path, uploaded by Procurement |
+| `RemittanceURL` | Text (URL) | Via-Requester path, uploaded by Procurement |
+| `OfficialInvoiceLink` | Text (URL) | Final official invoice link, set by `Submit_Invoice` flow result |
 | `ProcurementExecutedBy` | Lookup→Employee List | |
 | `ProcurementExecutedAt` | DateTime | |
-| `AccountingHandlerID` | Lookup→Employee List | chosen by Procurement |
-| `AccountingCompletedAt` | DateTime | |
+| `AccountingHandlerID` | Lookup→Employee List | chosen by Procurement on `InvoiceSubmissionScreen`/`ProcurementExecutionScreen` |
+| `AccountingCompletedAt` | DateTime | set by `AccountingScreen` submit, alongside `Status = "Completed"` |
 | `ConditionsText` | Text (multiline) | set on "Approve with conditions" |
-| `RequestID` | Lookup (→ID) | present in schema; not used by the app flow |
-| `PurchaseRequestLink` | Text (URL) | |
-| `GRAssignedToID` | Lookup→Employee List | delegate for Step 3 Goods Receipt; blank = Requester performs it |
-| `SFU1AssignedToID` | Lookup→Employee List | delegate for Step 4 Supplier Follow-up (Requester); blank = Requester performs it |
+| `PurchaseRequestLink` | Text (URL) | read-only in `RequestDetailScreen`; no `Patch` site found anywhere in the app — appears unwritten by current app code |
+| `GRAssignedToID` | Lookup→Employee List | delegate for Goods Receipt; blank = Requester performs it |
 | `GoodsReceiptBy` | Text | |
 | `GoodsReceiptDate` | DateTime | |
 | `GoodsReceiptStatus` | Choice | |
 | `GoodsAcceptanceDecision` | Choice | `Accepted`, `Rejected`, `Requires Supplier Follow-up` |
 | `GoodsReceiptRemarks` | Text (multiline) | |
 | `GoodsReceiptAt` | DateTime | |
+| `SFU1AssignedToID` | Lookup→Employee List | delegate for Supplier Follow-up Round 2 Step 1 (Requester); blank = Requester performs it |
 | `FollowUpReceiptBy` | Text | |
 | `FollowUpReceiptDate` | DateTime | |
 | `FollowUpReceiptStatus` | Choice | same choices as `GoodsReceiptStatus` |
 | `FollowUpAcceptanceDecision` | Choice | `Accepted`, `Accepted with Adjustment` |
-| `CreditNote` | Text | required when follow-up decision = adjustment |
+| `CreditNote` | Text | required when follow-up decision = adjustment; cleared to `""` at the start of the Step-2 form |
 | `Fulfillment` | Choice | `Fulfilled`, `Fulfilled with Adjustment` |
 | `FollowUpRemarks` | Text (multiline) | |
 | `FollowUpReceiptAt` | DateTime | |
@@ -78,15 +80,60 @@ When `rdoHasProject = "Yes"` and a project is selected, `Department` (`ddDepartm
 | `InvoiceRegion` ⚠ | Choice | Country code (`AU`/`MY`/`SG`) used to file the invoice into the correct storage folder. **Not directly user-selected** — auto-derived on submit from `ddCostCenter_1.Selected.Value` via a `Switch` lookup table in `RequestFormScreen.pa.yaml` (warehouse/office → country) |
 | `Attachments` | Attachments | invoice/supporting files; written via `Form1`+`SubmitForm` (Patch can't write attachments) |
 
-### `Status` choice values (exact strings — used as literals across all screens)
+### `Status` choice values and routing (exact strings — used as literals across all screens)
 
-`Pending Manager` → `Pending Executive` → `Pending Procurement` → `Pending Accounting` → `Goods Receipt & Acceptance` → `Pending Supplier Follow-up` → `Completed`, plus terminal `Rejected`.
+`Pending Manager`, `Pending Executive`, `Pending Procurement`, `Goods Receipt & Acceptance`, `Pending Supplier Follow-up`, `Pending Invoice`, `Pending Accounting`, `Completed`, `Rejected`.
+
+Routing is **not** a straight line — see `CLAUDE.md`'s "The workflow" section for the full branching diagram. The two most important corrections vs. older assumptions:
+- `"Completed"` is set in **exactly one place in the whole app**: `AccountingScreen`'s submit (`Patch(..., {Status: {Value: "Completed"}, ...})`). Neither `GoodsReceiptScreen` nor `SupplierFollowUpScreen` ever sets `Status` to `"Completed"` directly — both route to `"Pending Invoice"` or `"Pending Accounting"` depending on `InvoiceSubmitted`.
+- `"Pending Invoice"` is a routing junction reachable from **both** Goods Receipt and Supplier Follow-up (not just once, right after Procurement Execution) — it represents "goods physically received, but official invoice paperwork not yet done", independent of `InvoiceMode`.
 
 > Changing any string means updating every screen's filters, color maps, and `Patch`/`If`/`Switch` logic — there is no shared constant.
 
 ---
 
-## `Procurement_User` — role assignment
+## `'RM Procurement Line Items'` — one row per raw material on a request
+
+Required ⚠: none enforced by schema, but the app always writes `RequestID`, `RequestIDText`, `MaterialID`, `MaterialName`, `Unit`, `Quantity` together as a set on submit.
+
+| Column | Type | Notes |
+|---|---|---|
+| `Tiêu đề` (Title) | Text | Not set by the app's `Patch` — left blank/default |
+| `RequestID` | Lookup→'RM Procurement Requests' | `{Id: wNewRequest.ID, Value: wNewRequest.Title}`, written once per line item via `ForAll` on `RequestFormScreen` submit |
+| `RequestIDText` | Text | join key — `Filter('RM Procurement Line Items', RequestIDText = Text(gSelectedRequest.ID))` on every downstream screen |
+| `MaterialID` | Lookup→'Raw Materials' | `{Id: MaterialID, Value: MaterialName}` |
+| `MaterialName` | Text | copy of the raw material's `Title` at the time the line item was added |
+| `Unit` | Text | one of `pcs`, `kg`, `box`, `set`, `liter`, `meter` (hardcoded list on `RequestFormScreen`, not a Choice column) |
+| `Quantity` | Number | |
+| `ReceivedQty1` | Number | Goods Receipt round-1 received quantity |
+| `BatchNumber1` | Text | Goods Receipt round-1 batch number |
+| `ExpiryDate1` | Date | Goods Receipt round-1 expiry date |
+| `ReceivedQty2` | Number | Supplier Follow-up round-2 received quantity |
+| `BatchNumber2` | Text | Supplier Follow-up round-2 batch number |
+| `ExpiryDate2` | Date | Supplier Follow-up round-2 expiry date |
+
+**How it's populated**: `RequestFormScreen` builds a working collection `colLineItems` (`{RowID, MaterialID, MaterialName, Unit, Quantity}`) via `galLineItems`/`btnAddLineItem`/`ddMaterial_1`/`ddUnit_1`/`txtQty_1`/`btnRemoveItem_1`. Submit requires ≥1 row, every row's `MaterialID <> 0`, non-blank `Unit`, and `Quantity > 0`. After the request `Patch` succeeds, a `ForAll(colLineItems, Patch('RM Procurement Line Items', Defaults(...), {...}))` writes one row per material, then `Clear(colLineItems)`.
+
+**How it's read back**: `GoodsReceiptScreen`, `SupplierFollowUpScreen`, `RequestDetailScreen` each load `colLineItemsDetail` via `ClearCollect(colLineItemsDetail, Filter('RM Procurement Line Items', RequestIDText = Text(gSelectedRequest.ID)))` on `OnVisible`, then patch back the round-1/round-2 received-quantity/batch/expiry fields per row during Goods Receipt / Supplier Follow-up.
+
+---
+
+## `'Raw Materials'` — raw-material catalog
+
+Only these columns are currently referenced anywhere in the app's Power Fx (confirmed by a repo-wide search); if more columns exist on the SharePoint list (e.g. a per-material Supplier, INCI, CAS number) they are **not yet wired into the UI**:
+
+| Column | Type | Notes |
+|---|---|---|
+| `ID` | Number (system) | used as `MaterialID` |
+| `Tiêu đề` (Title) | Text | trade name — shown as the picker's display column (`FieldName: "Title"`); copied into `RM Procurement Line Items.MaterialName` on add |
+| `Code` | Text | shown read-only next to the material picker once a material is selected |
+| `Category` | Text | shown read-only next to the material picker once a material is selected. **Not a Choice column** — read directly as `ddMaterial_1.Selected.Category`, no `.Value` |
+
+Loaded via `ClearCollect(colRawMaterials, 'Raw Materials')` on `RequestFormScreen.OnVisible`; `App.OnStart` only preloads `FirstN('Raw Materials', 1)` as a lightweight schema-shape seed before the user navigates anywhere.
+
+---
+
+## `'RM User'` — role assignment
 
 Required ⚠: `Role`, `IsActive`, `EmployeeID`.
 
@@ -102,7 +149,7 @@ Resolved in `App.OnStart` → `gCurrentUser` / `gUserRole`. Employees absent her
 
 ---
 
-## `Procurement_ApprovalLog` — manager & executive decisions
+## `'RM Procurement Approval Log'` — manager & executive decisions
 
 Required ⚠: `RequestID`, `StepNumber`.
 
@@ -112,7 +159,7 @@ Required ⚠: `RequestID`, `StepNumber`.
 | `RequestID` ⚠ | Lookup (→Title) | `{Id,Value}` |
 | `StepNumber` ⚠ | Number | **`2` = Manager, `3` = Executive** (documented in the column itself) |
 | `ApproverID` | Lookup→Employee List | |
-| `Decision` | Choice | Manager: `Approved (within budget)`, … · Executive: `Reject`, `Approve with conditions`, `Approve` |
+| `Decision` | Choice | Manager: `Approved (within budget)`, `Needs clarification`, `Exceeds budget / unplanned` · Executive: `Reject`, `Approve with conditions`, `Approve` |
 | `ApprovalConditions` | Text (multiline) | step 3, "Approve with conditions" |
 | `RejectionReason` | Text (multiline) | step 3, "Reject" |
 | `ManagerRemarks` | Text (multiline) | step 2 |
@@ -120,7 +167,7 @@ Required ⚠: `RequestID`, `StepNumber`.
 
 ---
 
-## `Procurement_ExecutionLog` — procurement / receipt / follow-up steps
+## `'RM Procurement Execution Log'` — procurement / receipt / follow-up / invoice steps
 
 Required ⚠: none.
 
@@ -129,7 +176,7 @@ Required ⚠: none.
 | `Tiêu đề` (Title) | Text | `Step <n> - <name> - <request title>` |
 | `RequestID` | Lookup (→ID) | `{Id,Value}` |
 | `RequestIDText` | Text | join key |
-| `StepNumber` | Number | `1` Procurement Execution · `2` Accounting Handover · `3` Goods Receipt · `4` Supplier Follow-up (Requester) · `5` Supplier Follow-up (Procurement) |
+| `StepNumber` | Number | `1` Procurement Execution · `2` Accounting Handover · `3` Goods Receipt · `4` Supplier Follow-up (Requester) · `5` Supplier Follow-up (Procurement) · `6` Invoice Submission |
 | `StepName` | Choice | matches the step |
 | `ExecutedBy` | Lookup→Employee List | |
 | `ExecutedAt` | DateTime | |
@@ -137,45 +184,22 @@ Required ⚠: none.
 | `HandoverToIDText` | Text | step 1 |
 | `SupplierSummary` | Text (multiline) | step 1 |
 | `PurchaseOrderLink` | Text (URL) | step 1 |
-| `Notes` | Text (multiline) | |
+| `Notes` | Text (multiline) | steps 1 (reject)/2/3 |
+| `Attachments` | Attachments | Goods Receipt (step 3) and Supplier Follow-up round 2 (step 4) photo evidence — submitted via bound Forms (`frmGRLog_GR`, `frmSFU1Log_SFU`) since `Patch` alone can't write attachments |
 
-The presence of step-4 / step-5 rows distinguishes the two stages of the supplier follow-up flow (`LookUp` by `StepNumber`).
-
----
-
-## `Procurement_InvoiceData` — extracted invoice fields
-
-Required ⚠: none. **Not written by app `Patch`** — populated by the `Submit_Invoice` flow (see below). Column names differ from the app's variable names — note `VendorName` and `GSTAmount`.
-
-| Column | Type | Notes |
-|---|---|---|
-| `Tiêu đề` (Title) | Text | |
-| `RequestID` | Lookup (→Title) | |
-| `RequestIDText` | Text | join key |
-| `InvoiceNumber` | Text | |
-| `InvoiceDate` | Date | |
-| `VendorName` | Text | supplier name (flow arg `supplierName`) |
-| `BilledTo` | Text | |
-| `Attention` | Text | |
-| `Description` | Text (multiline) | |
-| `TotalAmount` | Number | |
-| `GSTAmount` | Number | tax amount (flow arg `taxAmount`) |
-| `Currency` | Text | |
-| `ParsedAt` | Date | |
-| `InvoiceLink` | Text (URL) | |
-| `ABN` | Text | supplier ABN |
+The presence of step-4 / step-5 rows distinguishes the two stages of the supplier follow-up flow (`LookUp` by `StepNumber`); the presence of a step-6 row distinguishes whether `InvoiceSubmissionScreen` has already run for a request.
 
 ---
 
-## `Employee List` — staff directory
+## `'Employee List'` — staff directory
 
-Required ⚠: none. **Internal names `email` and `department` are lowercase** (display names are capitalized).
+Required ⚠: none.
 
 | Column (internal) | Type | Notes |
 |---|---|---|
 | `Tiêu đề` (Title) | Text | employee display name |
-| `email` | Text | matched against `User().Email` in `App.OnStart` |
-| `department` | Choice | |
+| `Email` | Text | matched against `User().Email` in `App.OnStart` (`LookUp('Employee List', Email = User().Email)`). Elsewhere in the app the same column is read as `.email` (lowercase) — e.g. `LookUp('Employee List', ID = ...).email`, `ddAssignReceiver_GR.Selected.email`. Power Fx matches SharePoint column names case-insensitively so both forms work against the same column; keep both spellings in mind if this column is ever renamed |
+| `Department` | Choice | options-only source for `ddDepartment_1` via `Choices('Employee List'.Department)` |
 | `JobTitle` | Text | |
 | `City` | Text | |
 | `Country` | Text | |
@@ -183,36 +207,18 @@ Required ⚠: none. **Internal names `email` and `department` are lowercase** (d
 
 ---
 
-## `Suppliers`
+## Lists referenced by older versions of this app but no longer used
 
-Required ⚠: none. Bound to the "Preferred Supplier" picker via `Sort(Suppliers, 'Tiêu đề')`.
-
-| Column | Type | Notes |
-|---|---|---|
-| `Tiêu đề` (Title) | Text | supplier name |
-| `Code` | Text | |
-| `AccountName` | Text | |
-| `TaxId` | Text | |
-| `ABN` | Text | |
-| `Country` | Choice | |
-| `PicName` | Text | person in charge |
-| `Email` | Text | |
-| `Phone` | Text | |
-| `BillingAddress` / `DeliveryAddress` | Text | |
-| `ContractType` / `ScopeOfWork` | Text | |
-| `Industry` / `BusinessType` | Text | |
-| `PaymentTerms` / `Margin` | Text | |
-| `CompanyRegNo` | Text | |
-| `MisaCrmLink` | Text (URI) | |
-| `Note` | Text (multiline) | |
+- **`Procurement_InvoiceData`** — zero references anywhere in current `Src/*.pa.yaml`. If it still exists on SharePoint it is orphaned; don't assume the app writes to it.
+- **`Suppliers`** — zero references anywhere in current code. Removed together with the request-level `PreferredSupplier` field.
 
 ---
 
 ## Power Automate flows (Logic flows connector)
 
-Both are called from `ProcurementExecutionScreen` via `<Flow>.Run(...)`.
-
 ### `Parse_Invoice.Run(invoiceLink, requestId)` — AI invoice extraction
+
+Called from both `ProcurementExecutionScreen` (Deferred and Via-Requester paths) and `InvoiceSubmissionScreen` (same two paths).
 
 | Input | Type | |
 |---|---|---|
@@ -221,9 +227,9 @@ Both are called from `ProcurementExecutionScreen` via `<Flow>.Run(...)`.
 
 **Returns** (`gInvoiceResult`): `invoiceNumber`, `invoiceDate`, `totalAmount` (n), `taxAmount` (n), `supplierName`, `supplierABN`, `billedTo`, `currency`, `confidenceScore` (n), `jobId`, `attention`, `suggestedFilename`.
 
-### `Submit_Invoice.Run(...)` — writes the official invoice + `Procurement_InvoiceData`
+### `Submit_Invoice.Run(...)` — writes the official invoice
 
-16 positional args (the trigger names them `text`, `number`, `text_1`…); the app passes them in this order:
+Called from `ProcurementExecutionScreen` (2 call sites — Deferred and Via-Requester) and `InvoiceSubmissionScreen` (2 call sites, same two paths). 16 positional args, identical order at all 4 call sites:
 
 | # | Trigger param | App value |
 |---|---|---|
@@ -240,8 +246,27 @@ Both are called from `ProcurementExecutionScreen` via `<Flow>.Run(...)`.
 | 11 | `text_7` | AI jobId |
 | 12 | `number_3` | AI confidenceScore |
 | 13 | `text_8` | attention |
-| 14 | `text_9` | (reserved — empty string) |
+| 14 | `text_9` | **invoice Description field value** (all 4 call sites fill this — not a reserved/empty slot) |
 | 15 | `text_10` | invoice region |
 | 16 | `text_11` | ABN |
 
 **Returns**: `newinvoicelink` (string).
+
+### `Procurement_Notify_Receipt_Assignee.Run(assigneeEmail, assigneeName, requestTitle, requestId, notificationType, deliveryDate, category)`
+
+Called from `GoodsReceiptScreen` (3 call sites) and `SupplierFollowUpScreen` (3 call sites) whenever the Goods Receipt / Supplier Follow-up assignee changes.
+
+- `notificationType = "GoodsReceipt"` / `"SupplierFollowUp"` — new assignee notification (Outlook email + Teams Adaptive Card).
+- `notificationType = "Unassigned"` — previous assignee no longer needs to act (email only).
+- `category` — **always `""` at every call site in the current code.** This used to be the request-level Category field; Category now lives per raw-material and is no longer plumbed through to this flow.
+- Connection: `app.admin@maxbiocare.com` pinned in "Run only users" — not invoker-provided.
+
+### `Procurement_Notify_Invoice_Provided.Run(requestTitle, requestId, invoiceUrl)`
+
+3 args. Called once, from `RequesterInvoiceScreen`, after a Requester successfully uploads/re-uploads a corrected invoice — notifies Procurement.
+
+### `Procurement_Notify_Remind_Invoice.Run(requesterEmail, requesterName, requestTitle, requestIdText, rejectedByOrEmpty)`
+
+5 args. Called twice from `InvoiceSubmissionScreen`:
+- "Remind Requester" button — last arg `""`.
+- "Request Re-upload" button — last arg = `gCurrentEmployee.Title` (the Procurement employee who rejected the submitted invoice).

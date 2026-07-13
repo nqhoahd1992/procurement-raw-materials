@@ -2,7 +2,10 @@ Screens:
   RequestFormScreen:
     Properties:
       LoadingSpinnerColor: =RGBA(56, 96, 178, 1)
-      OnVisible: =NewForm(Form1)
+      OnVisible: |-
+        =NewForm(Form1);
+        ClearCollect(colRawMaterials, 'Raw Materials');
+        Clear(colLineItems)
     Children:
       - rectHeader_2:
           Control: Rectangle@2.3.0
@@ -76,13 +79,11 @@ Screens:
                           Reset(ddProject_1);
                           Reset(ddDepartment_1);
                           Reset(txtDescription_1);
-                          Reset(ddCategory_1);
                           Reset(ddCostCenter_1);
                           Reset(ddPurchaseAccordance_2);
                           Reset(txtEstimatedCost_1);
                           Reset(ddDeliveryLocation_1);
                           Reset(txtBudgetRef_1);
-                          Reset(ddPreferredSupplier_1);
                           Reset(dpDeliveryDate_1);
                           Reset(ddManagerApprover_1);
                           Reset(rdoProcurementType_1);
@@ -105,7 +106,6 @@ Screens:
                               If(
                               IsBlank(ddDepartment_1.Selected) ||
                               IsBlank(txtDescription_1.Value) ||
-                              IsBlank(ddCategory_1.Selected) ||
                               IsBlank(ddDeliveryLocation_1.Selected) ||
                               IsBlank(dpDeliveryDate_1.SelectedDate) ||
                               IsBlank(rdoProcurementType_1.Selected),
@@ -133,13 +133,25 @@ Screens:
                                                           (Value(txtEstimatedCost_1.Value) > 5000 && Switch(ddCostCenter_1.Selected.Value, "Office Melbourne (Head Quarter)", "AU", "Port Melbourne Warehouse", "AU", "Max Biocare Research Park - Natural Inspirations@Yinnar", "AU", "Max Biocare Research Park - Mar-Nuka Bay", "AU", "Malay Warehouse", "MY", "Singapore Warehouse", "SG") = "AU")) &&
                                                       IsBlank(ddManagerApprover_1.Selected),
                                                       Notify("Please select a Manager Approver", NotificationType.Error),
+                                                      If(
+                                                      CountRows(colLineItems) = 0,
+                                                      Notify("Please add at least one raw material", NotificationType.Error),
+                                                      If(
+                                                      CountRows(Filter(colLineItems, MaterialID = 0)) > 0,
+                                                      Notify("Please select a material for all rows", NotificationType.Error),
+                                                      If(
+                                                      CountRows(Filter(colLineItems, IsBlank(Unit))) > 0,
+                                                      Notify("Please select a unit for all rows", NotificationType.Error),
+                                                      If(
+                                                      CountRows(Filter(colLineItems, IsBlank(Quantity) || Quantity <= 0)) > 0,
+                                                      Notify("Please enter a valid quantity for all rows", NotificationType.Error),
                                                       With(
                                                           {
                                                               wNewRequest: Patch(
-                                                                  Procurement_Requests,
-                                                                  Defaults(Procurement_Requests),
+                                                                  'RM Procurement Requests',
+                                                                  Defaults('RM Procurement Requests'),
                                                                   {
-                                                                      Title: gCurrentEmployee.Title & " - " & ddCategory_1.Selected.Value & " - " & Text(Today(), "dd/mm/yyyy"),
+                                                                      Title: gCurrentEmployee.Title & " - " & Text(Today(), "dd/mm/yyyy"),
                                                                       RequesterID: {Id: gCurrentEmployee.ID, Value: gCurrentEmployee.Title},
                                                                       RequesterEmail: User().Email,
                                                                       ProjectID: ddProject_1.Selected.ProjectID,
@@ -147,8 +159,6 @@ Screens:
                                                                       ProcurementDescription: txtDescription_1.Value,
                                                                       BudgetReference: txtBudgetRef_1.Value,
                                                                       DeliveryLocation: {Value: ddDeliveryLocation_1.Selected.Value},
-                                                                      PreferredSupplier: ddPreferredSupplier_1.Selected.Title,
-                                                                      Category: {Value: ddCategory_1.Selected.Value},
                                                                       PurchaseAccordance: {Value: ddPurchaseAccordance_2.Selected.Value},
                                                                       CostCenter: {Value: ddCostCenter_1.Selected.Value},
                                                                       InvoiceRegion: {Value: Switch(
@@ -202,9 +212,29 @@ Screens:
                                                               Notify("Failed to submit request. Please try again.", NotificationType.Error),
                                                               Set(gPendingAttachments, DataCardValue15.Attachments);
                                                               Set(gSelectedRequest, wNewRequest);
+                                                              ForAll(
+                                                                  colLineItems,
+                                                                  Patch(
+                                                                      'RM Procurement Line Items',
+                                                                      Defaults('RM Procurement Line Items'),
+                                                                      {
+                                                                          RequestID: {Id: wNewRequest.ID, Value: wNewRequest.Title},
+                                                                          RequestIDText: Text(wNewRequest.ID),
+                                                                          MaterialID: {Id: MaterialID, Value: MaterialName},
+                                                                          MaterialName: MaterialName,
+                                                                          Unit: Unit,
+                                                                          Quantity: Quantity
+                                                                      }
+                                                                  )
+                                                              );
                                                               EditForm(Form1);
                                                               SubmitForm(Form1);
+                                                              Clear(colLineItems);
                                                           )
+                                                      )
+                                                      )
+                                                      )
+                                                      )
                                                       )
                                                   )
                                               )
@@ -390,10 +420,13 @@ Screens:
                                     X: =40
                                     Y: =40
                         - ddProject_1:
-                            Control: ComboBox@0.0.51
+                            Control: ModernCombobox@1.1.1
                             Properties:
+                              AllowExternalSelectedItems: =false
+                              FontWeight: =""
                               Height: =40
                               InputTextPlaceholder: ="Choose the project this request is for"
+                              ItemDisplayText: =ThisItem.ProjectID
                               Items: |-
                                 =Sort(
                                     Filter(Project_List, ProjectStatus.Value = "Not Started" ||
@@ -405,21 +438,13 @@ Screens:
                                     Title,
                                     SortOrder.Ascending
                                 )
+                              SelectMultiple: =false
+                              Size: =0
                               Visible: =rdoHasProject.Selected.Value = "Yes"
                               Width: =Parent.Width
                               X: =40
                               Y: =40
-                            Children:
-                              - ProjectID:
-                                  Control: ComboBoxDataField@1.5.0
-                                  Variant: textualColumn
-                                  IsLocked: true
-                                  Properties:
-                                    FieldDisplayName: ="Title"
-                                    FieldName: ="ProjectID"
-                                    FieldType: ="E"
-                                    Order: =1
-            - rowDeptCategory:
+            - rowDept:
                 Control: GroupContainer@1.5.0
                 Variant: AutoLayout
                 Properties:
@@ -448,7 +473,7 @@ Screens:
                         RadiusBottomRight: =0
                         RadiusTopLeft: =0
                         RadiusTopRight: =0
-                        Width: =400
+                        Width: =Parent.Width
                       Children:
                         - lblDepartmentLabel_1:
                             Control: Label@2.5.1
@@ -457,44 +482,20 @@ Screens:
                               Height: =24
                               Size: =11
                               Text: ="Department *"
-                              Width: =400
+                              Width: =Parent.Width
                         - ddDepartment_1:
-                            Control: ComboBox@0.0.51
+                            Control: ModernCombobox@1.1.1
                             Properties:
+                              AllowExternalSelectedItems: =false
                               DefaultSelectedItems: =Filter(Choices('Employee List'.Department), rdoHasProject.Selected.Value = "Yes" && Value = ddProject_1.Selected.Department)
                               DisplayMode: =If(Not(rdoHasProject.Selected.Value = "Yes"), DisplayMode.Edit, If(IsBlank(ddProject_1.Selected), DisplayMode.Disabled, DisplayMode.View))
+                              FontWeight: =""
                               Height: =40
                               InputTextPlaceholder: ="Choose an option"
+                              ItemDisplayText: =ThisItem.Value
                               Items: =Choices('Employee List'.Department)
-                              Width: =Parent.Width
-                  - colCategory:
-                      Control: GroupContainer@1.5.0
-                      Variant: AutoLayout
-                      Properties:
-                        DropShadow: =DropShadow.None
-                        LayoutDirection: =LayoutDirection.Vertical
-                        LayoutGap: =4
-                        LayoutMinHeight: =80
-                        RadiusBottomLeft: =0
-                        RadiusBottomRight: =0
-                        RadiusTopLeft: =0
-                        RadiusTopRight: =0
-                        Width: =360
-                      Children:
-                        - lblCategoryLabel_1:
-                            Control: Label@2.5.1
-                            Properties:
-                              FontWeight: =FontWeight.Semibold
-                              Height: =24
-                              Size: =11
-                              Text: ="Category *"
-                              Width: =360
-                        - ddCategory_1:
-                            Control: ComboBox@0.0.51
-                            Properties:
-                              Height: =40
-                              InputTextPlaceholder: ="Choose an option"
-                              Items: =Choices(Procurement_Requests.Category)
+                              SelectMultiple: =false
+                              Size: =0
                               Width: =Parent.Width
             - rowProcurementType:
                 Control: GroupContainer@1.5.0
@@ -588,7 +589,7 @@ Screens:
                       Layout: Vertical
                       Properties:
                         BorderColor: =RGBA(0, 18, 107, 1)
-                        DataSource: =Procurement_Requests
+                        DataSource: ='RM Procurement Requests'
                         Item: =gSelectedRequest
                         LayoutMinHeight: =16
                         LayoutMinWidth: =16
@@ -598,7 +599,7 @@ Screens:
                           =If(
                               Form1.LastSubmit.ProcurementType.Value = "Invoice Supplied" &&
                               Not(IsBlank(First(Form1.LastSubmit.Attachments).AbsoluteUri)),
-                              Patch(Procurement_Requests,
+                              Patch('RM Procurement Requests',
                                   {ID: Form1.LastSubmit.ID},
                                   {RequesterInvoiceURL: First(Form1.LastSubmit.Attachments).AbsoluteUri}
                               )
@@ -607,13 +608,11 @@ Screens:
                           Reset(ddProject_1);
                           Reset(ddDepartment_1);
                           Reset(txtDescription_1);
-                          Reset(ddCategory_1);
                           Reset(ddCostCenter_1);
                           Reset(ddPurchaseAccordance_2);
                           Reset(txtEstimatedCost_1);
                           Reset(ddDeliveryLocation_1);
                           Reset(txtBudgetRef_1);
-                          Reset(ddPreferredSupplier_1);
                           Reset(dpDeliveryDate_1);
                           Reset(ddManagerApprover_1);
                           Reset(rdoProcurementType_1);
@@ -632,7 +631,7 @@ Screens:
                               BorderColor: =RGBA(0, 18, 107, 1)
                               DataField: ="{Attachments}"
                               Default: =ThisItem.Attachments
-                              DisplayName: =DataSourceInfo([@Procurement_Requests],DataSourceInfo.DisplayName,Attachments)
+                              DisplayName: =DataSourceInfo([@'RM Procurement Requests'],DataSourceInfo.DisplayName,Attachments)
                               Required: =false
                               Update: =DataCardValue15.Attachments
                               Width: =Parent.Width
@@ -740,11 +739,16 @@ Screens:
                               Text: ="Purchase Accordance *"
                               Width: =Parent.Width
                         - ddPurchaseAccordance_2:
-                            Control: ComboBox@0.0.51
+                            Control: ModernCombobox@1.1.1
                             Properties:
+                              AllowExternalSelectedItems: =false
+                              FontWeight: =""
                               Height: =40
                               InputTextPlaceholder: ="Choose an option"
-                              Items: =Choices(Procurement_Requests.PurchaseAccordance)
+                              ItemDisplayText: =ThisItem.Value
+                              Items: =Choices('RM Procurement Requests'.PurchaseAccordance)
+                              SelectMultiple: =false
+                              Size: =0
                               Width: =Parent.Width
                   - colCostCenter_1:
                       Control: GroupContainer@1.5.0
@@ -772,13 +776,18 @@ Screens:
                               X: =40
                               Y: =40
                         - ddCostCenter_1:
-                            Control: ComboBox@0.0.51
+                            Control: ModernCombobox@1.1.1
                             Properties:
-                              DefaultSelectedItems: =Filter(Choices(Procurement_Requests.CostCenter), rdoHasProject.Selected.Value = "Yes" && Value = ddProject_1.Selected.CostCenter.Value)
+                              AllowExternalSelectedItems: =false
+                              DefaultSelectedItems: =Filter(Choices('RM Procurement Requests'.CostCenter), rdoHasProject.Selected.Value = "Yes" && Value = ddProject_1.Selected.CostCenter.Value)
                               DisplayMode: =If(Not(rdoHasProject.Selected.Value = "Yes"), DisplayMode.Edit, If(IsBlank(ddProject_1.Selected), DisplayMode.Disabled, DisplayMode.View))
+                              FontWeight: =""
                               Height: =40
                               InputTextPlaceholder: ="Choose an option"
-                              Items: =Choices(Procurement_Requests.CostCenter)
+                              ItemDisplayText: =ThisItem.Value
+                              Items: =Choices('RM Procurement Requests'.CostCenter)
+                              SelectMultiple: =false
+                              Size: =0
                               Width: =Parent.Width
                               X: =40
                               Y: =40
@@ -806,11 +815,16 @@ Screens:
                               Text: ="Delivery Location *"
                               Width: =Parent.Width
                         - ddDeliveryLocation_1:
-                            Control: ComboBox@0.0.51
+                            Control: ModernCombobox@1.1.1
                             Properties:
+                              AllowExternalSelectedItems: =false
+                              FontWeight: =""
                               Height: =40
                               InputTextPlaceholder: ="Choose an option"
-                              Items: =Choices(Procurement_Requests.DeliveryLocation)
+                              ItemDisplayText: =ThisItem.Value
+                              Items: =Choices('RM Procurement Requests'.DeliveryLocation)
+                              SelectMultiple: =false
+                              Size: =0
                               Width: =Parent.Width
                   - colDeliveryDate:
                       Control: GroupContainer@1.5.0
@@ -836,10 +850,14 @@ Screens:
                               Text: ="Required Delivery Date *"
                               Width: =Parent.Width
                         - dpDeliveryDate_1:
-                            Control: DatePicker@0.0.46
+                            Control: ModernDatePicker@1.0.1
                             Properties:
+                              BorderStyle: =""
+                              Font: =""
+                              FontWeight: =""
                               Height: =40
                               Placeholder: ="Choose a date"
+                              Size: =0
                               Width: =Parent.Width
             - rowCostCurrency:
                 Control: GroupContainer@1.5.0
@@ -949,46 +967,6 @@ Screens:
                             Properties:
                               Height: =40
                               Width: =Parent.Width
-                  - colSupplier:
-                      Control: GroupContainer@1.5.0
-                      Variant: AutoLayout
-                      Properties:
-                        DropShadow: =DropShadow.None
-                        LayoutDirection: =LayoutDirection.Vertical
-                        LayoutGap: =4
-                        RadiusBottomLeft: =0
-                        RadiusBottomRight: =0
-                        RadiusTopLeft: =0
-                        RadiusTopRight: =0
-                        Width: =360
-                        X: =40
-                        Y: =40
-                      Children:
-                        - lblPreferredSupplierLabel_1:
-                            Control: Label@2.5.1
-                            Properties:
-                              FontWeight: =FontWeight.Semibold
-                              Height: =24
-                              Size: =11
-                              Text: ="Preferred Supplier"
-                              Width: =Parent.Width
-                        - ddPreferredSupplier_1:
-                            Control: ComboBox@0.0.51
-                            Properties:
-                              Height: =40
-                              InputTextPlaceholder: ="Choose an option"
-                              Items: =Sort(Suppliers, Title, SortOrder.Ascending)
-                              Width: =Parent.Width
-                            Children:
-                              - Title_PS:
-                                  Control: ComboBoxDataField@1.5.0
-                                  Variant: textualColumn
-                                  IsLocked: true
-                                  Properties:
-                                    FieldDisplayName: ="Title"
-                                    FieldName: ="Title"
-                                    FieldType: ="E"
-                                    Order: =1
             - rowDeliverySupplier:
                 Control: GroupContainer@1.5.0
                 Variant: AutoLayout
@@ -1038,6 +1016,246 @@ Screens:
                               LayoutMinHeight: =80
                               Mode: ='TextInputCanvas.Mode'.Multiline
                               Width: =Parent.Width
+            - rowGalLineItems:
+                Control: GroupContainer@1.5.0
+                Variant: AutoLayout
+                Properties:
+                  DropShadow: =DropShadow.None
+                  FillPortions: =0
+                  Height: =50 + 36 + 4 + If(CountRows(colLineItems) = 0, 52, CountRows(colLineItems) * 52 + 8) + 16
+                  LayoutDirection: =LayoutDirection.Vertical
+                  LayoutGap: =4
+                  LayoutMinHeight: =80
+                  PaddingBottom: =8
+                  PaddingLeft: =20
+                  PaddingRight: =20
+                  PaddingTop: =8
+                  RadiusBottomLeft: =0
+                  RadiusBottomRight: =0
+                  RadiusTopLeft: =0
+                  RadiusTopRight: =0
+                  Width: =Parent.Width
+                  X: =40
+                  Y: =40
+                Children:
+                  - rowDeliverySupplier_1:
+                      Control: GroupContainer@1.5.0
+                      Variant: AutoLayout
+                      Properties:
+                        DropShadow: =DropShadow.None
+                        FillPortions: =0
+                        Height: =50
+                        LayoutAlignItems: =LayoutAlignItems.End
+                        LayoutDirection: =LayoutDirection.Horizontal
+                        LayoutGap: =20
+                        LayoutJustifyContent: =LayoutJustifyContent.SpaceBetween
+                        LayoutMinHeight: =160
+                        PaddingBottom: =10
+                        RadiusBottomLeft: =0
+                        RadiusBottomRight: =0
+                        RadiusTopLeft: =0
+                        RadiusTopRight: =0
+                        Width: =Parent.Width
+                        X: =40
+                        Y: =40
+                      Children:
+                        - lblLineItemsHeader:
+                            Control: Label@2.5.1
+                            Properties:
+                              FontWeight: =FontWeight.Bold
+                              Height: =32
+                              PaddingLeft: =4
+                              Size: =11
+                              Text: ="Raw Materials *"
+                              Width: =200
+                              X: =40
+                              Y: =40
+                        - btnAddLineItem:
+                            Control: Button@0.0.45
+                            Properties:
+                              Height: =36
+                              OnSelect: |-
+                                =Collect(colLineItems, {RowID: CountRows(colLineItems) + 1, MaterialID: 0, MaterialName: "", Unit: "", Quantity: 1})
+                              Text: ="+ Add Material"
+                              Width: =160
+                              X: =40
+                              Y: =40
+                  - rowLineItemsColumnHeader:
+                      Control: GroupContainer@1.5.0
+                      Variant: AutoLayout
+                      Properties:
+                        DropShadow: =DropShadow.None
+                        Fill: =RGBA(245, 245, 245, 1)
+                        FillPortions: =0
+                        Height: =36
+                        LayoutDirection: =LayoutDirection.Horizontal
+                        LayoutJustifyContent: =LayoutJustifyContent.SpaceBetween
+                        RadiusBottomLeft: =0
+                        RadiusBottomRight: =0
+                        Width: =Parent.Width
+                        X: =40
+                        Y: =40
+                      Children:
+                        - lblColMaterial:
+                            Control: Label@2.5.1
+                            Properties:
+                              FontWeight: =FontWeight.Semibold
+                              Height: =36
+                              PaddingLeft: =12
+                              PaddingRight: =12
+                              Size: =10
+                              Text: ="Trade Name"
+                              Width: =Parent.Width - 584
+                        - lblColCode:
+                            Control: Label@2.5.1
+                            Properties:
+                              FontWeight: =FontWeight.Semibold
+                              Height: =36
+                              PaddingLeft: =8
+                              PaddingRight: =8
+                              Size: =10
+                              Text: ="Code"
+                              Width: =90
+                        - lblColCategory:
+                            Control: Label@2.5.1
+                            Properties:
+                              FontWeight: =FontWeight.Semibold
+                              Height: =36
+                              PaddingLeft: =8
+                              PaddingRight: =8
+                              Size: =10
+                              Text: ="Category"
+                              Width: =110
+                        - lblColSupplier:
+                            Control: Label@2.5.1
+                            Properties:
+                              FontWeight: =FontWeight.Semibold
+                              Height: =36
+                              PaddingLeft: =8
+                              PaddingRight: =8
+                              Size: =10
+                              Text: ="Supplier"
+                        - lblColUnit:
+                            Control: Label@2.5.1
+                            Properties:
+                              FontWeight: =FontWeight.Semibold
+                              Height: =36
+                              PaddingLeft: =8
+                              PaddingRight: =8
+                              Size: =10
+                              Text: ="Unit"
+                              Width: =90
+                        - lblColQty:
+                            Control: Label@2.5.1
+                            Properties:
+                              Align: =Align.Center
+                              FontWeight: =FontWeight.Semibold
+                              Height: =36
+                              PaddingLeft: =0
+                              PaddingRight: =0
+                              Size: =10
+                              Text: ="Qty"
+                              Width: =60
+                        - lblColAction:
+                            Control: Label@2.5.1
+                            Properties:
+                              Height: =36
+                              Size: =12
+                              Text: |-
+                                ="
+                                "
+                              Width: =36
+                  - galLineItems:
+                      Control: Gallery@2.15.0
+                      Variant: BrowseLayout_Vertical_TwoTextOneImageVariant_ver5.0
+                      Properties:
+                        FillPortions: =0
+                        Height: =If(CountRows(colLineItems) = 0, 52, CountRows(colLineItems) * 52 + 8)
+                        Items: =colLineItems
+                        LayoutMinHeight: =52
+                        TemplateSize: =52
+                        Width: =Parent.Width
+                        X: =40
+                        Y: =40
+                      Children:
+                        - rowLineItem:
+                            Control: GroupContainer@1.5.0
+                            Variant: AutoLayout
+                            Properties:
+                              DropShadow: =DropShadow.None
+                              Height: =52
+                              LayoutAlignItems: =LayoutAlignItems.Center
+                              LayoutDirection: =LayoutDirection.Horizontal
+                              LayoutGap: =8
+                              Width: =Parent.Width
+                            Children:
+                              - ddMaterial_1:
+                                  Control: ModernCombobox@1.1.1
+                                  Properties:
+                                    DefaultSelectedItems: =Filter(colRawMaterials, ID = ThisItem.MaterialID)
+                                    Height: =36
+                                    InputTextPlaceholder: ="Select an option"
+                                    ItemDisplayText: =ThisItem.Title
+                                    Items: =colRawMaterials
+                                    OnChange: |-
+                                      =UpdateIf(colLineItems, RowID = ThisItem.RowID, {MaterialID: Self.Selected.ID, MaterialName: Self.Selected.Title})
+                                    SelectMultiple: =false
+                                    Width: =Parent.Width - 584
+                              - lblLineItemCode_1:
+                                  Control: Label@2.5.1
+                                  Properties:
+                                    Height: =36
+                                    PaddingLeft: =8
+                                    PaddingRight: =8
+                                    Size: =10
+                                    Text: =If(IsBlank(ddMaterial_1.Selected), "—", ddMaterial_1.Selected.Code)
+                                    Width: =90
+                              - lblLineItemCategory_1:
+                                  Control: Label@2.5.1
+                                  Properties:
+                                    Height: =36
+                                    PaddingLeft: =8
+                                    PaddingRight: =8
+                                    Size: =10
+                                    Text: =If(IsBlank(ddMaterial_1.Selected), "—", ddMaterial_1.Selected.Category)
+                                    Width: =110
+                              - lblLineItemSupplier_1:
+                                  Control: Label@2.5.1
+                                  Properties:
+                                    Height: =36
+                                    PaddingLeft: =8
+                                    PaddingRight: =8
+                                    Size: =10
+                                    Text: =If(IsBlank(ddMaterial_1.Selected), "—", ddMaterial_1.Selected.Supplier)
+                              - ddUnit_1:
+                                  Control: ComboBox@0.0.51
+                                  Properties:
+                                    DefaultSelectedItems: |-
+                                      =If(IsBlank(ThisItem.Unit), Blank(), Table({Value: ThisItem.Unit}))
+                                    Height: =36
+                                    InputTextPlaceholder: ="Select an option"
+                                    Items: =["pcs", "kg", "box", "set", "liter", "meter"]
+                                    OnChange: |-
+                                      =UpdateIf(colLineItems, RowID = ThisItem.RowID, {Unit: Self.Selected.Value})
+                                    Width: =90
+                              - txtQty_1:
+                                  Control: TextInput@0.0.54
+                                  Properties:
+                                    Align: =Align.Center
+                                    Height: =36
+                                    OnChange: |-
+                                      =UpdateIf(colLineItems, RowID = ThisItem.RowID, {Quantity: Value(Self.Value)})
+                                    Value: =Text(ThisItem.Quantity)
+                                    Width: =60
+                              - btnRemoveItem_1:
+                                  Control: Button@0.0.45
+                                  Properties:
+                                    Appearance: ='ButtonCanvas.Appearance'.Primary
+                                    BasePaletteColor: =RGBA(249, 83, 109, 1)
+                                    Height: =36
+                                    OnSelect: =Remove(colLineItems, ThisItem)
+                                    Text: ="✕"
+                                    Width: =36
             - rowManagerApprover:
                 Control: GroupContainer@1.5.0
                 Variant: AutoLayout
@@ -1068,22 +1286,17 @@ Screens:
                         Text: ="Select Manager Approver *"
                         Width: =300
                   - ddManagerApprover_1:
-                      Control: ComboBox@0.0.51
+                      Control: ModernCombobox@1.1.1
                       Properties:
+                        AllowExternalSelectedItems: =false
+                        FontWeight: =""
                         Height: =40
                         InputTextPlaceholder: ="Choose an option"
-                        Items: =Sort(Filter(Procurement_User, Role.Value = "Manager" && IsActive), EmployeeID.Value, SortOrder.Ascending)
+                        ItemDisplayText: =ThisItem.EmployeeID.Value
+                        Items: =Sort(Filter('RM User', Role.Value = "Manager" && IsActive), EmployeeID.Value, SortOrder.Ascending)
+                        SelectMultiple: =false
+                        Size: =0
                         Width: =Parent.Width - 40
-                      Children:
-                        - EmployeeID1:
-                            Control: ComboBoxDataField@1.5.0
-                            Variant: textualColumn
-                            IsLocked: true
-                            Properties:
-                              FieldDisplayName: ="EmployeeID"
-                              FieldName: ="EmployeeID"
-                              FieldType: ="E"
-                              Order: =1
             - rowEscalation:
                 Control: GroupContainer@1.5.0
                 Variant: AutoLayout

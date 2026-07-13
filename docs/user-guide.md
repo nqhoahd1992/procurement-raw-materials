@@ -7,11 +7,11 @@ Tài liệu này mô tả các **case (tình huống) sử dụng** của ứng 
 ## 1. Tổng quan luồng xử lý (Status flow)
 
 ```
-RequestFormScreen (Requester tạo yêu cầu)
+RequestFormScreen (Requester tạo yêu cầu, phải thêm ít nhất 1 raw material)
    │
    │  Tự động nhảy sang Executive nếu:
    │  - Purchase Accordance = "Urgent" hoặc "Unplanned", HOẶC
-   │  - Estimated Cost > 5000 VÀ Currency = "AUD"
+   │  - Estimated Cost > 5000 VÀ khu vực cost center = AU
    ▼
 Pending Manager ──(ManagerReviewScreen)
    │ "Approved (within budget)"        → Pending Procurement
@@ -23,20 +23,29 @@ Pending Executive ──(ExecutiveApprovalScreen)
    ▼
 Pending Procurement ──(ProcurementExecutionScreen)
    │ "Reject"                          → Rejected
-   │ "Proceed" (kèm invoice)           → Pending Accounting / Pending Invoice
-   ▼
-Pending Invoice (nếu invoice chưa nộp) ──(InvoiceSubmissionScreen / RequesterInvoiceScreen)
-   ▼
-Pending Accounting ──(AccountingScreen) → Goods Receipt & Acceptance
+   │ "Proceed"                         → Goods Receipt & Acceptance
+   │   (đặt InvoiceMode: Direct / Deferred / ViaRequester)
    ▼
 Goods Receipt & Acceptance ──(GoodsReceiptScreen)
-   │ "Accepted"                        → Completed (hoặc Pending Invoice/Accounting nếu invoice chưa xong)
+   │ "Accepted"                        → Pending Invoice (nếu invoice chưa nộp) hoặc Pending Accounting (nếu đã nộp)
    │ "Rejected"                        → Rejected
    │ "Requires Supplier Follow-up"     → Pending Supplier Follow-up
    ▼
 Pending Supplier Follow-up ──(SupplierFollowUpScreen, 2 vòng)
-   │ Round 1 (Requester) → nếu "Accepted": Completed
-   │                     → nếu "Accepted with Adjustment": tiếp tục Round 2 (Procurement) + Credit Note
+   │ Round 1 (Requester):
+   │   "Accepted"                → Pending Invoice (nếu invoice chưa nộp) hoặc Pending Accounting (nếu đã nộp)
+   │   "Accepted with Adjustment"→ tiếp tục Round 2 (Procurement) + Credit Note
+   │ Round 2 (Procurement, chỉ khi Round 1 = Adjustment):
+   │   Sau khi nộp Credit Note   → Pending Invoice (nếu invoice chưa nộp) hoặc Pending Accounting (nếu đã nộp)
+   ▼
+Pending Invoice ──(InvoiceSubmissionScreen [Procurement/Admin] hoặc RequesterInvoiceScreen [Requester])
+   │ InvoiceSubmissionScreen nộp →
+   │   Pending Supplier Follow-up (nếu Round 1 đã xong nhưng Round 2 chưa)
+   │   hoặc Pending Accounting
+   │ RequesterInvoiceScreen chỉ nộp lại file invoice, KHÔNG đổi Status
+   ▼
+Pending Accounting ──(AccountingScreen)
+   │ Submit → Completed (đây là nơi DUY NHẤT trong app đặt Status = Completed)
    ▼
 Completed
 ```
@@ -83,17 +92,24 @@ Mở **RequestFormScreen** để tạo yêu cầu mới. Chỉ hiển thị cho 
 
 ### Các trường bắt buộc (*)
 1. **Department*** — chọn từ danh sách phòng ban
-2. **Category*** — loại mua hàng
-3. **Procurement Type*** — radio: "Invoice Supplied" / "To be sourced by Procurement"
-4. **Purchase Accordance*** — ví dụ: "Urgent", "Unplanned", "Standard"…
-5. **Cost Center*** — khu vực hóa đơn
-6. **Delivery Location***
-7. **Required Delivery Date*** — chọn ngày
-8. **Estimated Cost*** — phải là số
-9. **Currency***
-10. **Procurement Description***
-11. **Budget Reference** — không bắt buộc
-12. **Preferred Supplier** — không bắt buộc, chọn từ danh sách nhà cung cấp
+2. **Procurement Type*** — radio: "Invoice Supplied" / "To be sourced by Procurement"
+3. **Purchase Accordance*** — ví dụ: "Urgent", "Unplanned", "Standard"…
+4. **Cost Center*** — khu vực hóa đơn
+5. **Delivery Location***
+6. **Required Delivery Date*** — chọn ngày
+7. **Estimated Cost*** — phải là số
+8. **Currency***
+9. **Procurement Description***
+10. **Budget Reference** — không bắt buộc
+
+### Case: Raw Materials (bắt buộc ít nhất 1 dòng)
+Bảng thêm nguyên liệu (**"+ Add Material"**), mỗi dòng gồm:
+- **Trade Name*** — chọn từ danh mục `Raw Materials`; sau khi chọn sẽ hiện thêm **Code** và **Category** của nguyên liệu đó (chỉ xem).
+- **Unit*** — dropdown: "pcs", "kg", "box", "set", "liter", "meter".
+- **Qty*** — số lượng, phải > 0.
+- Nút **✕** để xóa dòng.
+
+Không còn trường "Preferred Supplier" ở cấp yêu cầu — nhà cung cấp giờ gắn theo từng raw material trong danh mục, không chọn thủ công ở đây nữa.
 
 ### Case: Chọn "Invoice Supplied"
 Hiện thêm:
@@ -114,6 +130,10 @@ Không cần chọn Manager Approver.
 - "Please select an invoice type"
 - "Please attach the invoice file before submitting"
 - "Please select a Manager Approver"
+- "Please add at least one raw material" — chưa thêm dòng nguyên liệu nào
+- "Please select a material for all rows" — có dòng chưa chọn Trade Name
+- "Please select a unit for all rows" — có dòng chưa chọn Unit
+- "Please enter a valid quantity for all rows" — có dòng Qty trống hoặc ≤ 0
 
 ### Kết quả sau khi Submit
 - Trạng thái mới: "Pending Manager" hoặc "Pending Executive" (theo logic escalate trên).
@@ -126,7 +146,7 @@ Không cần chọn Manager Approver.
 **Ai dùng:** Manager được chỉ định là ManagerApproverID của yêu cầu, ở trạng thái "Pending Manager".
 
 ### Thông tin chỉ xem
-Toàn bộ thông tin yêu cầu: người tạo, category, chi phí, cost center, loại mua hàng, loại invoice, mô tả.
+Toàn bộ thông tin yêu cầu: người tạo, chi phí, cost center, loại mua hàng, loại invoice, mô tả.
 
 ### Review Checklist * (phải tick đủ 4 mục)
 - "Business justification is valid and necessary"
@@ -280,7 +300,7 @@ Lưu link file vào RequesterInvoiceURL, gọi flow thông báo Procurement (Pro
 **Accounting Notes*** — bắt buộc.
 
 ### Kết quả Submit
-Chuyển trạng thái sang **"Completed"** hoặc theo luồng "Goods Receipt & Acceptance" tùy vị trí trong quy trình; thông báo: *"Accounting handover completed. Request is now pending Goods Receipt & Acceptance."*
+Luôn chuyển trạng thái sang **"Completed"** — đây là màn hình duy nhất trong app đặt trạng thái này. Thông báo: *"Accounting handover completed. Request is now Completed."*
 
 ---
 
@@ -306,6 +326,14 @@ Bấm "I will receive" khi đang có người được giao → gọi flow với
 - "Quantity and condition verified"
 - "Requester acceptance confirmed"
 - "Damaged or incorrect items reported to Procurement (if applicable)"
+
+### Bảng nhận từng nguyên liệu (Raw Materials, bắt buộc)
+Danh sách raw material của yêu cầu (Trade Name, Unit, Qty đã đặt), mỗi dòng cần nhập:
+- **Received Qty** — số lượng thực nhận
+- **Batch Number** — bắt buộc nếu Received Qty > 0
+- **Expiry Date** — bắt buộc nếu Received Qty > 0
+
+Lỗi thường gặp: "Please enter received quantity for at least one material", "Please enter batch number for all received materials", "Please enter expiry date for all received materials".
 
 ### Trường nhập
 - **Receipt Date*** — chọn ngày
@@ -333,10 +361,11 @@ Hiện lại: Received By, Receipt Date, Receipt Status, Acceptance Decision, Re
 ### Round 2 — Bước 1: Requester nhận hàng lần 2
 - Cách phân công giống GoodsReceiptScreen: **"I will receive"** / **"Assign to someone else"** + **"Save Assignment"** (gọi flow với notificationType = "SupplierFollowUp").
 - Checklist * giống Goods Receipt (5 mục).
+- **Bảng nhận từng nguyên liệu (bắt buộc)** — giống GoodsReceiptScreen: mỗi dòng raw material nhập lại **Received Qty**, **Batch Number** (bắt buộc nếu Received Qty > 0), **Expiry Date** (bắt buộc nếu Received Qty > 0).
 - Trường: **Receipt Date***, **Receipt Status*** (theo danh mục FollowUpReceiptStatus riêng), **Acceptance Decision*** (FollowUpAcceptanceDecision — ví dụ "Accepted" / "Accepted with Adjustment"), **Remarks***, **Round 2 Receipt Photos*** (bắt buộc).
 
 ### Case theo Acceptance Decision Round 2
-- **"Accepted"** → trạng thái chuyển thẳng sang **Completed**.
+- **"Accepted"** → trạng thái chuyển sang **"Pending Invoice"** (nếu invoice chưa nộp) hoặc **"Pending Accounting"** (nếu đã nộp) — **không** đi thẳng đến Completed.
 - **"Accepted with Adjustment"** → trạng thái giữ "Pending Supplier Follow-up", chuyển tiếp sang Bước 2 (Procurement) kèm yêu cầu **Upload Credit Note ***.
 
 ### Round 2 — Bước 2: Procurement hoàn tất theo dõi (chỉ hiện khi Bước 1 xong và có Adjustment)
@@ -354,7 +383,8 @@ Nếu log Bước 2 đã tồn tại, hiện banner xanh **"Supplier Follow-up C
 **Ai dùng:** Mọi vai trò, khi bấm vào 1 request từ Home (trừ trường hợp Procurement mở request "Pending Invoice" sẽ vào InvoiceSubmissionScreen thẳng).
 
 Hiển thị toàn bộ dữ liệu của yêu cầu ở dạng chỉ xem:
-- Thông tin cơ bản: Requester, Department, Category, Procurement Type, Purchase Accordance, Cost Center, Delivery Location, Required Delivery Date, Estimated Cost, Budget Reference, Preferred Supplier.
+- Thông tin cơ bản: Requester, Department, Procurement Type, Purchase Accordance, Cost Center, Delivery Location, Required Delivery Date, Estimated Cost, Budget Reference.
+- **Raw Materials** — bảng danh sách nguyên liệu của yêu cầu (Trade Name, Unit, Qty), chỉ xem.
 - **Escalated to Executive**: "Yes"/"No" — cho biết yêu cầu có bị bỏ qua Manager Review không.
 - Invoice Type (màu xanh nếu "Official Invoice", cam nếu "Proforma Invoice").
 - Link Invoice của Requester (nếu invoice qua Requester) và Official Invoice Link (nếu Procurement xử lý) — bấm để mở file.

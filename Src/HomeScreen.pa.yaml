@@ -345,11 +345,11 @@ Screens:
               =SortByColumns(
                   Filter(
                       Switch(gCurrentUser.Role.Value,
-                          "Manager", Filter(Procurement_Requests,
+                          "Manager", Filter('RM Procurement Requests',
                               ManagerApproverID.Id = gCurrentEmployee.ID ||
                               RequesterEmail = User().Email
                           ),
-                          "Procurement", Filter(Procurement_Requests,
+                          "Procurement", Filter('RM Procurement Requests',
                               Status.Value = "Pending Procurement" ||
                               Status.Value = "Pending Invoice" ||
                               Status.Value = "Pending Accounting" ||
@@ -359,16 +359,16 @@ Screens:
                               Status.Value = "Rejected" ||
                               RequesterEmail = User().Email
                           ),
-                          "Accounting", Filter(Procurement_Requests,
+                          "Accounting", Filter('RM Procurement Requests',
                               Status.Value = "Pending Accounting" ||
                               Status.Value = "Goods Receipt & Acceptance" ||
                               Status.Value = "Pending Supplier Follow-up" ||
                               Status.Value = "Completed" ||
                               RequesterEmail = User().Email
                           ),
-                          "Executive", Procurement_Requests,
-                          "Admin", Procurement_Requests,
-                          Filter(Procurement_Requests,
+                          "Executive", 'RM Procurement Requests',
+                          "Admin", 'RM Procurement Requests',
+                          Filter('RM Procurement Requests',
                               RequesterEmail = User().Email ||
                               GRAssignedToID.Id = gCurrentEmployee.ID ||
                               SFU1AssignedToID.Id = gCurrentEmployee.ID
@@ -438,7 +438,7 @@ Screens:
                     =If(
                         ThisItem.Status.Value = "Pending Supplier Follow-up",
                         If(
-                            IsBlank(LookUp(Procurement_ExecutionLog, RequestIDText = Text(ThisItem.ID) And StepNumber = 4)),
+                            IsBlank(LookUp('RM Procurement Execution Log', RequestIDText = Text(ThisItem.ID) And StepNumber = 4)),
                             "Supplier Follow-up (Step 1)",
                             "Supplier Follow-up (Step 2)"
                         ),
@@ -455,7 +455,7 @@ Screens:
                   OnSelect: =Set(gSelectedRequest, ThisItem); If(ThisItem.Status.Value = "Pending Invoice" && (gCurrentUser.Role.Value = "Procurement" || gCurrentUser.Role.Value = "Admin"), Navigate(InvoiceSubmissionScreen), Navigate(RequestDetailScreen))
                   Size: =11
                   Text: |-
-                    ="ID: " & ThisItem.ID & " | " & ThisItem.Category.Value & " | Delivery Date: " & Text(ThisItem.RequiredDeliveryDate, "dd/mm/yyyy") & If(IsBlank(ThisItem.EstimatedCost) || ThisItem.EstimatedCost = 0, "", " | Estimated Cost: " & ThisItem.Currency & " " & Text(ThisItem.EstimatedCost, "[#,###]")) & If(IsBlank(ThisItem.ProjectID), "", " | ProjectID: " & ThisItem.ProjectID)
+                    ="ID: " & ThisItem.ID & " | Delivery Date: " & Text(ThisItem.RequiredDeliveryDate, "dd/mm/yyyy") & If(IsBlank(ThisItem.EstimatedCost) || ThisItem.EstimatedCost = 0, "", " | Estimated Cost: " & ThisItem.Currency & " " & Text(ThisItem.EstimatedCost, "[#,###]")) & If(IsBlank(ThisItem.ProjectID), "", " | ProjectID: " & ThisItem.ProjectID)
                   Width: =800
                   X: =16
                   Y: =44
@@ -473,7 +473,7 @@ Screens:
                         ThisItem.Status.Value = "Goods Receipt & Acceptance" && Not(IsBlank(ThisItem.GRAssignedToID)),
                         " | Receiver: " & ThisItem.GRAssignedToID.Value,
                         If(
-                            ThisItem.Status.Value = "Pending Supplier Follow-up" && Not(IsBlank(ThisItem.SFU1AssignedToID)) && IsBlank(LookUp(Procurement_ExecutionLog, RequestIDText = Text(ThisItem.ID) && StepNumber = 4)),
+                            ThisItem.Status.Value = "Pending Supplier Follow-up" && Not(IsBlank(ThisItem.SFU1AssignedToID)) && IsBlank(LookUp('RM Procurement Execution Log', RequestIDText = Text(ThisItem.ID) && StepNumber = 4)),
                             " | Receiver: " & ThisItem.SFU1AssignedToID.Value,
                             ""
                         )

@@ -4,8 +4,8 @@ Screens:
       LoadingSpinnerColor: =RGBA(56, 96, 178, 1)
       OnVisible: |-
         =Set(locSFUStep2Pending,
-            Not(IsBlank(LookUp(Procurement_ExecutionLog, RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 4))) &&
-            IsBlank(LookUp(Procurement_ExecutionLog, RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 5))
+            Not(IsBlank(LookUp('RM Procurement Execution Log', RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 4))) &&
+            IsBlank(LookUp('RM Procurement Execution Log', RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 5))
         );
         Set(gHasInvoiceResult, false);
         Set(gInvoiceResult, Blank());
@@ -13,7 +13,7 @@ Screens:
         Set(locInvoiceVerified, Blank());
         Set(locOfficialInvoiceURL_ISS, "");
         Set(gPendingInvName_ISS, "");
-        Set(gSelectedRequest, LookUp(Procurement_Requests, ID = gSelectedRequest.ID))
+        Set(gSelectedRequest, LookUp('RM Procurement Requests', ID = gSelectedRequest.ID))
     Children:
       - rectHeader_ISS:
           Control: Rectangle@2.3.0
@@ -187,37 +187,6 @@ Screens:
                               Size: =11
                               Text: =gSelectedRequest.RequesterID.Value
                               Width: =240
-                  - colCategory_ISS:
-                      Control: GroupContainer@1.5.0
-                      Variant: AutoLayout
-                      Properties:
-                        DropShadow: =DropShadow.None
-                        LayoutDirection: =LayoutDirection.Vertical
-                        LayoutGap: =2
-                        RadiusBottomLeft: =0
-                        RadiusBottomRight: =0
-                        RadiusTopLeft: =0
-                        RadiusTopRight: =0
-                        Width: =240
-                      Children:
-                        - lblInfoCategoryLabel_ISS:
-                            Control: Label@2.5.1
-                            Properties:
-                              Color: =RGBA(136, 135, 128, 1)
-                              Height: =18
-                              PaddingLeft: =0
-                              Size: =9
-                              Text: ="Category"
-                              Width: =240
-                        - lblInfoCategoryValue_ISS:
-                            Control: Label@2.5.1
-                            Properties:
-                              FontWeight: =FontWeight.Semibold
-                              Height: =20
-                              PaddingLeft: =0
-                              Size: =11
-                              Text: =gSelectedRequest.Category.Value
-                              Width: =240
                   - colCost_ISS:
                       Control: GroupContainer@1.5.0
                       Variant: AutoLayout
@@ -295,37 +264,6 @@ Screens:
                               Size: =11
                               Text: =gSelectedRequest.InvoiceMode.Value
                               Width: =240
-                  - colSupplier_ISS:
-                      Control: GroupContainer@1.5.0
-                      Variant: AutoLayout
-                      Properties:
-                        DropShadow: =DropShadow.None
-                        LayoutDirection: =LayoutDirection.Vertical
-                        LayoutGap: =2
-                        RadiusBottomLeft: =0
-                        RadiusBottomRight: =0
-                        RadiusTopLeft: =0
-                        RadiusTopRight: =0
-                        Width: =400
-                      Children:
-                        - lblInfoSupplierLabel_ISS:
-                            Control: Label@2.5.1
-                            Properties:
-                              Color: =RGBA(136, 135, 128, 1)
-                              Height: =18
-                              PaddingLeft: =0
-                              Size: =9
-                              Text: ="Preferred Supplier"
-                              Width: =400
-                        - lblInfoSupplierValue_ISS:
-                            Control: Label@2.5.1
-                            Properties:
-                              FontWeight: =FontWeight.Semibold
-                              Height: =20
-                              PaddingLeft: =0
-                              Size: =11
-                              Text: =If(IsBlank(gSelectedRequest.PreferredSupplier), "—", gSelectedRequest.PreferredSupplier)
-                              Width: =400
       - conScrollable_ISS:
           Control: GroupContainer@1.5.0
           Variant: AutoLayout
@@ -535,7 +473,7 @@ Screens:
                         Height: =36
                         OnSelect: |-
                           =With(
-                              {wPatched: Patch(Procurement_Requests, gSelectedRequest, {RequesterInvoiceURL: ""})},
+                              {wPatched: Patch('RM Procurement Requests', gSelectedRequest, {RequesterInvoiceURL: ""})},
                               If(
                                   IsBlank(wPatched.ID),
                                   Notify("Failed. Please try again.", NotificationType.Error),
@@ -546,7 +484,7 @@ Screens:
                                       Text(gSelectedRequest.ID),
                                       gCurrentEmployee.Title
                                   );
-                                  Set(gSelectedRequest, LookUp(Procurement_Requests, ID = gSelectedRequest.ID));
+                                  Set(gSelectedRequest, LookUp('RM Procurement Requests', ID = gSelectedRequest.ID));
                                   Set(locInvoiceVerified, Blank());
                                   Notify("Requester has been notified to re-upload the invoice.", NotificationType.Success)
                               )
@@ -594,7 +532,7 @@ Screens:
                       Variant: Classic
                       Layout: Vertical
                       Properties:
-                        DataSource: =Procurement_Requests
+                        DataSource: ='RM Procurement Requests'
                         Height: =120
                         Item: =gSelectedRequest
                         LayoutMinWidth: =100
@@ -1160,7 +1098,7 @@ Screens:
                       Properties:
                         Height: =40
                         InputTextPlaceholder: ="Choose an option"
-                        Items: =Filter(Procurement_User, Role.Value = "Accounting")
+                        Items: =Filter('RM User', Role.Value = "Accounting")
                         Width: =Parent.Width - 40
                       Children:
                         - EmployeeID_AH_ISS:
@@ -1235,7 +1173,7 @@ Screens:
                                     Notify("Some invoice fields could not be extracted. Please fill them in manually before submitting.", NotificationType.Warning),
                                     With(
                                         {wPatched: Patch(
-                                            Procurement_Requests,
+                                            'RM Procurement Requests',
                                             gSelectedRequest,
                                             {
                                                 InvoiceSubmitted: true,
@@ -1253,8 +1191,8 @@ Screens:
                                             Notify("Failed to save. Please try again.", NotificationType.Error),
                                             With(
                                                 {wLog: Patch(
-                                                    Procurement_ExecutionLog,
-                                                    Defaults(Procurement_ExecutionLog),
+                                                    'RM Procurement Execution Log',
+                                                    Defaults('RM Procurement Execution Log'),
                                                     {
                                                         Title: "Step 6 - Invoice Submission - " & gSelectedRequest.Title,
                                                         RequestID: {Id: gSelectedRequest.ID, Value: gSelectedRequest.Title},

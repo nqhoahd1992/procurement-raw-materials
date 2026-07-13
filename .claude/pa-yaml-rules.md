@@ -78,7 +78,7 @@ Canvas Apps cannot write attachments via `Patch()`. The only way is `Form` contr
     Control: Form@2.4.4
     Layout: Vertical
     Properties:
-      DataSource: =Procurement_ExecutionLog   # or Procurement_Requests
+      DataSource: ='RM Procurement Execution Log'   # or 'RM Procurement Requests'
       Item: =gMyLogEntry                      # global var pointing to the record
       OnFailure: |-
         =Notify("Saved but attachment failed...", NotificationType.Warning)
