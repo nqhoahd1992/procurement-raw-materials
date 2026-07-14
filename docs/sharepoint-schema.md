@@ -246,7 +246,7 @@ Called from both `ProcurementExecutionScreen` (Deferred and Via-Requester paths)
 
 ### `Submit_Invoice.Run(...)` — writes the official invoice
 
-Called from `ProcurementExecutionScreen` (2 call sites — Deferred and Via-Requester) and `InvoiceSubmissionScreen` (2 call sites, same two paths). 16 positional args, identical order at all 4 call sites:
+Called from `ProcurementExecutionScreen` (2 call sites — Deferred and Via-Requester) and `InvoiceSubmissionScreen` (2 call sites, same two paths). 18 positional args, identical order at all 4 call sites:
 
 | # | Trigger param | App value |
 |---|---|---|
@@ -266,6 +266,8 @@ Called from `ProcurementExecutionScreen` (2 call sites — Deferred and Via-Requ
 | 14 | `text_9` | **invoice Description field value** (all 4 call sites fill this — not a reserved/empty slot) |
 | 15 | `text_10` | invoice region |
 | 16 | `text_11` | ABN |
+| 17 | `text_12` | source app name — always the literal `"Raw Materials Procurement App"` |
+| 18 | `text_13` | `gSelectedRequest.ProjectID` |
 
 **Returns**: `newinvoicelink` (string).
 

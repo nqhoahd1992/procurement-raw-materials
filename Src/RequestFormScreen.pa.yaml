@@ -1043,7 +1043,7 @@ Screens:
                               PaddingRight: =12
                               Size: =10
                               Text: ="Trade Name"
-                              Width: =Parent.Width - 584
+                              Width: =Parent.Width - 644
                         - lblColCode:
                             Control: Label@2.5.1
                             Properties:
@@ -1082,7 +1082,6 @@ Screens:
                               PaddingRight: =8
                               Size: =10
                               Text: ="Unit"
-                              Width: =90
                         - lblColQty:
                             Control: Label@2.5.1
                             Properties:
@@ -1138,7 +1137,7 @@ Screens:
                                     OnChange: |-
                                       =UpdateIf(colLineItems, RowID = ThisItem.RowID, {MaterialID: Self.Selected.ID, MaterialName: Self.Selected.Title})
                                     SelectMultiple: =false
-                                    Width: =Parent.Width - 584
+                                    Width: =Parent.Width - 644
                               - lblLineItemCode_1:
                                   Control: Label@2.5.1
                                   Properties:
@@ -1178,7 +1177,7 @@ Screens:
                                     Items: =["Kg", "g", "L", "ml"]
                                     OnChange: |-
                                       =UpdateIf(colLineItems, RowID = ThisItem.RowID, {Unit: Self.Selected.Value})
-                                    Width: =90
+                                    Width: =150
                               - txtQty_1:
                                   Control: TextInput@0.0.54
                                   Properties:

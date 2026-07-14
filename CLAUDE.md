@@ -35,7 +35,7 @@ Full column-level schema (types, choice values, join keys): `docs/sharepoint-sch
 
 Invoice flows (called from `ProcurementExecutionScreen` and `InvoiceSubmissionScreen`):
 - `Parse_Invoice.Run(invoiceUrl, requestId)` — AI invoice extraction.
-- `Submit_Invoice.Run(...)` — 17 positional args; writes the official invoice. Param 14 is the invoice **Description** field value (not a reserved/empty slot — see `docs/sharepoint-schema.md` for the full param table).
+- `Submit_Invoice.Run(...)` — 18 positional args; writes the official invoice. Param 14 is the invoice **Description** field value, param 17 is the source app name (`"Raw Materials Procurement App"`), param 18 is `gSelectedRequest.ProjectID` (not reserved/empty slots — see `docs/sharepoint-schema.md` for the full param table).
 
 Assignment notification flow (called from `GoodsReceiptScreen` and `SupplierFollowUpScreen`):
 - `Procurement_Notify_Receipt_Assignee.Run(assigneeEmail, assigneeName, requestTitle, requestId, notificationType, deliveryDate, category)`

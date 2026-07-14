@@ -296,7 +296,7 @@ Screens:
                                     FontWeight: =FontWeight.Semibold
                                     Height: =24
                                     Size: =11
-                                    Text: =If(IsBlank(gSelectedRequest.InvoiceRegion.Value), "—", gSelectedRequest.InvoiceRegion.Value)
+                                    Text: =If(IsBlank(gSelectedRequest.CostCenter.Value), "—", gSelectedRequest.CostCenter.Value)
                                     Width: =Parent.Width - 20
                         - colDeliveryLoc_1:
                             Control: GroupContainer@1.5.0
@@ -836,10 +836,10 @@ Screens:
                                                     Control: Label@2.5.1
                                                     Properties:
                                                       Align: =Align.Center
-                                                      Color: =RGBA(15, 110, 86, 1)
+                                                      Color: =If(Coalesce(ThisItem.ReceivedQty1, 0) + Coalesce(ThisItem.ReceivedQty2, 0) = ThisItem.Quantity, RGBA(15, 110, 86, 1), RGBA(163, 45, 45, 1))
                                                       FontWeight: =FontWeight.Semibold
                                                       Size: =10
-                                                      Text: =If(Not(IsBlank(ThisItem.ReceivedQty2)) && ThisItem.ReceivedQty2 > 0, Text(ThisItem.ReceivedQty2), If(Not(IsBlank(ThisItem.ReceivedQty1)) && ThisItem.ReceivedQty1 > 0, Text(ThisItem.ReceivedQty1), "—"))
+                                                      Text: =If(Coalesce(ThisItem.ReceivedQty1, 0) + Coalesce(ThisItem.ReceivedQty2, 0) > 0, Text(Coalesce(ThisItem.ReceivedQty1, 0) + Coalesce(ThisItem.ReceivedQty2, 0)), "—")
                                                       Width: =Parent.Width * 0.16
                                                 - btnViewDetails:
                                                     Control: ModernButton@1.0.0

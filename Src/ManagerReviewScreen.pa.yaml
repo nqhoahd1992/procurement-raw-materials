@@ -169,7 +169,7 @@ Screens:
                               FontWeight: =FontWeight.Semibold
                               Height: =24
                               Size: =11
-                              Text: =gSelectedRequest.InvoiceRegion.Value
+                              Text: =gSelectedRequest.CostCenter.Value
                               Width: =240
             - rowRequestInfo_3:
                 Control: GroupContainer@1.5.0

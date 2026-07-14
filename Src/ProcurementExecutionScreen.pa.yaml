@@ -225,7 +225,7 @@ Screens:
                               Height: =20
                               PaddingLeft: =0
                               Size: =11
-                              Text: =If(IsBlank(gSelectedRequest.InvoiceRegion.Value), "—", gSelectedRequest.InvoiceRegion.Value)
+                              Text: =If(IsBlank(gSelectedRequest.CostCenter.Value), "—", gSelectedRequest.CostCenter.Value)
                               Width: =300
       - conScrollable_PE:
           Control: GroupContainer@1.5.0
@@ -795,7 +795,8 @@ Screens:
                                                   txtDescriptionValue_PE.Value,
                                                   gSelectedRequest.InvoiceRegion.Value,
                                                   txtABNValue_PE.Value,
-                                                  "Raw Materials Procurement App"
+                                                  "Raw Materials Procurement App",
+                                                  gSelectedRequest.ProjectID
                                               )
                                           );
                                           If(
@@ -996,7 +997,8 @@ Screens:
                                                   txtDescriptionValue_PE.Value,
                                                   gSelectedRequest.InvoiceRegion.Value,
                                                   txtABNValue_PE.Value,
-                                                  "Raw Materials Procurement App"
+                                                  "Raw Materials Procurement App",
+                                                  gSelectedRequest.ProjectID
                                               )
                                           );
                                           If(
