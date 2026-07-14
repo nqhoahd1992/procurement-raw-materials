@@ -431,7 +431,7 @@ Screens:
                               FontWeight: =FontWeight.Semibold
                               Height: =28
                               Text: =ThisItem.Title
-                              Width: =Parent.Width - 420
+                              Width: =Parent.Width - 500
                         - rowTopRight:
                             Control: GroupContainer@1.5.0
                             Variant: AutoLayout
@@ -447,7 +447,7 @@ Screens:
                               RadiusBottomRight: =0
                               RadiusTopLeft: =0
                               RadiusTopRight: =0
-                              Width: =420
+                              Width: =500
                             Children:
                               - rowInvoiceActions:
                                   Control: GroupContainer@1.5.0
@@ -545,6 +545,14 @@ Screens:
                                         ThisItem.Status.Value
                                       )
                                     Width: =220
+                              - btnViewRequest:
+                                  Control: Button@0.0.45
+                                  Properties:
+                                    FontWeight: =FontWeight.Semibold
+                                    Height: =24
+                                    OnSelect: =Set(gSelectedRequest, ThisItem); If(ThisItem.Status.Value = "Pending Invoice" && (gCurrentUser.Role.Value = "Procurement" || gCurrentUser.Role.Value = "Admin"), Navigate(InvoiceSubmissionScreen), Navigate(RequestDetailScreen))
+                                    Text: ="View"
+                                    Width: =70
                   - rowMeta:
                       Control: GroupContainer@1.5.0
                       Variant: AutoLayout
