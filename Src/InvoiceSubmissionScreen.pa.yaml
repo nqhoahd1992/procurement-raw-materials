@@ -1094,22 +1094,17 @@ Screens:
                         Text: ="Assign to Accounting Staff *"
                         Width: =Parent.Width - 40
                   - ddAccountingHandler_ISS:
-                      Control: ComboBox@0.0.51
+                      Control: ModernCombobox@1.1.1
                       Properties:
+                        AllowExternalSelectedItems: =false
+                        FontWeight: =""
                         Height: =40
                         InputTextPlaceholder: ="Choose an option"
+                        ItemDisplayText: =ThisItem.EmployeeID.Value
                         Items: =Filter('RM User', Role.Value = "Accounting")
+                        SelectMultiple: =false
+                        Size: =0
                         Width: =Parent.Width - 40
-                      Children:
-                        - EmployeeID_AH_ISS:
-                            Control: ComboBoxDataField@1.5.0
-                            Variant: textualColumn
-                            IsLocked: true
-                            Properties:
-                              FieldDisplayName: ="EmployeeID"
-                              FieldName: ="EmployeeID"
-                              FieldType: ="E"
-                              Order: =1
       - conActionBar_ISS:
           Control: GroupContainer@1.5.0
           Variant: AutoLayout
@@ -1226,7 +1221,8 @@ Screens:
                                                             txtAttentionValue_ISS.Value,
                                                             txtDescriptionValue_ISS.Value,
                                                             gSelectedRequest.InvoiceRegion.Value,
-                                                            txtABNValue_ISS.Value
+                                                            txtABNValue_ISS.Value,
+                                                            "Raw Materials Procurement App"
                                                         )
                                                     );
                                                     If(
