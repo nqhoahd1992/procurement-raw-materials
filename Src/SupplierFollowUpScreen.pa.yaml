@@ -520,22 +520,17 @@ Screens:
                               Text: ="Assign to *"
                               Width: =Parent.Width
                         - ddAssignReceiver_SFU:
-                            Control: ComboBox@0.0.51
+                            Control: ModernCombobox@1.1.1
                             Properties:
+                              AllowExternalSelectedItems: =false
+                              FontWeight: =""
                               Height: =40
                               InputTextPlaceholder: ="Select an employee"
+                              ItemDisplayText: =ThisItem.'Title'
                               Items: =Sort(Filter('Employee List', ID in ForAll(Filter('RM User', IsActive), EmployeeID.Id)), Title, SortOrder.Ascending)
+                              SelectMultiple: =false
+                              Size: =0
                               Width: =Parent.Width
-                            Children:
-                              - Title_DelegateSFU:
-                                  Control: ComboBoxDataField@1.5.0
-                                  Variant: textualColumn
-                                  IsLocked: true
-                                  Properties:
-                                    FieldDisplayName: ="Title"
-                                    FieldName: ="Title"
-                                    FieldType: ="E"
-                                    Order: =1
                         - lblCurrentAssignee_SFU:
                             Control: Label@2.5.1
                             Properties:
@@ -876,7 +871,7 @@ Screens:
                 Properties:
                   DropShadow: =DropShadow.None
                   FillPortions: =0
-                  Height: =40 + 36 + 4 + 36 + 4 + CountRows(colLineItemsDetail) * 100 + 8 + 60
+                  Height: =40 + 36 + 4 + CountRows(colLineItemsDetail) * 56 + 8 + 60
                   LayoutDirection: =LayoutDirection.Vertical
                   LayoutGap: =4
                   PaddingBottom: =8
@@ -914,7 +909,9 @@ Screens:
                         Fill: =RGBA(225, 223, 214, 1)
                         FillPortions: =0
                         Height: =36
+                        LayoutAlignItems: =LayoutAlignItems.Center
                         LayoutDirection: =LayoutDirection.Horizontal
+                        LayoutGap: =8
                         PaddingLeft: =8
                         PaddingRight: =8
                         RadiusBottomLeft: =0
@@ -925,11 +922,12 @@ Screens:
                             Control: Label@2.5.1
                             Properties:
                               Color: =RGBA(68, 68, 65, 1)
+                              FillPortions: =1
                               FontWeight: =FontWeight.Semibold
                               Height: =36
                               Size: =9
                               Text: ="Trade Name"
-                              Width: =Parent.Width * 0.25
+                              Width: =Parent.Width * 0.16
                         - lblGRColUnit_1:
                             Control: Label@2.5.1
                             Properties:
@@ -938,7 +936,7 @@ Screens:
                               Height: =36
                               Size: =9
                               Text: ="Unit"
-                              Width: =Parent.Width * 0.08
+                              Width: =Parent.Width * 0.04
                         - lblGRColRecQtyR1:
                             Control: Label@2.5.1
                             Properties:
@@ -948,7 +946,7 @@ Screens:
                               Height: =36
                               Size: =9
                               Text: ="Received Quantity R1"
-                              Width: =Parent.Width * 0.12
+                              Width: =Parent.Width * 0.07
                         - lblGRColRecQtyR1_1:
                             Control: Label@2.5.1
                             Properties:
@@ -958,43 +956,25 @@ Screens:
                               Height: =36
                               Size: =9
                               Text: ="Received Quantity R2 *"
-                              Width: =Parent.Width * 0.12
+                              Width: =Parent.Width * 0.07
                         - lblGRColBatch_1:
                             Control: Label@2.5.1
                             Properties:
                               Color: =RGBA(68, 68, 65, 1)
                               FontWeight: =FontWeight.Semibold
                               Height: =36
-                              PaddingLeft: =16
                               Size: =9
                               Text: ="Batch No *"
-                              Width: =Parent.Width * 0.18 - 8
+                              Width: =Parent.Width * 0.1
                         - lblGRColExp_1:
                             Control: Label@2.5.1
                             Properties:
                               Color: =RGBA(68, 68, 65, 1)
                               FontWeight: =FontWeight.Semibold
                               Height: =36
-                              PaddingLeft: =16
-                              PaddingRight: =16
                               Size: =9
                               Text: ="Expiry Date *"
-                              Width: =Parent.Width * 0.25
-                  - rowLineItemsColHeader_SFU2:
-                      Control: GroupContainer@1.5.0
-                      Variant: AutoLayout
-                      Properties:
-                        DropShadow: =DropShadow.None
-                        Fill: =RGBA(225, 223, 214, 1)
-                        FillPortions: =0
-                        Height: =36
-                        LayoutDirection: =LayoutDirection.Horizontal
-                        PaddingLeft: =8
-                        PaddingRight: =8
-                        RadiusBottomLeft: =0
-                        RadiusBottomRight: =0
-                        Width: =Parent.Width
-                      Children:
+                              Width: =Parent.Width * 0.1
                         - lblGRColQC_1:
                             Control: Label@2.5.1
                             Properties:
@@ -1003,157 +983,160 @@ Screens:
                               Height: =36
                               Size: =9
                               Text: ="QC Number *"
-                              Width: =Parent.Width * 0.33
+                              Width: =Parent.Width * 0.09
                         - lblGRColRMPK_1:
                             Control: Label@2.5.1
                             Properties:
                               Color: =RGBA(68, 68, 65, 1)
                               FontWeight: =FontWeight.Semibold
                               Height: =36
-                              PaddingLeft: =16
                               Size: =9
                               Text: ="RM/PK Code *"
-                              Width: =Parent.Width * 0.33
+                              Width: =Parent.Width * 0.09
                         - lblGRColCOA_1:
                             Control: Label@2.5.1
                             Properties:
                               Color: =RGBA(68, 68, 65, 1)
                               FontWeight: =FontWeight.Semibold
                               Height: =36
-                              PaddingLeft: =16
-                              PaddingRight: =16
                               Size: =9
                               Text: ="Link to COA *"
-                              Width: =Parent.Width * 0.34
+                              Width: =Parent.Width * 0.15
                   - galLineItems_SFU:
                       Control: Gallery@2.15.0
                       Variant: BrowseLayout_Vertical_TwoTextOneImageVariant_ver5.0
                       Properties:
                         FillPortions: =0
-                        Height: =CountRows(colLineItemsDetail) * 100 + 12
+                        Height: =CountRows(colLineItemsDetail) * 56 + 12
                         Items: =colLineItemsDetail
                         ShowScrollbar: =false
                         TemplatePadding: =4
-                        TemplateSize: =100
+                        TemplateSize: =56
                         Width: =Parent.Width
-                        X: =40
-                        Y: =40
                       Children:
-                        - rectSFUItemBg:
-                            Control: Rectangle@2.3.0
+                        - rowSFUItem:
+                            Control: GroupContainer@1.5.0
+                            Variant: AutoLayout
                             Properties:
+                              DropShadow: =DropShadow.None
                               Fill: =If(Mod(ThisItem.ID, 2) = 0, RGBA(248, 247, 243, 1), RGBA(255, 255, 255, 1))
-                              Height: =100
+                              Height: =56
+                              LayoutAlignItems: =LayoutAlignItems.Center
+                              LayoutDirection: =LayoutDirection.Horizontal
+                              LayoutGap: =8
+                              PaddingLeft: =8
+                              PaddingRight: =8
+                              RadiusBottomLeft: =0
+                              RadiusBottomRight: =0
+                              RadiusTopLeft: =0
+                              RadiusTopRight: =0
                               Width: =Parent.Width
-                        - lblSFUItemName:
-                            Control: Label@2.5.1
-                            Properties:
-                              Height: =24
-                              PaddingLeft: =8
-                              Size: =11
-                              Text: =ThisItem.MaterialName
-                              Width: =Parent.Width * 0.25
-                              Wrap: =false
-                              Y: =4
-                        - lblSFUItemSubtitle:
-                            Control: Label@2.5.1
-                            Properties:
-                              Color: =RGBA(136, 135, 128, 1)
-                              Height: =18
-                              PaddingLeft: =8
-                              Size: =8
-                              Text: |-
-                                =With({wMat: LookUp('Raw Materials', ID = ThisItem.MaterialID.Id)}, If(IsBlank(wMat), "", wMat.Category & " · " & wMat.Supplier))
-                              Width: =Parent.Width * 0.25
-                              Wrap: =false
-                              Y: =28
-                        - lblSFUItemUnit:
-                            Control: Label@2.5.1
-                            Properties:
-                              Color: =RGBA(136, 135, 128, 1)
-                              Height: =48
-                              Size: =11
-                              Text: =ThisItem.Unit
-                              Width: =Parent.Width * 0.08
-                              X: =Parent.Width * 0.25
-                              Y: =4
-                        - lblSFURound1Qty:
-                            Control: Label@2.5.1
-                            Properties:
-                              Align: =Align.Center
-                              Color: =RGBA(136, 135, 128, 1)
-                              Height: =48
-                              Size: =11
-                              Text: =If(IsBlank(ThisItem.ReceivedQty1), "-", Text(ThisItem.ReceivedQty1))
-                              Width: =Parent.Width * 0.12
-                              X: =Parent.Width * 0.33
-                              Y: =4
-                        - txtSFURecQty:
-                            Control: TextInput@0.0.54
-                            Properties:
-                              Align: =Align.Center
-                              Height: =40
-                              OnChange: |-
-                                =UpdateIf(colLineItemsDetail, ID = ThisItem.ID, {ReceivedQty2: Value(Self.Value)})
-                              Placeholder: ="0"
-                              Value: =If(IsBlank(ThisItem.ReceivedQty2) || ThisItem.ReceivedQty2 = 0, "", Text(ThisItem.ReceivedQty2))
-                              Width: =Parent.Width * 0.12 - 8
-                              X: =Parent.Width * 0.45 + 1
-                              Y: =8
-                        - txtSFUBatch:
-                            Control: TextInput@0.0.54
-                            Properties:
-                              Height: =40
-                              OnChange: |-
-                                =UpdateIf(colLineItemsDetail, ID = ThisItem.ID, {BatchNumber2: Self.Value})
-                              Placeholder: ="Batch no."
-                              Value: =If(IsBlank(ThisItem.BatchNumber2), "", ThisItem.BatchNumber2)
-                              Width: =Parent.Width * 0.18 - 16
-                              X: =Parent.Width * 0.57 + 16
-                              Y: =8
-                        - dpSFUExpiry:
-                            Control: DatePicker@0.0.46
-                            Properties:
-                              Height: =40
-                              OnChange: |-
-                                =UpdateIf(colLineItemsDetail, ID = ThisItem.ID, {ExpiryDate2: Self.SelectedDate})
-                              Placeholder: ="Expiry date"
-                              Width: =Parent.Width * 0.25 - 8
-                              X: =Parent.Width * 0.75 + 16
-                              Y: =8
-                        - txtSFUQCNumber:
-                            Control: TextInput@0.0.54
-                            Properties:
-                              Height: =40
-                              OnChange: |-
-                                =UpdateIf(colLineItemsDetail, ID = ThisItem.ID, {QCNumber2: Self.Value})
-                              Placeholder: ="QC number"
-                              Value: =If(IsBlank(ThisItem.QCNumber2), "", ThisItem.QCNumber2)
-                              Width: =Parent.Width * 0.33 - 8
-                              X: =1
-                              Y: =52
-                        - txtSFURMPKCode:
-                            Control: TextInput@0.0.54
-                            Properties:
-                              Height: =40
-                              OnChange: |-
-                                =UpdateIf(colLineItemsDetail, ID = ThisItem.ID, {RMPKCode2: Self.Value})
-                              Placeholder: ="RM/PK code"
-                              Value: =If(IsBlank(ThisItem.RMPKCode2), "", ThisItem.RMPKCode2)
-                              Width: =Parent.Width * 0.33 - 16
-                              X: =Parent.Width * 0.33 + 8
-                              Y: =52
-                        - txtSFUCOALink:
-                            Control: TextInput@0.0.54
-                            Properties:
-                              Height: =40
-                              OnChange: |-
-                                =UpdateIf(colLineItemsDetail, ID = ThisItem.ID, {COALink2: Self.Value})
-                              Placeholder: ="Link to COA (URL)"
-                              Value: =If(IsBlank(ThisItem.COALink2), "", ThisItem.COALink2)
-                              Width: =Parent.Width * 0.34 - 16
-                              X: =Parent.Width * 0.66 + 8
-                              Y: =52
+                            Children:
+                              - colSFUName:
+                                  Control: GroupContainer@1.5.0
+                                  Variant: AutoLayout
+                                  Properties:
+                                    DropShadow: =DropShadow.None
+                                    LayoutDirection: =LayoutDirection.Vertical
+                                    LayoutGap: =2
+                                    RadiusBottomLeft: =0
+                                    RadiusBottomRight: =0
+                                    RadiusTopLeft: =0
+                                    RadiusTopRight: =0
+                                    Width: =Parent.Width * 0.16
+                                  Children:
+                                    - lblSFUItemName:
+                                        Control: Label@2.5.1
+                                        Properties:
+                                          Height: =20
+                                          Size: =11
+                                          Text: =ThisItem.MaterialName
+                                          Width: =Parent.Width
+                                          Wrap: =false
+                                    - lblSFUItemSubtitle:
+                                        Control: Label@2.5.1
+                                        Properties:
+                                          Color: =RGBA(136, 135, 128, 1)
+                                          Height: =16
+                                          Size: =8
+                                          Text: |-
+                                            =With({wMat: LookUp('Raw Materials', ID = ThisItem.MaterialID.Id)}, If(IsBlank(wMat), "", wMat.Category & " · " & wMat.Supplier))
+                                          Width: =Parent.Width
+                                          Wrap: =false
+                              - lblSFUItemUnit:
+                                  Control: Label@2.5.1
+                                  Properties:
+                                    Color: =RGBA(136, 135, 128, 1)
+                                    Size: =11
+                                    Text: =ThisItem.Unit
+                                    Width: =Parent.Width * 0.04
+                              - lblSFURound1Qty:
+                                  Control: Label@2.5.1
+                                  Properties:
+                                    Align: =Align.Center
+                                    Color: =RGBA(136, 135, 128, 1)
+                                    Size: =11
+                                    Text: =If(IsBlank(ThisItem.ReceivedQty1), "-", Text(ThisItem.ReceivedQty1))
+                                    Width: =Parent.Width * 0.07
+                              - txtSFURecQty:
+                                  Control: TextInput@0.0.54
+                                  Properties:
+                                    Align: =Align.Center
+                                    Height: =40
+                                    OnChange: |-
+                                      =UpdateIf(colLineItemsDetail, ID = ThisItem.ID, {ReceivedQty2: Value(Self.Value)})
+                                    Placeholder: ="0"
+                                    Value: =If(IsBlank(ThisItem.ReceivedQty2) || ThisItem.ReceivedQty2 = 0, "", Text(ThisItem.ReceivedQty2))
+                                    Width: =Parent.Width * 0.07
+                              - txtSFUBatch:
+                                  Control: TextInput@0.0.54
+                                  Properties:
+                                    Height: =40
+                                    OnChange: |-
+                                      =UpdateIf(colLineItemsDetail, ID = ThisItem.ID, {BatchNumber2: Self.Value})
+                                    Placeholder: ="Batch no."
+                                    Value: =If(IsBlank(ThisItem.BatchNumber2), "", ThisItem.BatchNumber2)
+                                    Width: =Parent.Width * 0.1
+                              - dpSFUExpiry:
+                                  Control: ModernDatePicker@1.0.1
+                                  Properties:
+                                    BorderStyle: =""
+                                    DefaultDate: =ThisItem.ExpiryDate2
+                                    Font: =""
+                                    FontWeight: =""
+                                    Height: =40
+                                    OnChange: |-
+                                      =UpdateIf(colLineItemsDetail, ID = ThisItem.ID, {ExpiryDate2: Self.SelectedDate})
+                                    Placeholder: ="Expiry date"
+                                    Size: =0
+                                    Width: =Parent.Width * 0.1
+                              - txtSFUQCNumber:
+                                  Control: TextInput@0.0.54
+                                  Properties:
+                                    Height: =40
+                                    OnChange: |-
+                                      =UpdateIf(colLineItemsDetail, ID = ThisItem.ID, {QCNumber2: Self.Value})
+                                    Placeholder: ="QC number"
+                                    Value: =If(IsBlank(ThisItem.QCNumber2), "", ThisItem.QCNumber2)
+                                    Width: =Parent.Width * 0.09
+                              - txtSFURMPKCode:
+                                  Control: TextInput@0.0.54
+                                  Properties:
+                                    Height: =40
+                                    OnChange: |-
+                                      =UpdateIf(colLineItemsDetail, ID = ThisItem.ID, {RMPKCode2: Self.Value})
+                                    Placeholder: ="RM/PK code"
+                                    Value: =If(IsBlank(ThisItem.RMPKCode2), "", ThisItem.RMPKCode2)
+                                    Width: =Parent.Width * 0.09
+                              - txtSFUCOALink:
+                                  Control: TextInput@0.0.54
+                                  Properties:
+                                    Height: =40
+                                    OnChange: |-
+                                      =UpdateIf(colLineItemsDetail, ID = ThisItem.ID, {COALink2: Self.Value})
+                                    Placeholder: ="Link to COA (URL)"
+                                    Value: =If(IsBlank(ThisItem.COALink2), "", ThisItem.COALink2)
+                                    Width: =Parent.Width * 0.15
             - rowStep1Remarks_SFU:
                 Control: GroupContainer@1.5.0
                 Variant: AutoLayout

@@ -340,6 +340,7 @@ Screens:
                   RadiusBottomRight: =0
                   RadiusTopLeft: =0
                   RadiusTopRight: =0
+                  Visible: =false
                   Width: =Parent.Width
                 Children:
                   - lblEscalationTitle:
