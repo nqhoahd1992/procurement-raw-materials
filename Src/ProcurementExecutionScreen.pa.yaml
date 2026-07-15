@@ -795,8 +795,7 @@ Screens:
                                                   txtDescriptionValue_PE.Value,
                                                   gSelectedRequest.InvoiceRegion.Value,
                                                   txtABNValue_PE.Value,
-                                                  "Raw Materials Procurement App",
-                                                  gSelectedRequest.ProjectID
+                                                  "Raw Materials Procurement App"
                                               )
                                           );
                                           If(
@@ -997,8 +996,7 @@ Screens:
                                                   txtDescriptionValue_PE.Value,
                                                   gSelectedRequest.InvoiceRegion.Value,
                                                   txtABNValue_PE.Value,
-                                                  "Raw Materials Procurement App",
-                                                  gSelectedRequest.ProjectID
+                                                  "Raw Materials Procurement App"
                                               )
                                           );
                                           If(
@@ -1098,7 +1096,8 @@ Screens:
                         Size: =11
                         Text: =If(IsBlank(gSelectedRequest.RequesterInvoiceURL), "—", gSelectedRequest.RequesterInvoiceURL)
                         Underline: =Not(IsBlank(gSelectedRequest.RequesterInvoiceURL))
-                        Width: =Parent.Width
+                        Width: =Parent.Width - 40
+                        Wrap: =false
                   - lblInvoiceCorrectLabel_PE:
                       Control: Label@2.5.1
                       Properties:

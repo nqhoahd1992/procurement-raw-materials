@@ -375,6 +375,38 @@ Screens:
                         RadiusTopRight: =0
                         Width: =Parent.Width
                       Children:
+                        - colRelatedProject_1:
+                            Control: GroupContainer@1.5.0
+                            Variant: AutoLayout
+                            Properties:
+                              DropShadow: =DropShadow.None
+                              LayoutDirection: =LayoutDirection.Vertical
+                              LayoutGap: =2
+                              LayoutMinHeight: =60
+                              RadiusBottomLeft: =0
+                              RadiusBottomRight: =0
+                              RadiusTopLeft: =0
+                              RadiusTopRight: =0
+                              Width: =220
+                              X: =40
+                              Y: =40
+                            Children:
+                              - lblRelatedProjectLabel:
+                                  Control: Label@2.5.1
+                                  Properties:
+                                    Color: =RGBA(136, 135, 128, 1)
+                                    Height: =20
+                                    Size: =9
+                                    Text: ="Related Project"
+                                    Width: =220
+                              - lblRelatedProjectValue:
+                                  Control: Label@2.5.1
+                                  Properties:
+                                    FontWeight: =FontWeight.Semibold
+                                    Height: =24
+                                    Size: =11
+                                    Text: =If(IsBlank(gSelectedRequest.ProjectID), "—", Coalesce(LookUp(Project_List, ProjectID = gSelectedRequest.ProjectID).Title, "—"))
+                                    Width: =Parent.Width
                         - colEstCost:
                             Control: GroupContainer@1.5.0
                             Variant: AutoLayout
@@ -480,6 +512,7 @@ Screens:
                               RadiusBottomRight: =0
                               RadiusTopLeft: =0
                               RadiusTopRight: =0
+                              Visible: =false
                               Width: =220
                             Children:
                               - lblSkippedLabel:
@@ -547,36 +580,6 @@ Screens:
                                     Size: =11
                                     Text: =gSelectedRequest.InvoiceType.Value
                                     Width: =220
-                        - colRelatedProject_1:
-                            Control: GroupContainer@1.5.0
-                            Variant: AutoLayout
-                            Properties:
-                              DropShadow: =DropShadow.None
-                              LayoutDirection: =LayoutDirection.Vertical
-                              LayoutGap: =2
-                              LayoutMinHeight: =60
-                              RadiusBottomLeft: =0
-                              RadiusBottomRight: =0
-                              RadiusTopLeft: =0
-                              RadiusTopRight: =0
-                              Width: =220
-                            Children:
-                              - lblRelatedProjectLabel:
-                                  Control: Label@2.5.1
-                                  Properties:
-                                    Color: =RGBA(136, 135, 128, 1)
-                                    Height: =20
-                                    Size: =9
-                                    Text: ="Related Project"
-                                    Width: =220
-                              - lblRelatedProjectValue:
-                                  Control: Label@2.5.1
-                                  Properties:
-                                    FontWeight: =FontWeight.Semibold
-                                    Height: =24
-                                    Size: =11
-                                    Text: =If(IsBlank(gSelectedRequest.ProjectID), "—", Coalesce(LookUp(Project_List, ProjectID = gSelectedRequest.ProjectID).Title, "—"))
-                                    Width: =Parent.Width
                         - colRelatedSKU:
                             Control: GroupContainer@1.5.0
                             Variant: AutoLayout
@@ -1475,7 +1478,7 @@ Screens:
                       Properties:
                         DropShadow: =DropShadow.None
                         FillPortions: =0
-                        Height: =56
+                        Height: =60
                         LayoutDirection: =LayoutDirection.Vertical
                         LayoutGap: =2
                         LayoutMinHeight: =56
@@ -1507,13 +1510,14 @@ Screens:
                               Text: =If(IsBlank(gSelectedRequest.RequesterInvoiceURL), "—", gSelectedRequest.RequesterInvoiceURL)
                               Underline: =Not(IsBlank(gSelectedRequest.RequesterInvoiceURL))
                               Width: =Parent.Width
+                              Wrap: =false
                   - rowPurchaseRequestLink_1:
                       Control: GroupContainer@1.5.0
                       Variant: AutoLayout
                       Properties:
                         DropShadow: =DropShadow.None
                         FillPortions: =0
-                        Height: =70
+                        Height: =60
                         LayoutDirection: =LayoutDirection.Vertical
                         LayoutGap: =2
                         LayoutMinHeight: =70
@@ -1545,13 +1549,14 @@ Screens:
                               Text: =If(IsBlank(gSelectedRequest.PurchaseRequestLink), "—", gSelectedRequest.PurchaseRequestLink)
                               Underline: =Not(IsBlank(gSelectedRequest.PurchaseRequestLink))
                               Width: =Parent.Width
+                              Wrap: =false
                   - rowOfficialInvoiceLink:
                       Control: GroupContainer@1.5.0
                       Variant: AutoLayout
                       Properties:
                         DropShadow: =DropShadow.None
                         FillPortions: =0
-                        Height: =100
+                        Height: =60
                         LayoutDirection: =LayoutDirection.Vertical
                         LayoutGap: =2
                         LayoutMinHeight: =70
@@ -1578,12 +1583,14 @@ Screens:
                               FillPortions: =1
                               FontWeight: =FontWeight.Semibold
                               Height: =48
+                              LayoutMinHeight: =28
                               OnSelect: =If(Not(IsBlank(gSelectedRequest.OfficialInvoiceLink)), Launch(gSelectedRequest.OfficialInvoiceLink, {}, LaunchTarget.New))
                               Size: =11
                               Text: =If(IsBlank(gSelectedRequest.OfficialInvoiceLink), "—", gSelectedRequest.OfficialInvoiceLink)
                               Underline: =Not(IsBlank(gSelectedRequest.OfficialInvoiceLink))
                               VerticalAlign: =VerticalAlign.Top
                               Width: =Parent.Width
+                              Wrap: =false
                   - rowConditionsText:
                       Control: GroupContainer@1.5.0
                       Variant: AutoLayout
@@ -1949,6 +1956,7 @@ Screens:
                                           Text: =If(IsBlank(ThisItem.DisplayName), "—", ThisItem.DisplayName)
                                           Underline: =true
                                           Width: =Parent.Width - 20
+                                          Wrap: =false
                                           X: =1
                         - lblGoodsReceipt2Header:
                             Control: Label@2.5.1
@@ -2229,6 +2237,7 @@ Screens:
                                           Text: =If(IsBlank(ThisItem.DisplayName), "—", ThisItem.DisplayName)
                                           Underline: =true
                                           Width: =Parent.Width - 20
+                                          Wrap: =false
                                           X: =1
                         - rowSupplierFollowUpNotes:
                             Control: GroupContainer@1.5.0
@@ -2327,6 +2336,7 @@ Screens:
                                     Underline: =Not(IsBlank(gSelectedRequest.CreditNote))
                                     VerticalAlign: =VerticalAlign.Top
                                     Width: =Parent.Width
+                                    Wrap: =false
             - rowApprovalTitle:
                 Control: GroupContainer@1.5.0
                 Variant: AutoLayout

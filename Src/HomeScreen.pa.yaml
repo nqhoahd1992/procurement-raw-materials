@@ -419,6 +419,7 @@ Screens:
                         Height: =28
                         LayoutAlignItems: =LayoutAlignItems.Center
                         LayoutDirection: =LayoutDirection.Horizontal
+                        LayoutGap: =20
                         RadiusBottomLeft: =0
                         RadiusBottomRight: =0
                         RadiusTopLeft: =0
@@ -428,10 +429,11 @@ Screens:
                         - lblRequestTitle:
                             Control: Label@2.5.1
                             Properties:
+                              FillPortions: =1
                               FontWeight: =FontWeight.Semibold
                               Height: =28
                               Text: =ThisItem.Title
-                              Width: =Parent.Width - 500
+                              Width: =Parent.Width - 650
                         - rowTopRight:
                             Control: GroupContainer@1.5.0
                             Variant: AutoLayout
@@ -443,11 +445,11 @@ Screens:
                               LayoutGap: =10
                               LayoutJustifyContent: =LayoutJustifyContent.End
                               LayoutMinHeight: =28
+                              LayoutMinWidth: =650
                               RadiusBottomLeft: =0
                               RadiusBottomRight: =0
                               RadiusTopLeft: =0
                               RadiusTopRight: =0
-                              Width: =500
                             Children:
                               - rowInvoiceActions:
                                   Control: GroupContainer@1.5.0
@@ -460,19 +462,30 @@ Screens:
                                     LayoutGap: =10
                                     LayoutJustifyContent: =LayoutJustifyContent.End
                                     LayoutMinHeight: =28
+                                    LayoutMinWidth: =340
                                     RadiusBottomLeft: =0
                                     RadiusBottomRight: =0
                                     RadiusTopLeft: =0
                                     RadiusTopRight: =0
                                   Children:
                                     - btnSubmitInvoice:
-                                        Control: Button@0.0.45
+                                        Control: ModernButton@1.0.0
                                         Properties:
+                                          Align: =Align.Center
                                           BasePaletteColor: =RGBA(133, 79, 11, 1)
                                           FontWeight: =FontWeight.Semibold
                                           Height: =24
                                           OnSelect: =Set(gSelectedRequest, ThisItem); Navigate(RequesterInvoiceScreen)
+                                          PaddingBottom: =5
+                                          PaddingLeft: =12
+                                          PaddingRight: =12
+                                          PaddingTop: =5
+                                          RadiusBottomLeft: =4
+                                          RadiusBottomRight: =4
+                                          RadiusTopLeft: =4
+                                          RadiusTopRight: =4
                                           Text: ="Submit Invoice"
+                                          VerticalAlign: =VerticalAlign.Middle
                                           Visible: |-
                                             =ThisItem.InvoiceMode.Value = "ViaRequester" && !ThisItem.InvoiceSubmitted &&
                                             (
@@ -481,8 +494,9 @@ Screens:
                                             )
                                           Width: =160
                                     - btnProcessInvoice:
-                                        Control: Button@0.0.45
+                                        Control: ModernButton@1.0.0
                                         Properties:
+                                          Align: =Align.Center
                                           BasePaletteColor: |-
                                             =If(
                                               ThisItem.InvoiceMode.Value = "Deferred",
@@ -492,12 +506,21 @@ Screens:
                                           FontWeight: =FontWeight.Semibold
                                           Height: =24
                                           OnSelect: =Set(gSelectedRequest, ThisItem); Navigate(InvoiceSubmissionScreen)
+                                          PaddingBottom: =5
+                                          PaddingLeft: =12
+                                          PaddingRight: =12
+                                          PaddingTop: =5
+                                          RadiusBottomLeft: =4
+                                          RadiusBottomRight: =4
+                                          RadiusTopLeft: =4
+                                          RadiusTopRight: =4
                                           Text: |-
                                             =If(
                                               ThisItem.InvoiceMode.Value = "Deferred",
                                               "Submit Invoice",
                                               If(IsBlank(ThisItem.RequesterInvoiceURL), "Remind Requester", "Process Invoice")
                                             )
+                                          VerticalAlign: =VerticalAlign.Middle
                                           Visible: |-
                                             =(ThisItem.InvoiceMode.Value = "ViaRequester" || ThisItem.InvoiceMode.Value = "Deferred") &&
                                             !ThisItem.InvoiceSubmitted &&
@@ -546,12 +569,22 @@ Screens:
                                       )
                                     Width: =220
                               - btnViewRequest:
-                                  Control: Button@0.0.45
+                                  Control: ModernButton@1.0.0
                                   Properties:
+                                    Align: =Align.Center
                                     FontWeight: =FontWeight.Semibold
                                     Height: =24
                                     OnSelect: =Set(gSelectedRequest, ThisItem); If(ThisItem.Status.Value = "Pending Invoice" && (gCurrentUser.Role.Value = "Procurement" || gCurrentUser.Role.Value = "Admin"), Navigate(InvoiceSubmissionScreen), Navigate(RequestDetailScreen))
+                                    PaddingBottom: =5
+                                    PaddingLeft: =12
+                                    PaddingRight: =12
+                                    PaddingTop: =5
+                                    RadiusBottomLeft: =4
+                                    RadiusBottomRight: =4
+                                    RadiusTopLeft: =4
+                                    RadiusTopRight: =4
                                     Text: ="View"
+                                    VerticalAlign: =VerticalAlign.Middle
                                     Width: =70
                   - rowMeta:
                       Control: GroupContainer@1.5.0

@@ -1463,6 +1463,7 @@ Screens:
                         Size: =11
                         Text: =gSelectedRequest.CreditNote
                         Width: =Parent.Width - 40
+                        Wrap: =false
             - rowGR2Remarks_SFU:
                 Control: GroupContainer@1.5.0
                 Variant: AutoLayout

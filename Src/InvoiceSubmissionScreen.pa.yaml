@@ -374,6 +374,7 @@ Screens:
                         Text: =If(IsBlank(gSelectedRequest.RequesterInvoiceURL), "—", gSelectedRequest.RequesterInvoiceURL)
                         Underline: =Not(IsBlank(gSelectedRequest.RequesterInvoiceURL))
                         Width: =Parent.Width - 40
+                        Wrap: =false
             - rowVerifyInvoice_ISS:
                 Control: GroupContainer@1.5.0
                 Variant: AutoLayout
@@ -1222,8 +1223,7 @@ Screens:
                                                             txtDescriptionValue_ISS.Value,
                                                             gSelectedRequest.InvoiceRegion.Value,
                                                             txtABNValue_ISS.Value,
-                                                            "Raw Materials Procurement App",
-                                                            gSelectedRequest.ProjectID
+                                                            "Raw Materials Procurement App"
                                                         )
                                                     );
                                                     If(
