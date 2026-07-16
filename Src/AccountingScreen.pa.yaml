@@ -16,7 +16,7 @@ Screens:
             FontWeight: =FontWeight.Bold
             Height: =60
             Size: =14
-            Text: ="Max Biocare Procurement - Accounting Handover"
+            Text: ="Raw Material Procurement - Accounting Handover"
             Width: =698
             X: =20
       - rowInfoBlock_AC:

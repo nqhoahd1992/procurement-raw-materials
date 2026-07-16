@@ -35,7 +35,7 @@ Screens:
             FontWeight: =FontWeight.Bold
             Height: =60
             Size: =14
-            Text: ="Max Biocare Procurement - Procurement Execution"
+            Text: ="Raw Material Procurement - Procurement Execution"
             Width: =654
             X: =20
       - rowInfoBlock_PE:
@@ -1872,7 +1872,7 @@ Screens:
                                           (Not(locIsViaRequester) && rdoInvoiceChoice_PE.Selected.Value = "Defer Invoice") ||
                                           (locIsViaRequester && rdoInvoiceCorrect_PE.Selected.Value = "No")
                                       ) &&
-                                      IsBlank(ddAccountingHandler_PE.Selected)
+                                      (IsBlank(ddAccountingHandler_PE.Selected) || IsBlank(ddAccountingHandler_PE.Selected.EmployeeID.Id))
                                   ),
                                   Notify("Please fill in all required fields", NotificationType.Error),
                                   If(

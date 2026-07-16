@@ -16,7 +16,7 @@ Screens:
             FontWeight: =FontWeight.Bold
             Height: =60
             Size: =14
-            Text: ="Max Biocare Procurement - Executive Escalation & Approval"
+            Text: ="Raw Material Procurement - Executive Escalation & Approval"
             Width: =716
             X: =20
       - containerScroll_2:

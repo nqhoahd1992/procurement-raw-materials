@@ -20,7 +20,7 @@ Screens:
             FontWeight: =FontWeight.Bold
             Height: =60
             Size: =14
-            Text: ="Max Biocare Procurement - New Request"
+            Text: ="Raw Material Procurement - New Request"
             Width: =718
             X: =20
       - rowButtons:
@@ -98,7 +98,7 @@ Screens:
                         Height: =36
                         OnSelect: |-
                           =If(
-                              rdoHasProject.Selected.Value = "Yes" && IsBlank(ddProject_1.Selected),
+                              rdoHasProject.Selected.Value = "Yes" && (IsBlank(ddProject_1.Selected) || IsBlank(ddProject_1.Selected.ProjectID)),
                               Notify("Please select the Project this request is for", NotificationType.Error),
                               If(
                               IsBlank(txtDescription_1.Value) ||
@@ -120,7 +120,7 @@ Screens:
                                                   CountRows(DataCardValue15.Attachments) = 0,
                                                   Notify("Please attach the invoice file before submitting", NotificationType.Error),
                                                   If(
-                                                      IsBlank(ddManagerApprover_1.Selected),
+                                                      IsBlank(ddManagerApprover_1.Selected) || IsBlank(ddManagerApprover_1.Selected.EmployeeID.Id),
                                                       Notify("Please select a Manager Approver", NotificationType.Error),
                                                       If(
                                                       CountRows(colLineItems) = 0,
