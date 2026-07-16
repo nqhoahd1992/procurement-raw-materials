@@ -244,7 +244,8 @@ Screens:
                                     gSelectedRequest.ID,
                                     "Unassigned",
                                     Text(gSelectedRequest.RequiredDeliveryDate, "dd/mm/yyyy"),
-                                    ""
+                                    "",
+                                    "Max Biocare · Raw Materials Procurement"
                                     )
                                 );
                                 Set(gGRDelegationMode, "I will receive");
@@ -1061,7 +1062,7 @@ Screens:
                   - btnSaveAssignment_GR:
                       Control: Button@0.0.45
                       Properties:
-                        Height: =44
+                        Height: =36
                         OnSelect: |-
                           =If(
                               IsBlank(ddAssignReceiver_GR.Selected.Title),
@@ -1076,7 +1077,8 @@ Screens:
                                       gSelectedRequest.ID,
                                       "Unassigned",
                                       Text(gSelectedRequest.RequiredDeliveryDate, "dd/mm/yyyy"),
-                                      ""
+                                      "",
+                                      "Max Biocare · Raw Materials Procurement"
                                   )
                               );
                               With(
@@ -1092,7 +1094,8 @@ Screens:
                                           gSelectedRequest.ID,
                                           "GoodsReceipt",
                                           Text(gSelectedRequest.RequiredDeliveryDate, "dd/mm/yyyy"),
-                                          ""
+                                          "",
+                                          "Max Biocare · Raw Materials Procurement"
                                       );
                                       Notify("Assignment saved to " & ddAssignReceiver_GR.Selected.Title, NotificationType.Success)
                                   )

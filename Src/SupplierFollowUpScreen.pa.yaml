@@ -478,7 +478,8 @@ Screens:
                                     gSelectedRequest.ID,
                                     "Unassigned",
                                     Text(gSelectedRequest.RequiredDeliveryDate, "dd/mm/yyyy"),
-                                    ""
+                                    "",
+                                    "Max Biocare · Raw Materials Procurement"
                                     )
                                 );
                                 Set(gSFU1DelegationMode, "I will receive");
@@ -1785,7 +1786,7 @@ Screens:
                   - btnSaveAssignment_SFU:
                       Control: Button@0.0.45
                       Properties:
-                        Height: =44
+                        Height: =36
                         OnSelect: |-
                           =If(
                             IsBlank(ddAssignReceiver_SFU.Selected.Title),
@@ -1800,7 +1801,8 @@ Screens:
                                   gSelectedRequest.ID,
                                   "Unassigned",
                                   Text(gSelectedRequest.RequiredDeliveryDate, "dd/mm/yyyy"),
-                                  ""
+                                  "",
+                                  "Max Biocare · Raw Materials Procurement"
                               )
                             );
                             With(
@@ -1816,7 +1818,8 @@ Screens:
                                   gSelectedRequest.ID,
                                   "SupplierFollowUp",
                                   Text(gSelectedRequest.RequiredDeliveryDate, "dd/mm/yyyy"),
-                                  ""
+                                  "",
+                                  "Max Biocare · Raw Materials Procurement"
                                 );
                                 Notify("Assignment saved to " & ddAssignReceiver_SFU.Selected.Title, NotificationType.Success)
                               )
