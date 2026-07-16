@@ -475,7 +475,7 @@ Screens:
                                           Align: =Align.Center
                                           BasePaletteColor: =RGBA(133, 79, 11, 1)
                                           FontWeight: =FontWeight.Semibold
-                                          Height: =24
+                                          Height: =28
                                           OnSelect: =Set(gSelectedRequest, ThisItem); Navigate(RequesterInvoiceScreen)
                                           PaddingBottom: =5
                                           PaddingLeft: =12
@@ -505,7 +505,7 @@ Screens:
                                               If(IsBlank(ThisItem.RequesterInvoiceURL), RGBA(133, 79, 11, 1), RGBA(83, 74, 183, 1))
                                             )
                                           FontWeight: =FontWeight.Semibold
-                                          Height: =24
+                                          Height: =28
                                           OnSelect: =Set(gSelectedRequest, ThisItem); Navigate(InvoiceSubmissionScreen)
                                           PaddingBottom: =5
                                           PaddingLeft: =12

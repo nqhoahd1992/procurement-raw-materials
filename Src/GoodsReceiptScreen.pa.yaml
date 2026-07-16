@@ -528,12 +528,13 @@ Screens:
                   RadiusBottomRight: =0
                   RadiusTopLeft: =0
                   RadiusTopRight: =0
+                  Visible: =gGRDelegationMode = "I will receive"
                   Width: =Parent.Width
                 Children:
                   - lblLineItemsHeaderGR:
                       Control: Label@2.5.1
                       Properties:
-                        FontWeight: =FontWeight.Bold
+                        FontWeight: =FontWeight.Semibold
                         Height: =24
                         Size: =12
                         Text: ="Raw Material Receipt Details *"

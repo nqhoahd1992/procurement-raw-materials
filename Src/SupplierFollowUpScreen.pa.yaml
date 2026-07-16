@@ -882,13 +882,15 @@ Screens:
                   RadiusBottomRight: =0
                   RadiusTopLeft: =0
                   RadiusTopRight: =0
-                  Visible: =IsBlank(LookUp('RM Procurement Execution Log', RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 4))
+                  Visible: |-
+                    =IsBlank(LookUp('RM Procurement Execution Log', RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 4))
+                    && gSFU1DelegationMode = "I will receive"
                   Width: =Parent.Width
                 Children:
                   - lblLineItemsHeader_SFU:
                       Control: Label@2.5.1
                       Properties:
-                        FontWeight: =FontWeight.Bold
+                        FontWeight: =FontWeight.Semibold
                         Height: =24
                         Size: =12
                         Text: ="Raw Material Receipt Details *"

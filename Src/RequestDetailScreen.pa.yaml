@@ -2459,7 +2459,7 @@ Screens:
                                     Height: =21
                                     Size: =11
                                     Text: =ThisItem.ApproverID.Value
-                                    Width: =300
+                                    Width: =400
                               - lblDecisionDetail:
                                   Control: Label@2.5.1
                                   Properties:
@@ -2476,7 +2476,7 @@ Screens:
                                     Height: =21
                                     Size: =11
                                     Text: =ThisItem.Decision.Value
-                                    Width: =194
+                                    Width: =300
                         - colApprovalNotes:
                             Control: GroupContainer@1.5.0
                             Variant: AutoLayout
