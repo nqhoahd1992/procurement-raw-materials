@@ -795,7 +795,8 @@ Screens:
                                                   txtDescriptionValue_PE.Value,
                                                   gSelectedRequest.InvoiceRegion.Value,
                                                   txtABNValue_PE.Value,
-                                                  "Raw Materials Procurement App"
+                                                  "Raw Materials Procurement App",
+                                                  gSelectedRequest.ProjectID
                                               )
                                           );
                                           If(
@@ -996,7 +997,8 @@ Screens:
                                                   txtDescriptionValue_PE.Value,
                                                   gSelectedRequest.InvoiceRegion.Value,
                                                   txtABNValue_PE.Value,
-                                                  "Raw Materials Procurement App"
+                                                  "Raw Materials Procurement App",
+                                                  gSelectedRequest.ProjectID
                                               )
                                           );
                                           If(
@@ -1822,8 +1824,10 @@ Screens:
                         X: =40
                         Y: =40
                   - btnSubmit_PE:
-                      Control: Button@0.0.45
+                      Control: ModernButton@1.0.0
                       Properties:
+                        Align: =Align.Center
+                        FontWeight: =""
                         Height: =36
                         OnSelect: |-
                           =If(
@@ -1991,7 +1995,16 @@ Screens:
                                   )
                               )
                           )
+                        PaddingBottom: =5
+                        PaddingLeft: =12
+                        PaddingRight: =12
+                        PaddingTop: =5
+                        RadiusBottomLeft: =4
+                        RadiusBottomRight: =4
+                        RadiusTopLeft: =4
+                        RadiusTopRight: =4
                         Text: ="Submit →"
+                        VerticalAlign: =VerticalAlign.Middle
                         Width: =120
                         X: =40
                         Y: =40

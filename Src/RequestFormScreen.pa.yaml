@@ -448,7 +448,7 @@ Screens:
                             Control: Radio@0.0.25
                             Properties:
                               Height: =40
-                              Items: =["Invoice Supplied", "To be sourced by Procurement"]
+                              Items: =["To be sourced by Procurement", "Invoice Supplied"]
                               Layout: ='RadioGroupCanvas.Layout'.Horizontal
                               Width: =600
                               X: =40

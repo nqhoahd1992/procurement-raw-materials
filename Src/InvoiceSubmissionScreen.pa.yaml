@@ -1224,7 +1224,8 @@ Screens:
                                                             txtDescriptionValue_ISS.Value,
                                                             gSelectedRequest.InvoiceRegion.Value,
                                                             txtABNValue_ISS.Value,
-                                                            "Raw Materials Procurement App"
+                                                            "Raw Materials Procurement App",
+                                                            gSelectedRequest.ProjectID
                                                         )
                                                     );
                                                     If(

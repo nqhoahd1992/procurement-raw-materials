@@ -8,6 +8,7 @@ Screens:
         NewForm(frmGRLog_GR);
         Set(gSelectedRequest, LookUp('RM Procurement Requests', ID = gSelectedRequest.ID));
         ClearCollect(colLineItemsDetail, Filter('RM Procurement Line Items', RequestIDText = Text(gSelectedRequest.ID)));
+        UpdateIf(colLineItemsDetail, IsBlank(RMPKCode1), {RMPKCode1: LookUp('Raw Materials', ID = MaterialID.Id).Code});
         Set(gGRDelegationMode, If(IsBlank(gSelectedRequest.GRAssignedToID) || gSelectedRequest.GRAssignedToID.Id = 0 || gSelectedRequest.GRAssignedToID.Id = gCurrentEmployee.ID, "I will receive", "Assign to someone else"))
     Children:
       - rectHeader_GR:

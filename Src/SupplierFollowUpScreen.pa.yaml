@@ -8,6 +8,7 @@ Screens:
         NewForm(frmSFU1Log_SFU);
         Set(gSelectedRequest, LookUp('RM Procurement Requests', ID = gSelectedRequest.ID));
         ClearCollect(colLineItemsDetail, Filter('RM Procurement Line Items', RequestIDText = Text(gSelectedRequest.ID)));
+        UpdateIf(colLineItemsDetail, IsBlank(RMPKCode2), {RMPKCode2: LookUp('Raw Materials', ID = MaterialID.Id).Code});
         Set(gSFU1DelegationMode, If(IsBlank(gSelectedRequest.SFU1AssignedToID) || gSelectedRequest.SFU1AssignedToID.Id = 0 || gSelectedRequest.SFU1AssignedToID.Id = gCurrentEmployee.ID, "I will receive", "Assign to someone else"));
         Set(locCreditNoteURL_SFU, "");
         Set(gPendingCreditNoteName_SFU, "")
