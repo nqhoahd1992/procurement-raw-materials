@@ -224,9 +224,9 @@ Required ⚠: none.
 
 ---
 
-## Lists referenced by older versions of this app but no longer used
+## Lists dropped by an older refactor (status notes)
 
-- **`Procurement_InvoiceData`** — zero references anywhere in current `Src/*.pa.yaml`. If it still exists on SharePoint it is orphaned; don't assume the app writes to it.
+- **`Procurement_InvoiceData`** — back in use as of the "Project Information" panel on `ManagerReviewScreen` / `ExecutiveApprovalScreen`, but **read-only**: those screens' `OnVisible` does `ClearCollect(colProjectInvoices, Filter(Procurement_InvoiceData, Not(IsBlank(gSelectedRequest.ProjectID)) && ProjectID = gSelectedRequest.ProjectID))` and the Actual Cost label sums `TotalAmount` grouped by `Currency`. Columns relied on: `ProjectID` (Text — added to the list on 2026-07-23, blank on older rows, which therefore match no project), `TotalAmount` (Number), `Currency` (Text). The app never writes to this list. Requires the list added as a connected data source in Studio.
 - **`Suppliers`** — zero references anywhere in current code. Removed together with the request-level `PreferredSupplier` field.
 
 ---
