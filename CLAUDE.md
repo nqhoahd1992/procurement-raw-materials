@@ -86,7 +86,11 @@ Pending Manager ──(ManagerReviewScreen)──┐
    ▼
 Pending Executive ──(ExecutiveApprovalScreen)──┐
    │ Reject → Rejected
-   │ Approve / Approve with conditions → Pending Procurement (ConditionsText)
+   │ Approve / Approve with conditions (ConditionsText), then:
+   │     Currency <> "AUD" OR EstimatedCost > 10000 → stays "Pending Executive" + isExecutivePayment = true
+   │                                                   (shown as "Pending Payment From Executive" in UI only —
+   │                                                   real Status string is unchanged) → ExecutivePaymentScreen
+   │     otherwise                                  → Pending Procurement
    ▼
 Pending Procurement ──(ProcurementExecutionScreen)──┐
    │ Reject                      → Rejected
@@ -117,6 +121,10 @@ Pending Accounting ──(AccountingScreen)──
    ▼
 Completed
 ```
+
+**Executive-payment sub-flow** (`isExecutivePayment` Yes/No field on `'RM Procurement Requests'`): when Executive approves a request that is over-threshold (`Currency <> "AUD" || EstimatedCost > 10000` — `USD` always qualifies since this app only offers `AUD`/`USD`, no FX conversion for the AUD case, just the plain 10,000 cutoff), the request does **not** advance to "Pending Procurement" — it stays `Status = "Pending Executive"` with `isExecutivePayment = true`, and `RequestDetailScreen`/`HomeScreen` display it as **"Pending Payment From Executive"** purely as a computed label (same pattern as the "Supplier Follow-up (Step 1/2)" sub-status — the real `Status` value never changes). The Executive then uses `ExecutivePaymentScreen` (reached via `RequestDetailScreen`'s "Process Payment →" button, shown only when `isExecutivePayment = true`) to upload a remittance advice document; submitting patches `RemittanceURL` and moves `Status` to `"Pending Procurement"` (keeping `isExecutivePayment = true` for history). Unlike the sibling `procurement-procedure` app, there is no Manager fast-track to worry about here — every request always passes through `ExecutiveApprovalScreen` regardless of decision (see `ManagerReviewScreen`'s hardcoded `Status: {Value: "Pending Executive"}`), so the threshold only needs to be checked in one place.
+
+`RemittanceURL` is shared between two independent producers: `ExecutivePaymentScreen` (this sub-flow) and `ProcurementExecutionScreen`'s own "Remittance Advice Document" upload (Path C / `locIsViaRequester`, when Procurement proceeds with a requester-supplied invoice). When `isExecutivePayment = true`, `ProcurementExecutionScreen` hides its own remittance upload requirement entirely (Executive's upload already satisfies it) and reuses the existing `RemittanceURL` instead of asking Procurement to attach a second document — see `rowFormRemittance_PE` / `rowExecutiveRemittanceInfo_PE` and the `wURL` branch in `formRemittance.OnSuccess`.
 
 Routing relies on these status strings being exact and consistent across `HomeScreen` (filters + gallery `Items` per-role filter), each action screen, and the `Switch`/`If` color maps. **When changing status names or the flow, update every screen that references the string** — there is no shared constant.
 

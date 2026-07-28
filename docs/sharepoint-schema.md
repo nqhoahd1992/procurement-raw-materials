@@ -49,11 +49,12 @@ Does **not** have a `Category`, `PreferredSupplier`, or `Department` column (all
 | `RequesterID` ⚠ | Lookup→Employee List | `{Id,Value}` (→Title) |
 | `ManagerApproverID` ⚠ | Lookup→Employee List | always set — every request requires a Manager Approver (no more skip-to-Executive path) |
 | `SkippedManagerReview` | Yes/No | always written `false` on submit now — every request goes through both Manager and Executive approval. Kept only so older requests submitted before this change (where it may be `true`) still display correctly on `ExecutiveApprovalScreen`/`RequestDetailScreen` |
+| `isExecutivePayment` | Yes/No | true when Executive approves an over-threshold request (`Currency <> "AUD" \|\| EstimatedCost > 10000`). Set by `ExecutiveApprovalScreen` on Approve/Approve-with-conditions; `Status` stays `"Pending Executive"` while this is true (UI shows "Pending Payment From Executive" as a computed label — see `CLAUDE.md`) |
 | `InvoiceMode` | Choice | `Direct`, `Deferred`, `ViaRequester` — set by Procurement Execution |
 | `InvoiceSubmitted` | Yes/No | true once the official invoice has been processed inline (drives whether Goods Receipt/Supplier Follow-up route to `Pending Invoice` or `Pending Accounting`) |
 | `RequesterInvoiceURL` | Text (URL) | set when the Requester uploads the invoice (`ProcurementType = "Invoice Supplied"`) or re-uploads via `RequesterInvoiceScreen` |
 | `OrderConfirmationURL` | Text (URL) | Deferred-invoice path, uploaded by Procurement |
-| `RemittanceURL` | Text (URL) | Via-Requester path, uploaded by Procurement |
+| `RemittanceURL` | Text (URL) | Proof-of-payment attachment link. Two independent producers: `ExecutivePaymentScreen` (when `isExecutivePayment = true`) and `ProcurementExecutionScreen`'s own Path C "Remittance Advice Document" upload (`locIsViaRequester`, Procurement proceeding with a requester-supplied invoice). `ProcurementExecutionScreen` skips its own upload requirement and reuses this field's existing value when `isExecutivePayment = true` — see `CLAUDE.md` |
 | `OfficialInvoiceLink` | Text (URL) | Final official invoice link, set by `Submit_Invoice` flow result |
 | `ProcurementExecutedBy` | Lookup→Employee List | |
 | `ProcurementExecutedAt` | DateTime | |
