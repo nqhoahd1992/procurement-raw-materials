@@ -795,8 +795,7 @@ Screens:
                                                   txtDescriptionValue_PE.Value,
                                                   gSelectedRequest.InvoiceRegion.Value,
                                                   txtABNValue_PE.Value,
-                                                  "Raw Materials Procurement App",
-                                                  gSelectedRequest.ProjectID
+                                                  "Raw Materials Procurement App"
                                               )
                                           );
                                           If(
@@ -997,8 +996,7 @@ Screens:
                                                   txtDescriptionValue_PE.Value,
                                                   gSelectedRequest.InvoiceRegion.Value,
                                                   txtABNValue_PE.Value,
-                                                  "Raw Materials Procurement App",
-                                                  gSelectedRequest.ProjectID
+                                                  "Raw Materials Procurement App"
                                               )
                                           );
                                           If(
