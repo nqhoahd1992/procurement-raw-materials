@@ -289,7 +289,7 @@ Screens:
                               With(
                                   {wReq: Patch(
                                       'RM Procurement Requests',
-                                      gSelectedRequest,
+                                      LookUp('RM Procurement Requests', ID = gSelectedRequest.ID),
                                       {
                                           Status: {Value: "Pending Procurement"},
                                           RemittanceURL: wURL
@@ -299,6 +299,16 @@ Screens:
                                       IsBlank(wReq.ID),
                                       Notify("Failed to save. Please try again.", NotificationType.Error),
                                       Notify("Remittance submitted. Request sent to Procurement.", NotificationType.Success);
+                                      ProcurementNotify.Run(
+                                          "procurement@maxbiocare.com",
+                                          "Procurement Team",
+                                          wReq.Title,
+                                          wReq.ID,
+                                          "RMProcurementExecution",
+                                          Text(wReq.RequiredDeliveryDate, "dd/mm/yyyy"),
+                                          "",
+                                          "Max Biocare · Raw Materials Procurement"
+                                      );
                                       Navigate(HomeScreen)
                                   )
                               )
