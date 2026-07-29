@@ -472,7 +472,7 @@ Screens:
                               OnSelect: |-
                                 =If(
                                     Not(IsBlank(gSelectedRequest.SFU1AssignedToID)),
-                                    Procurement_Notify_Receipt_Assignee.Run(
+                                    ProcurementNotify.Run(
                                     LookUp('Employee List', ID = gSelectedRequest.SFU1AssignedToID.Id).email,
                                     gSelectedRequest.SFU1AssignedToID.Value,
                                     gSelectedRequest.Title,
@@ -528,7 +528,7 @@ Screens:
                               FontWeight: =""
                               Height: =40
                               InputTextPlaceholder: ="Select an employee"
-                              ItemDisplayText: =ThisItem.'Title'
+                              ItemDisplayText: =ThisItem.Title
                               Items: =Sort(Filter('Employee List', ID in ForAll(Filter('RM User', IsActive), EmployeeID.Id)), Title, SortOrder.Ascending)
                               SelectMultiple: =false
                               Size: =0
@@ -903,7 +903,7 @@ Screens:
                         Color: =RGBA(133, 79, 11, 1)
                         PaddingTop: =0
                         Size: =10
-                        Text: ="Enter actual received quantity, batch number, expiry date, QC number, RM/PK code and Link to COA for each item"
+                        Text: ="Enter actual received quantity, batch number, expiry date, QC number, RM/PK code and Link to COA (optional) for each item"
                         Width: =Parent.Width
                   - rowLineItemsColHeader_SFU:
                       Control: GroupContainer@1.5.0
@@ -1004,7 +1004,7 @@ Screens:
                               FontWeight: =FontWeight.Semibold
                               Height: =36
                               Size: =9
-                              Text: ="Link to COA *"
+                              Text: ="Link to COA"
                               Width: =Parent.Width * 0.15
                   - galLineItems_SFU:
                       Control: Gallery@2.15.0
@@ -1795,7 +1795,7 @@ Screens:
                             If(
                               Not(IsBlank(gSelectedRequest.SFU1AssignedToID)) &&
                               gSelectedRequest.SFU1AssignedToID.Id <> ddAssignReceiver_SFU.Selected.ID,
-                              Procurement_Notify_Receipt_Assignee.Run(
+                              ProcurementNotify.Run(
                                   LookUp('Employee List', ID = gSelectedRequest.SFU1AssignedToID.Id).email,
                                   gSelectedRequest.SFU1AssignedToID.Value,
                                   gSelectedRequest.Title,
@@ -1812,7 +1812,7 @@ Screens:
                                 IsBlank(wPatched.ID),
                                 Notify("Failed to save assignment. Please try again.", NotificationType.Error),
                                 Set(gSelectedRequest, wPatched);
-                                Procurement_Notify_Receipt_Assignee.Run(
+                                ProcurementNotify.Run(
                                   ddAssignReceiver_SFU.Selected.email,
                                   ddAssignReceiver_SFU.Selected.Title,
                                   gSelectedRequest.Title,
@@ -1870,9 +1870,6 @@ Screens:
                                           If(
                                           CountRows(Filter(colLineItemsDetail, ReceivedQty2 > 0 && IsBlank(RMPKCode2))) > 0,
                                           Notify("Please enter RM/PK code for all received materials", NotificationType.Error),
-                                          If(
-                                          CountRows(Filter(colLineItemsDetail, ReceivedQty2 > 0 && IsBlank(COALink2))) > 0,
-                                          Notify("Please enter Link to COA for all received materials", NotificationType.Error),
                                           With(
                                               {
                                                   wPatched: Patch(
@@ -1947,7 +1944,6 @@ Screens:
                                                       )
                                                   )
                                               )
-                                          )
                                           )
                                           )
                                           )

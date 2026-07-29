@@ -238,7 +238,7 @@ Screens:
                               OnSelect: |-
                                 =If(
                                     Not(IsBlank(gSelectedRequest.GRAssignedToID)),
-                                    Procurement_Notify_Receipt_Assignee.Run(
+                                    ProcurementNotify.Run(
                                     LookUp('Employee List', ID = gSelectedRequest.GRAssignedToID.Id).email,
                                     gSelectedRequest.GRAssignedToID.Value,
                                     gSelectedRequest.Title,
@@ -547,7 +547,7 @@ Screens:
                         Color: =RGBA(133, 79, 11, 1)
                         PaddingTop: =0
                         Size: =10
-                        Text: ="Enter actual received quantity, batch number, expiry date, QC number, RM/PK code and Link to COA for each item"
+                        Text: ="Enter actual received quantity, batch number, expiry date, QC number, RM/PK code and Link to COA (optional) for each item"
                         Width: =Parent.Width
                   - rowLineItemsColHeaderGR:
                       Control: GroupContainer@1.5.0
@@ -638,7 +638,7 @@ Screens:
                               FontWeight: =FontWeight.Semibold
                               Height: =36
                               Size: =9
-                              Text: ="Link to COA *"
+                              Text: ="Link to COA"
                               Width: =Parent.Width * 0.15
                   - galLineItemsGR:
                       Control: Gallery@2.15.0
@@ -1071,7 +1071,7 @@ Screens:
                               If(
                                   Not(IsBlank(gSelectedRequest.GRAssignedToID)) &&
                                   gSelectedRequest.GRAssignedToID.Id <> ddAssignReceiver_GR.Selected.ID,
-                                  Procurement_Notify_Receipt_Assignee.Run(
+                                  ProcurementNotify.Run(
                                       LookUp('Employee List', ID = gSelectedRequest.GRAssignedToID.Id).email,
                                       gSelectedRequest.GRAssignedToID.Value,
                                       gSelectedRequest.Title,
@@ -1088,7 +1088,7 @@ Screens:
                                       IsBlank(wPatched.ID),
                                       Notify("Failed to save assignment. Please try again.", NotificationType.Error),
                                       Set(gSelectedRequest, wPatched);
-                                      Procurement_Notify_Receipt_Assignee.Run(
+                                      ProcurementNotify.Run(
                                           ddAssignReceiver_GR.Selected.email,
                                           ddAssignReceiver_GR.Selected.Title,
                                           gSelectedRequest.Title,
@@ -1146,9 +1146,6 @@ Screens:
                                           If(
                                           CountRows(Filter(colLineItemsDetail, ReceivedQty1 > 0 && IsBlank(RMPKCode1))) > 0,
                                           Notify("Please enter RM/PK code for all received materials", NotificationType.Error),
-                                          If(
-                                          CountRows(Filter(colLineItemsDetail, ReceivedQty1 > 0 && IsBlank(COALink1))) > 0,
-                                          Notify("Please enter Link to COA for all received materials", NotificationType.Error),
                                           With(
                                               {
                                                   wPatched: Patch(
@@ -1220,7 +1217,6 @@ Screens:
                                                       )
                                                   )
                                               )
-                                          )
                                           )
                                           )
                                           )

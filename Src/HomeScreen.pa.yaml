@@ -2,52 +2,7 @@ Screens:
   HomeScreen:
     Properties:
       LoadingSpinnerColor: =RGBA(56, 96, 178, 1)
-      OnVisible: |-
-        =Set(gStatusFilter, Blank());
-        ClearCollect(colHomeRoleRequests,
-            Switch(gCurrentUser.Role.Value,
-                "Manager", Filter('RM Procurement Requests',
-                    ManagerApproverID.Id = gCurrentEmployee.ID ||
-                    RequesterEmail = User().Email
-                ),
-                "Procurement", Filter('RM Procurement Requests',
-                    Status.Value = "Pending Procurement" ||
-                    Status.Value = "Pending Invoice" ||
-                    Status.Value = "Pending Accounting" ||
-                    Status.Value = "Goods Receipt & Acceptance" ||
-                    Status.Value = "Pending Supplier Follow-up" ||
-                    Status.Value = "Completed" ||
-                    Status.Value = "Rejected" ||
-                    RequesterEmail = User().Email
-                ),
-                "Accounting", Filter('RM Procurement Requests',
-                    Status.Value = "Pending Accounting" ||
-                    Status.Value = "Goods Receipt & Acceptance" ||
-                    Status.Value = "Pending Supplier Follow-up" ||
-                    Status.Value = "Completed" ||
-                    RequesterEmail = User().Email
-                ),
-                "Executive", 'RM Procurement Requests',
-                "Admin", 'RM Procurement Requests',
-                Filter('RM Procurement Requests',
-                    RequesterEmail = User().Email ||
-                    GRAssignedToID.Id = gCurrentEmployee.ID ||
-                    SFU1AssignedToID.Id = gCurrentEmployee.ID
-                )
-            )
-        );
-        Set(gStatusCounts, {
-            All: CountRows(colHomeRoleRequests),
-            PendingManager: CountIf(colHomeRoleRequests, Status.Value = "Pending Manager"),
-            PendingExecutive: CountIf(colHomeRoleRequests, Status.Value = "Pending Executive"),
-            PendingProcurement: CountIf(colHomeRoleRequests, Status.Value = "Pending Procurement"),
-            PendingAccounting: CountIf(colHomeRoleRequests, Status.Value = "Pending Accounting"),
-            PendingInvoice: CountIf(colHomeRoleRequests, Status.Value = "Pending Invoice"),
-            GoodsReceipt: CountIf(colHomeRoleRequests, Status.Value = "Goods Receipt & Acceptance"),
-            SupplierFollowUp: CountIf(colHomeRoleRequests, Status.Value = "Pending Supplier Follow-up"),
-            Completed: CountIf(colHomeRoleRequests, Status.Value = "Completed"),
-            Rejected: CountIf(colHomeRoleRequests, Status.Value = "Rejected")
-        })
+      OnVisible: =Set(gStatusFilter, Blank())
     Children:
       - lblNoRole:
           Control: Label@2.5.1
@@ -173,8 +128,8 @@ Screens:
                   PaddingLeft: =8
                   PaddingRight: =8
                   Size: =11
-                  Text: ="All (" & gStatusCounts.All & ")"
-                  Width: =70
+                  Text: ="All"
+                  Width: =50
             - divFilter1:
                 Control: Rectangle@2.3.0
                 Properties:
@@ -195,8 +150,8 @@ Screens:
                   PaddingLeft: =8
                   PaddingRight: =8
                   Size: =11
-                  Text: ="Pending Manager (" & gStatusCounts.PendingManager & ")"
-                  Width: =170
+                  Text: ="Pending Manager"
+                  Width: =140
             - divFilter2:
                 Control: Rectangle@2.3.0
                 Properties:
@@ -217,8 +172,7 @@ Screens:
                   PaddingLeft: =8
                   PaddingRight: =8
                   Size: =11
-                  Text: ="Pending Executive (" & gStatusCounts.PendingExecutive & ")"
-                  Width: =170
+                  Text: ="Pending Executive"
             - divFilter3:
                 Control: Rectangle@2.3.0
                 Properties:
@@ -239,8 +193,8 @@ Screens:
                   PaddingLeft: =8
                   PaddingRight: =8
                   Size: =11
-                  Text: ="Pending Procurement (" & gStatusCounts.PendingProcurement & ")"
-                  Width: =200
+                  Text: ="Pending Procurement"
+                  Width: =170
             - divFilter4:
                 Control: Rectangle@2.3.0
                 Properties:
@@ -261,8 +215,8 @@ Screens:
                   PaddingLeft: =8
                   PaddingRight: =8
                   Size: =11
-                  Text: ="Pending Accounting (" & gStatusCounts.PendingAccounting & ")"
-                  Width: =190
+                  Text: ="Pending Accounting"
+                  Width: =160
             - divFilter5:
                 Control: Rectangle@2.3.0
                 Properties:
@@ -283,8 +237,8 @@ Screens:
                   PaddingLeft: =8
                   PaddingRight: =8
                   Size: =11
-                  Text: ="Pending Invoice (" & gStatusCounts.PendingInvoice & ")"
-                  Width: =160
+                  Text: ="Pending Invoice"
+                  Width: =130
             - divFilter6:
                 Control: Rectangle@2.3.0
                 Properties:
@@ -305,8 +259,8 @@ Screens:
                   PaddingLeft: =8
                   PaddingRight: =8
                   Size: =11
-                  Text: ="Goods Receipt (" & gStatusCounts.GoodsReceipt & ")"
-                  Width: =150
+                  Text: ="Goods Receipt"
+                  Width: =120
             - divFilter7:
                 Control: Rectangle@2.3.0
                 Properties:
@@ -327,8 +281,7 @@ Screens:
                   PaddingLeft: =8
                   PaddingRight: =8
                   Size: =11
-                  Text: ="Supplier Follow-up (" & gStatusCounts.SupplierFollowUp & ")"
-                  Width: =190
+                  Text: ="Supplier Follow-up"
             - divFilter8:
                 Control: Rectangle@2.3.0
                 Properties:
@@ -349,8 +302,8 @@ Screens:
                   PaddingLeft: =8
                   PaddingRight: =8
                   Size: =11
-                  Text: ="Completed (" & gStatusCounts.Completed & ")"
-                  Width: =150
+                  Text: ="Completed"
+                  Width: =120
             - divFilter9:
                 Control: Rectangle@2.3.0
                 Properties:
@@ -371,8 +324,8 @@ Screens:
                   PaddingLeft: =8
                   PaddingRight: =8
                   Size: =11
-                  Text: ="Rejected (" & gStatusCounts.Rejected & ")"
-                  Width: =150
+                  Text: ="Rejected"
+                  Width: =120
       - rectFilterBarBorder:
           Control: Rectangle@2.3.0
           Properties:
@@ -493,7 +446,7 @@ Screens:
                               LayoutGap: =10
                               LayoutJustifyContent: =LayoutJustifyContent.End
                               LayoutMinHeight: =28
-                              LayoutMinWidth: =670
+                              LayoutMinWidth: =720
                               RadiusBottomLeft: =0
                               RadiusBottomRight: =0
                               RadiusTopLeft: =0
