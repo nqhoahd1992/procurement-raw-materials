@@ -573,10 +573,10 @@ Screens:
                               Visible: |-
                                 =(gCurrentUser.Role.Value = "Procurement" || gCurrentUser.Role.Value = "Admin") &&
                                 ThisItem.Status.Value <> "Rejected" &&
-                                CountRows(Filter('RM Procurement Line Items',
+                                Not(IsEmpty(Filter('RM Procurement Line Items',
                                     RequestIDText = Text(ThisItem.ID) &&
-                                    ((ReceivedQty1 > 0 && IsBlank(COALink1)) || (ReceivedQty2 > 0 && IsBlank(COALink2)))
-                                )) > 0
+                                    (COA1Missing || COA2Missing)
+                                )))
                               Width: =150
                         - btnSubmitInvoice:
                             Control: ModernButton@1.0.0

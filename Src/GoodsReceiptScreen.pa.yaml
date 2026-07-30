@@ -1203,7 +1203,8 @@ Screens:
                                                                       ExpiryDate1: If(ThisRecord.ReceivedQty1 > 0, ThisRecord.ExpiryDate1, Blank()),
                                                                       QCNumber1: If(ThisRecord.ReceivedQty1 > 0, ThisRecord.QCNumber1, ""),
                                                                       RMPKCode1: If(ThisRecord.ReceivedQty1 > 0, ThisRecord.RMPKCode1, ""),
-                                                                      COALink1: If(ThisRecord.ReceivedQty1 > 0, ThisRecord.COALink1, "")
+                                                                      COALink1: If(ThisRecord.ReceivedQty1 > 0, ThisRecord.COALink1, ""),
+                                                                      COA1Missing: ThisRecord.ReceivedQty1 > 0 && IsBlank(ThisRecord.COALink1)
                                                                   }
                                                               )
                                                           );

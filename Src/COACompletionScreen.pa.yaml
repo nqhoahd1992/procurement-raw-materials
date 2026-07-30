@@ -9,7 +9,7 @@ Screens:
             ForAll(
                 Filter(
                     'RM Procurement Line Items',
-                    RequestIDText = Text(gSelectedRequest.ID) && ReceivedQty1 > 0 && IsBlank(COALink1)
+                    RequestIDText = Text(gSelectedRequest.ID) && COA1Missing
                 ),
                 {ID: ID, RowKey: ID * 10 + 1, MaterialName: MaterialName, COARound: 1, ReceivedQty: ReceivedQty1, BatchNumber: BatchNumber1, ExpiryDate: ExpiryDate1, QCNumber: QCNumber1, RMPKCode: RMPKCode1, NewCOALink: ""}
             )
@@ -19,7 +19,7 @@ Screens:
             ForAll(
                 Filter(
                     'RM Procurement Line Items',
-                    RequestIDText = Text(gSelectedRequest.ID) && ReceivedQty2 > 0 && IsBlank(COALink2)
+                    RequestIDText = Text(gSelectedRequest.ID) && COA2Missing
                 ),
                 {ID: ID, RowKey: ID * 10 + 2, MaterialName: MaterialName, COARound: 2, ReceivedQty: ReceivedQty2, BatchNumber: BatchNumber2, ExpiryDate: ExpiryDate2, QCNumber: QCNumber2, RMPKCode: RMPKCode2, NewCOALink: ""}
             )
@@ -352,7 +352,11 @@ Screens:
                             Patch(
                                 'RM Procurement Line Items',
                                 {ID: ThisRecord.ID},
-                                If(ThisRecord.COARound = 1, {COALink1: ThisRecord.NewCOALink}, {COALink2: ThisRecord.NewCOALink})
+                                If(
+                                    ThisRecord.COARound = 1,
+                                    {COALink1: ThisRecord.NewCOALink, COA1Missing: false},
+                                    {COALink2: ThisRecord.NewCOALink, COA2Missing: false}
+                                )
                             )
                         );
                         Notify("Link to COA saved.", NotificationType.Success);
@@ -361,7 +365,7 @@ Screens:
                             ForAll(
                                 Filter(
                                     'RM Procurement Line Items',
-                                    RequestIDText = Text(gSelectedRequest.ID) && ReceivedQty1 > 0 && IsBlank(COALink1)
+                                    RequestIDText = Text(gSelectedRequest.ID) && COA1Missing
                                 ),
                                 {ID: ID, RowKey: ID * 10 + 1, MaterialName: MaterialName, COARound: 1, ReceivedQty: ReceivedQty1, BatchNumber: BatchNumber1, ExpiryDate: ExpiryDate1, QCNumber: QCNumber1, RMPKCode: RMPKCode1, NewCOALink: ""}
                             )
@@ -371,7 +375,7 @@ Screens:
                             ForAll(
                                 Filter(
                                     'RM Procurement Line Items',
-                                    RequestIDText = Text(gSelectedRequest.ID) && ReceivedQty2 > 0 && IsBlank(COALink2)
+                                    RequestIDText = Text(gSelectedRequest.ID) && COA2Missing
                                 ),
                                 {ID: ID, RowKey: ID * 10 + 2, MaterialName: MaterialName, COARound: 2, ReceivedQty: ReceivedQty2, BatchNumber: BatchNumber2, ExpiryDate: ExpiryDate2, QCNumber: QCNumber2, RMPKCode: RMPKCode2, NewCOALink: ""}
                             )
