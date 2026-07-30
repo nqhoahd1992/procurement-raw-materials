@@ -1290,7 +1290,7 @@ Screens:
                   - lblGR2Header_SFU:
                       Control: Label@2.5.1
                       Properties:
-                        FontWeight: =FontWeight.Bold
+                        FontWeight: =FontWeight.Semibold
                         Height: =24
                         Size: =12
                         Text: ="Goods Receipt — Round 2"
@@ -1527,7 +1527,7 @@ Screens:
                   - lblStep2Header_SFU:
                       Control: Label@2.5.1
                       Properties:
-                        FontWeight: =FontWeight.Bold
+                        FontWeight: =FontWeight.Semibold
                         Height: =24
                         Size: =12
                         Text: ="Procurement Follow-up"
@@ -1675,7 +1675,7 @@ Screens:
                   - lblFollowUpNotesLabel_SFU:
                       Control: Label@2.5.1
                       Properties:
-                        FontWeight: =FontWeight.Bold
+                        FontWeight: =FontWeight.Semibold
                         Height: =24
                         Size: =11
                         Text: ="Remarks *"

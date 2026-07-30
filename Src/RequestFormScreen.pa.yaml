@@ -687,7 +687,6 @@ Screens:
                             Control: Label@2.5.1
                             Properties:
                               Fill: =RGBA(214, 221, 224, 1)
-                              FontWeight: =FontWeight.Semibold
                               PaddingLeft: =8
                               Size: =10
                               Text: ="Port Melbourne Warehouse"
@@ -719,7 +718,6 @@ Screens:
                             Control: Label@2.5.1
                             Properties:
                               Fill: =RGBA(214, 221, 224, 1)
-                              FontWeight: =FontWeight.Semibold
                               PaddingLeft: =8
                               Size: =10
                               Text: ="Port Melbourne Warehouse"

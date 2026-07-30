@@ -965,8 +965,10 @@ Screens:
                         X: =40
                         Y: =40
                   - btnSubmitExec:
-                      Control: Button@0.0.45
+                      Control: ModernButton@1.0.0
                       Properties:
+                        Align: =Align.Center
+                        FontWeight: =""
                         Height: =36
                         OnSelect: |-
                           =If(
@@ -1026,7 +1028,8 @@ Screens:
                                                               rdoExecutiveDecision.Selected.Value = "Approve with conditions",
                                                               txtApprovalConditions.Value,
                                                               ""
-                                                          )
+                                                          ),
+                                                          ExecutiveApproverID: {Id: gCurrentEmployee.ID, Value: gCurrentEmployee.Title}
                                                       }
                                                   )},
                                                   If(
@@ -1035,7 +1038,7 @@ Screens:
                                                       Notify("Decision submitted successfully", NotificationType.Success);
                                                       If(
                                                           wReq.isExecutivePayment,
-                                                          Procurement_Notify_Receipt_Assignee.Run(
+                                                          ProcurementNotify.Run(
                                                               gCurrentEmployee.Email,
                                                               gCurrentEmployee.Title,
                                                               wReq.Title,
@@ -1055,7 +1058,16 @@ Screens:
                                   )
                               )
                           )
+                        PaddingBottom: =5
+                        PaddingLeft: =12
+                        PaddingRight: =12
+                        PaddingTop: =5
+                        RadiusBottomLeft: =4
+                        RadiusBottomRight: =4
+                        RadiusTopLeft: =4
+                        RadiusTopRight: =4
                         Text: ="Submit Decision →"
+                        VerticalAlign: =VerticalAlign.Middle
                         Width: =200
                         X: =40
                         Y: =40
