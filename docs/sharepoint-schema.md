@@ -31,7 +31,7 @@ Does **not** have a `Category`, `PreferredSupplier`, or `Department` column (all
 
 | Column | Type | Notes |
 |---|---|---|
-| `Tiêu đề` (Title) | Text | Auto-built: `<employee> - <dd/mm/yyyy>` (no longer includes Category — see removal note above) |
+| `Title` (Title) | Text | Auto-built: `<employee> - <dd/mm/yyyy>` (no longer includes Category — see removal note above) |
 | `Status` ⚠ | Choice | **Drives the workflow** — value list below |
 | `RequesterEmail` ⚠ | Text | `User().Email`; "my requests" filter key |
 | `ProjectID` | Text | The related `project-list` project's business key (`Project_List.ProjectID`), set from `ddProject_1` when `rdoHasProject = "Yes"`; blank when the request isn't tied to a project |
@@ -62,26 +62,42 @@ Does **not** have a `Category`, `PreferredSupplier`, or `Department` column (all
 | `AccountingCompletedAt` | DateTime | set by `AccountingScreen` submit, alongside `Status = "Completed"` |
 | `ConditionsText` | Text (multiline) | set on "Approve with conditions" |
 | `PurchaseRequestLink` | Text (URL) | read-only in `RequestDetailScreen`; no `Patch` site found anywhere in the app — appears unwritten by current app code |
-| `GRAssignedToID` | Lookup→Employee List | delegate for Goods Receipt; blank = Requester performs it |
-| `GoodsReceiptBy` | Text | |
-| `GoodsReceiptDate` | DateTime | |
-| `GoodsReceiptStatus` | Choice | |
-| `GoodsAcceptanceDecision` | Choice | `Accepted`, `Rejected`, `Requires Supplier Follow-up` |
-| `GoodsReceiptRemarks` | Text (multiline) | |
-| `GoodsReceiptAt` | DateTime | |
-| `SFU1AssignedToID` | Lookup→Employee List | delegate for Supplier Follow-up Round 2 Step 1 (Requester); blank = Requester performs it |
-| `FollowUpReceiptBy` | Text | |
-| `FollowUpReceiptDate` | DateTime | |
-| `FollowUpReceiptStatus` | Choice | same choices as `GoodsReceiptStatus` |
-| `FollowUpAcceptanceDecision` | Choice | `Accepted`, `Accepted with Adjustment` |
-| `CreditNote` | Text | required when follow-up decision = adjustment; cleared to `""` at the start of the Step-2 form |
-| `Fulfillment` | Choice | `Fulfilled`, `Fulfilled with Adjustment` |
-| `FollowUpRemarks` | Text (multiline) | |
-| `FollowUpReceiptAt` | DateTime | |
-| `SupplierFollowUpNotes` | Text (multiline) | |
-| `FollowUpCompletedAt` | DateTime | |
+| `GRAssignedToID` | Lookup→Employee List | delegate for Goods Receipt round 1; blank = Requester performs it |
+| `SFU1AssignedToID` | Lookup→Employee List | delegate for the **currently open** receipt round (round ≥ 2); blank = Requester performs it. **Cleared after every round** so the next round's receiver is picked again |
+| `ReceiptRoundCount` ⬅ **new** | Number | how many receipt rounds have been submitted. `GoodsReceiptScreen` writes `1`; `SupplierFollowUpScreen` writes `N` each round. Used to number the next round (`+1`), stamp `RoundNumber` on the log and receipt-round rows, and label the UI |
+| `LatestReceiptDecision` ⬅ **new** | Text | the acceptance decision of the most recent receipt round — `Accepted`, `Requires Supplier Follow-up`, or (round ≥ 2 only) `Accepted with Adjustment`. Plain Text (not Choice) so both the round-1 and round-N option sets fit. **Together with `Status` this is the whole state machine** — see the note below |
+| `CreditNote` | Text | request-level, written **once** — only on the `Accepted with Adjustment` branch, by `ProcurementFollowUpScreen` |
+| `Fulfillment` | Choice | `Fulfilled` (written by whichever screen closes with `Accepted`) or `Fulfilled with Adjustment` (written by `ProcurementFollowUpScreen`) |
 | `InvoiceRegion` ⚠ | Choice | Country code used to file the invoice into the correct storage folder. **Not user-selected** — hardcoded to `"AU"` on submit, since `CostCenter` is now always `"Port Melbourne Warehouse"` |
 | `Attachments` | Attachments | invoice/supporting files; written via `Form1`+`SubmitForm` (Patch can't write attachments) |
+
+**All four receipt Choice columns were deleted — the dropdowns hold their options inline.** Nothing reads these columns' *value* on a request any more (the header moved per-round into `'RM Procurement Execution Log'`), so keeping them purely as `Choices()` sources was dead coupling. A literal `["a", "b"]` in Power Fx is a one-column table whose column is named `Value`, so every `.Selected.Value` reference kept working unchanged.
+
+| Deleted column | Was `Items` of | Now |
+|---|---|---|
+| `GoodsReceiptStatus` | `ddReceiptStatus_GR` | `=["Fully Received", "Partially Received", "Incorrect Items", "Damaged Items"]` |
+| `FollowUpReceiptStatus` | `ddReceiptStatus2_SFU` | same four values |
+| `GoodsAcceptanceDecision` | `ddAcceptanceDecision_GR` | `=["Accepted", "Requires Supplier Follow-up"]` — **round 1 can no longer reject**; see the note below |
+| `FollowUpAcceptanceDecision` | `ddAcceptanceDecision2_SFU` | `=["Requires Supplier Follow-up", "Accepted", "Accepted with Adjustment"]` — the first option is what lets the receiving loop continue past round 2; the third is what triggers the Credit Note |
+
+**Goods Receipt round 1 no longer offers `Rejected`.** A short/damaged/incorrect delivery is now recorded as `Requires Supplier Follow-up` and handled through the receiving loop instead of terminating the request. The `Rejected` **`Status`** value is untouched and still reachable — `ManagerReviewScreen`, `ExecutiveApprovalScreen` and `ProcurementExecutionScreen` all still set it.
+
+Trade-off of inlining: changing an option list is now a `.pa.yaml` edit pasted back into Studio, not a List-settings change on SharePoint — and because `LatestReceiptDecision` and the log's `AcceptanceDecision`/`ReceiptStatus` store these as plain text, renaming an option also means updating every `= "..."` comparison in the receiving loop.
+
+**Deleted columns.** These held the round-1 / round-2 receipt header back when the app was capped at two rounds. There was no live receipt data at the time of the change, so they were **removed from the list** rather than kept as fallbacks — the app contains no read path for any of them:
+
+| Deleted column | Replaced by |
+|---|---|
+| `GoodsReceiptBy` | `'RM Procurement Execution Log'.ReceivedBy` (Step 3) |
+| `GoodsReceiptDate` | `…ReceiptDate` (Step 3) |
+| `GoodsReceiptRemarks` | `…Notes` (Step 3) |
+| `GoodsReceiptAt` | `…ExecutedAt` (Step 3) |
+| `FollowUpReceiptBy` | `…ReceivedBy` (Step 4) |
+| `FollowUpReceiptDate` | `…ReceiptDate` (Step 4) |
+| `FollowUpRemarks` | `…Notes` (Step 4) |
+| `FollowUpReceiptAt` | `…ExecutedAt` (Step 4) |
+| `SupplierFollowUpNotes` | `…Notes` (Step 5, one row per round) |
+| `FollowUpCompletedAt` | `…ExecutedAt` on the **final** Step-5 row. Deleted for a different reason from the rest: it was never per-round, just write-only — the app wrote it and no screen ever read it |
 
 ### `Status` choice values and routing (exact strings — used as literals across all screens)
 
@@ -101,41 +117,33 @@ Required ⚠: none enforced by schema, but the app always writes `RequestID`, `R
 
 | Column | Type | Notes |
 |---|---|---|
-| `Tiêu đề` (Title) | Text | Not set by the app's `Patch` — left blank/default |
+| `Title` (Title) | Text | Not set by the app's `Patch` — left blank/default |
 | `RequestID` | Lookup→'RM Procurement Requests' | `{Id: wNewRequest.ID, Value: wNewRequest.Title}`, written once per line item via `ForAll` on `RequestFormScreen` submit |
 | `RequestIDText` | Text | join key — `Filter('RM Procurement Line Items', RequestIDText = Text(gSelectedRequest.ID))` on every downstream screen |
 | `MaterialID` | Lookup→'Raw Materials' | `{Id: MaterialID, Value: MaterialName}` |
 | `MaterialName` | Text | copy of the raw material's `Title` at the time the line item was added |
 | `Unit` | Text | one of `pcs`, `kg`, `box`, `set`, `liter`, `meter` (hardcoded list on `RequestFormScreen`, not a Choice column) |
 | `Quantity` | Number | |
-| `ReceivedQty1` | Number | Goods Receipt round-1 received quantity |
-| `BatchNumber1` | Text | Goods Receipt round-1 batch number |
-| `ExpiryDate1` | Date | Goods Receipt round-1 expiry date |
-| `QCNumber1` | Text | Goods Receipt round-1 QC number |
-| `RMPKCode1` | Text | Goods Receipt round-1 RM/PK code |
-| `COALink1` | Text | Goods Receipt round-1 Link to COA (URL) |
-| `COA1Missing` | Yes/No | `true` when `ReceivedQty1 > 0 && IsBlank(COALink1)` at the time `GoodsReceiptScreen`/`COACompletionScreen` last wrote this row — see note below |
-| `ReceivedQty2` | Number | Supplier Follow-up round-2 received quantity |
-| `BatchNumber2` | Text | Supplier Follow-up round-2 batch number |
-| `ExpiryDate2` | Date | Supplier Follow-up round-2 expiry date |
-| `QCNumber2` | Text | Supplier Follow-up round-2 QC number |
-| `RMPKCode2` | Text | Supplier Follow-up round-2 RM/PK code |
-| `COALink2` | Text | Supplier Follow-up round-2 Link to COA (URL) |
-| `COA2Missing` | Yes/No | `true` when `ReceivedQty2 > 0 && IsBlank(COALink2)` at the time `SupplierFollowUpScreen`/`COACompletionScreen` last wrote this row — see note below |
+
+**Nothing about receiving lives on this list.** The 14 `…1` / `…2` columns it used to carry (`ReceivedQty1` `BatchNumber1` `ExpiryDate1` `QCNumber1` `RMPKCode1` `COALink1` `COA1Missing` and the matching `…2` set) were **deleted** when receipt rounds became unbounded — two fixed column sets can only ever hold two rounds. Per-round receipt data is now one row per (line item × round) in `'RM Procurement Receipt Rounds'`. No formula anywhere in the app reads the deleted columns.
 
 **How it's populated**: `RequestFormScreen` builds a working collection `colLineItems` (`{RowID, MaterialID, MaterialName, Unit, Quantity}`) via `galLineItems`/`btnAddLineItem`/`ddMaterial_1`/`ddUnit_1`/`txtQty_1`/`btnRemoveItem_1`. Submit requires ≥1 row, every row's `MaterialID <> 0`, non-blank `Unit`, and `Quantity > 0`. After the request `Patch` succeeds, a `ForAll(colLineItems, Patch('RM Procurement Line Items', Defaults(...), {...}))` writes one row per material, then `Clear(colLineItems)`.
 
-**How it's read back**: `GoodsReceiptScreen`, `SupplierFollowUpScreen`, `RequestDetailScreen` each load `colLineItemsDetail` via `ClearCollect(colLineItemsDetail, Filter('RM Procurement Line Items', RequestIDText = Text(gSelectedRequest.ID)))` on `OnVisible`, then patch back the round-1/round-2 received-quantity/batch/expiry fields per row during Goods Receipt / Supplier Follow-up. `colLineItemsDetail` itself does **not** carry `Category`/`Supplier` (those live on `'Raw Materials'`, not on the line-item row) — each of these 3 screens re-looks them up per row via `LookUp('Raw Materials', ID = ThisItem.MaterialID.Id)` to display them:
-- `RequestDetailScreen` (read-only, less crowded) shows them as full **Category**/**Supplier** columns alongside Trade Name/Unit/Qty.
-- `GoodsReceiptScreen`/`SupplierFollowUpScreen` (data-entry rows already packed with Received Qty/Batch/Expiry/QC Number/RM-PK Code/Link to COA inputs) instead show a small grey `"<Category> · <Supplier>"` subtitle line under the trade name, to avoid squeezing the input columns.
+**How it's read back**: `GoodsReceiptScreen`, `SupplierFollowUpScreen`, `RequestDetailScreen` each load `colLineItemsDetail` via `ClearCollect(colLineItemsDetail, Filter('RM Procurement Line Items', RequestIDText = Text(gSelectedRequest.ID)))` on `OnVisible`. It is now a **read-only staging collection** — no screen patches receipt data back onto these rows any more. Each screen immediately projects it into a purpose-built collection:
+- `GoodsReceiptScreen` / `SupplierFollowUpScreen` → `colRoundEntry`, the blank data-entry buffer for the round being recorded (`{LineItemID, MaterialID, MaterialName, Unit, OrderedQty, PrevReceivedQty, ReceivedQty, BatchNumber, ExpiryDate, QCNumber, RMPKCode, COALink}`). `PrevReceivedQty` = `Sum` of that line item's existing `colReceiptRounds` rows, so the receiver can see how much is still outstanding. On submit each row with `ReceivedQty > 0` becomes a new `'RM Procurement Receipt Rounds'` row.
+- `RequestDetailScreen` → `colLineItemsSummary` (`{ID, MaterialID, MaterialName, Unit, Quantity, TotalReceivedQty}`), where `TotalReceivedQty` is the `Sum` across all rounds.
 
-`Src/COACompletionScreen.pa.yaml` is `gSelectedRequest`-scoped, same as the 3 screens above, but reads into its own `colCOAOutstanding` collection (not `colLineItemsDetail`) filtered further to only the rows where `COA1Missing`/`COA2Missing` is true. It patches `COALink1`/`COALink2` (and clears the matching `COA1Missing`/`COA2Missing` flag) directly and does **not** touch `Status` or write an execution-log row — see `CLAUDE.md`'s "Link to COA completion" section.
+`colLineItemsDetail` does **not** carry `Category`/`Supplier` (those live on `'Raw Materials'`) — the screens re-look them up per row to display them:
+- `RequestDetailScreen` (read-only, less crowded) shows them as full **Category**/**Supplier** columns alongside Trade Name/Unit/Qty, and clicking a row opens a per-round drill-down gallery over `Filter(colReceiptRounds, LineItemID = gSelectedLineItem.ID)`.
+- `GoodsReceiptScreen`/`SupplierFollowUpScreen` (data-entry rows already packed with Received Qty/Batch/Expiry/QC Number/RM-PK Code/Link to COA inputs) instead show a small grey `"<Category> · <Supplier>"` subtitle line under the trade name, to avoid squeezing the input columns. Note these two screens project `MaterialID` into `colRoundEntry` as a **plain number** (`li.MaterialID.Id`), so the lookup there is `LookUp('Raw Materials', ID = ThisItem.MaterialID)` — no `.Id`.
 
-**`COA1Missing`/`COA2Missing` exist purely to avoid a Power Apps delegation warning.** `Filter('RM Procurement Line Items', IsBlank(COALink1))` is flagged non-delegable by Studio — `IsBlank()` on a SharePoint text column can never be delegated by that connector, no formula rewrite fixes it. Every place that used to filter on `IsBlank(COALink1)`/`IsBlank(COALink2)` (`COACompletionScreen`, `HomeScreen`'s `btnCOACompletion_Request.Visible`) now filters on these two Yes/No columns instead, which **are** delegable via plain equality/truthy checks. The flags are written locally (evaluated against an already-fetched record inside a `Patch`, not against the data source, so `IsBlank` there is fine) at the same 2 places `COALink1`/`COALink2` themselves are written: `GoodsReceiptScreen`'s `btnSubmit_GR` sets `COA1Missing`, `SupplierFollowUpScreen`'s `btnSubmitStep1_SFU` sets `COA2Missing`, and `COACompletionScreen`'s save clears whichever flag it just filled in. **These 2 columns did not exist before this change — any `'RM Procurement Line Items'` row created earlier has them blank**, which Power Fx treats as falsy, so pre-existing outstanding COA rows will silently stop appearing in `COACompletionScreen`/the "Link to COA" button until a one-time manual backfill sets `COA1Missing`/`COA2Missing` correctly on old rows (e.g. via SharePoint Quick Edit, filtering `ReceivedQty1 > 0` and `COALink1` blank).
+`Src/COACompletionScreen.pa.yaml` is `gSelectedRequest`-scoped and reads into its own `colCOAOutstanding` from a single source — `'RM Procurement Receipt Rounds'` rows where `COAMissing` is true — patching back `COALink`/`COAMissing`. The receipt-round row `ID` is the unique key, so the input's `UpdateIf` keys off it directly; the earlier `RowKey`/`Source` disambiguation is gone, because a line item can now appear once per round and each of those is its own row. The screen does **not** touch `Status` or write an execution-log row — see `CLAUDE.md`'s "Link to COA completion" section.
 
-Both `GoodsReceiptScreen` (`galLineItemsGR`) and `SupplierFollowUpScreen` Step 1 (`galLineItems_SFU`) render their per-material receiving row as two stacked lines per item (`TemplateSize: 100`): row 1 = Received Qty / Batch No / Expiry Date (round-1/round-2 as applicable); row 2 = QC Number / RM-PK Code / Link to COA. The 4 companion fields `BatchNumber`/`ExpiryDate`/`QCNumber`/`RMPKCode` (suffixed `1` or `2`) are required on submit for every row where the corresponding received quantity is `> 0` — `btnSubmit_GR.OnSelect` / `btnSubmitStep1_SFU.OnSelect` validate each individually before patching. `COALink1`/`COALink2` themselves are **not** validated as required — deliberately optional, see "Link to COA completion" in `CLAUDE.md`.
+**`COAMissing` exists purely to avoid a Power Apps delegation warning.** `Filter(..., IsBlank(COALink))` is flagged non-delegable by Studio — `IsBlank()` on a SharePoint text column can never be delegated by that connector, no formula rewrite fixes it. Every "is the COA link still missing" filter therefore reads the Yes/No column instead, which **is** delegable via a plain truthy check. The flag is written locally (evaluated against an already-fetched record inside a `Patch`, so `IsBlank` there is fine) at the same places the link itself is written: `GoodsReceiptScreen`'s `btnSubmit_GR` and `SupplierFollowUpScreen`'s `btnSubmitStep1_SFU` set it on the receipt-round rows they create, and `COACompletionScreen`'s save clears it.
 
-All of these labels set `Wrap: =false` — every raw-material line-items Gallery in this app uses a fixed `TemplateSize` per row (e.g. `RequestDetailScreen`'s `rowLineItemsSection.Height` formula assumes exactly 36px per `colLineItemsDetail` row). A long Category/Supplier value wrapping to a second line would get clipped against that fixed row height instead of growing it (standard Power Apps Gallery rows can't have a per-item variable height), so text is truncated to one line rather than allowed to wrap.
+Both `GoodsReceiptScreen` (`galLineItemsGR`) and `SupplierFollowUpScreen` (`galLineItems_SFU`) render one 56px row per material against `colRoundEntry`. `SupplierFollowUpScreen` additionally shows read-only **Ordered** and **Received So Far** columns before the input columns, so the receiver knows the outstanding balance for the round they are recording. `BatchNumber`/`ExpiryDate`/`QCNumber`/`RMPKCode` are required on submit for every row where `ReceivedQty > 0` — `btnSubmit_GR.OnSelect` / `btnSubmitStep1_SFU.OnSelect` validate each individually before writing. `COALink` is **not** validated as required — deliberately optional, see "Link to COA completion" in `CLAUDE.md`.
+
+All of these labels set `Wrap: =false` — every raw-material line-items Gallery in this app uses a fixed `TemplateSize` per row. A long Category/Supplier value wrapping to a second line would get clipped against that fixed row height instead of growing it (standard Power Apps Gallery rows can't have a per-item variable height), so text is truncated to one line rather than allowed to wrap.
 
 ---
 
@@ -146,7 +154,7 @@ Only these columns are currently referenced anywhere in the app's Power Fx (conf
 | Column | Type | Notes |
 |---|---|---|
 | `ID` | Number (system) | used as `MaterialID` |
-| `Tiêu đề` (Title) | Text | trade name — shown as the picker's display column (`ItemDisplayText: =ThisItem.Title`); copied into `RM Procurement Line Items.MaterialName` on add |
+| `Title` (Title) | Text | trade name — shown as the picker's display column (`ItemDisplayText: =ThisItem.Title`); copied into `RM Procurement Line Items.MaterialName` on add |
 | `Code` | Text | shown read-only next to the material picker once a material is selected |
 | `Category` | Text | shown read-only next to the material picker once a material is selected. **Not a Choice column** — read directly as `ddMaterial_1.Selected.Category`, no `.Value` |
 | `Supplier` | Text | shown read-only next to the material picker once a material is selected — the raw material's own supplier, now the only place supplier information lives (the request-level `PreferredSupplier` field was removed) |
@@ -161,7 +169,7 @@ Required ⚠: `Role`, `IsActive`, `EmployeeID`.
 
 | Column | Type | Notes |
 |---|---|---|
-| `Tiêu đề` (Title) | Text | |
+| `Title` (Title) | Text | |
 | `Role` ⚠ | Choice | `Requester`, `Manager`, `Executive`, `Procurement`, `Accounting`, `Admin` — **`Requester` must be added as an explicit Choice option on this SharePoint column** (List settings → `Role` column → edit choices). This is a SharePoint schema change, not something any `.pa.yaml` edit can do. |
 | `IsActive` ⚠ | Yes/No | default true; manager picker filters `Role.Value="Manager" && IsActive` |
 | `EmployeeID` ⚠ | Lookup→Employee List | `{Id,Value}` (→Title) |
@@ -179,7 +187,7 @@ Required ⚠: `RequestID`, `StepNumber`.
 
 | Column | Type | Notes |
 |---|---|---|
-| `Tiêu đề` (Title) | Text | `Step <n> - <decision> - <request title>` |
+| `Title` (Title) | Text | `Step <n> - <decision> - <request title>` |
 | `RequestID` ⚠ | Lookup (→Title) | `{Id,Value}` |
 | `StepNumber` ⚠ | Number | **`2` = Manager, `3` = Executive** (documented in the column itself) |
 | `ApproverID` | Lookup→Employee List | |
@@ -197,21 +205,51 @@ Required ⚠: none.
 
 | Column | Type | Notes |
 |---|---|---|
-| `Tiêu đề` (Title) | Text | `Step <n> - <name> - <request title>` |
+| `Title` (Title) | Text | `Step <n> - <name> - <request title>` |
 | `RequestID` | Lookup (→ID) | `{Id,Value}` |
 | `RequestIDText` | Text | join key |
-| `StepNumber` | Number | `1` Procurement Execution · `2` Accounting Handover · `3` Goods Receipt · `4` Supplier Follow-up (Requester) · `5` Supplier Follow-up (Procurement) · `6` Invoice Submission |
+| `StepNumber` | Number | `1` Procurement Execution · `2` Accounting Handover · `3` Goods Receipt **round 1** · `4` Goods Receipt **round N ≥ 2** · `5` Supplier Follow-up (Procurement, one row **per round**) · `6` Invoice Submission |
 | `StepName` | Choice | matches the step |
+| `RoundNumber` ⬅ **new** | Number | which receipt round this row belongs to. Step 3 always `1`; step 4 = `N`; step 5 = the round it follows up on. **Blank on rows written before the unlimited-rounds change** — every reader coalesces to `If(StepNumber = 3, 1, 2)` |
+| `ReceivedBy` ⬅ **new** | Text | steps 3/4 — display name of whoever physically received the goods |
+| `ReceiptDate` ⬅ **new** | Date | steps 3/4 |
+| `ReceiptStatus` ⬅ **new** | Text | steps 3/4 — copy of the chosen `GoodsReceiptStatus` / `FollowUpReceiptStatus` choice value. Plain Text so both choice sets fit |
+| `AcceptanceDecision` ⬅ **new** | Text | steps 3/4 — copy of the chosen acceptance decision. Plain Text, same reason |
 | `ExecutedBy` | Lookup→Employee List | |
 | `ExecutedAt` | DateTime | |
 | `HandoverToID` | Lookup→Employee List | step 1 — accounting handler |
 | `HandoverToIDText` | Text | step 1 |
 | `SupplierSummary` | Text (multiline) | step 1 |
 | `PurchaseOrderLink` | Text (URL) | step 1 |
-| `Notes` | Text (multiline) | steps 1 (reject)/2/3 |
-| `Attachments` | Attachments | Goods Receipt (step 3) and Supplier Follow-up round 2 (step 4) photo evidence — submitted via bound Forms (`frmGRLog_GR`, `frmSFU1Log_SFU`) since `Patch` alone can't write attachments |
+| `Notes` | Text (multiline) | **shared column, meaning depends on `StepNumber`**: step 1 (reject reason) / 2 · steps 3 & 4 = that receipt round's Remarks · step 5 = that round's Procurement follow-up notes |
+| `Attachments` | Attachments | receipt photos for the round — step 3 via `frmGRLog_GR`, step 4 via `frmSFU1Log_SFU`; `Patch` alone can't write attachments. One row per round ⇒ photos are naturally kept per round |
 
-The presence of step-4 / step-5 rows distinguishes the two stages of the supplier follow-up flow (`LookUp` by `StepNumber`); the presence of a step-6 row distinguishes whether `InvoiceSubmissionScreen` has already run for a request.
+There can be **many step-4 rows per request** (one per receipt round from round 2 on) — never `LookUp` one expecting it to be unique. A step-5 row is written at most once, on the `Accepted with Adjustment` branch. Routing state lives on the request in `ReceiptRoundCount` / `LatestReceiptDecision`, not in the log. The presence of a step-6 row still distinguishes whether `InvoiceSubmissionScreen` has already run for a request.
+
+---
+
+## `'RM Procurement Receipt Rounds'` ⬅ **new list** — one row per (line item × receipt round)
+
+Created for the unlimited-receipt-rounds change: the old fixed `…1` / `…2` columns on `'RM Procurement Line Items'` could only ever hold two rounds. Written by `GoodsReceiptScreen` (round 1) and `SupplierFollowUpScreen` (round N ≥ 2); **only materials with `ReceivedQty > 0` get a row**, so a round where a material wasn't delivered simply has no row for it.
+
+| Column | Type | Notes |
+|---|---|---|
+| `Title` (Title) | Text | `R<n> - <material name>` |
+| `RequestID` | Lookup→'RM Procurement Requests' | `{Id, Value}` |
+| `RequestIDText` | Text | join key — every screen filters on this |
+| `LineItemID` | Number | plain number copy of `'RM Procurement Line Items'.ID` (not a Lookup — kept delegable for equality filters and simple to `Sum`/`Filter` locally) |
+| `RoundNumber` | Number | 1 = Goods Receipt, ≥2 = Supplier Follow-up rounds |
+| `MaterialName` | Text | denormalized copy so COA/history screens don't have to re-join |
+| `Unit` | Text | denormalized copy |
+| `ReceivedQty` | Number | quantity received **in this round only** — cumulative received = `Sum` across rounds |
+| `BatchNumber` | Text | required on submit |
+| `ExpiryDate` | Date | required on submit |
+| `QCNumber` | Text | required on submit |
+| `RMPKCode` | Text | required on submit; defaults to the raw material's `Code` |
+| `COALink` | Text (URL) | optional at submit — see "Link to COA completion" in `CLAUDE.md` |
+| `COAMissing` | Yes/No | `IsBlank(COALink)` at write time; delegation-safe filter for the outstanding-COA views (see the delegation note under `'RM Procurement Line Items'`) |
+
+`colReceiptRounds` mirrors this list per request and is the only source for "what has been received": `PrevReceivedQty` on the entry screens, `TotalReceivedQty` on `RequestDetailScreen`, the per-line-item drill-down gallery, and `ProcurementFollowUpScreen`'s "what was received in Round N" table all read it. This list replaced the deleted `…1`/`…2` line-item columns outright — there is no back-fill or synthetic-row path anywhere.
 
 ---
 
@@ -221,7 +259,7 @@ Required ⚠: none.
 
 | Column (internal) | Type | Notes |
 |---|---|---|
-| `Tiêu đề` (Title) | Text | employee display name |
+| `Title` (Title) | Text | employee display name |
 | `Email` | Text | matched against `User().Email` in `App.OnStart` (`LookUp('Employee List', Email = User().Email)`). Elsewhere in the app the same column is read as `.email` (lowercase) — e.g. `LookUp('Employee List', ID = ...).email`, `ddAssignReceiver_GR.Selected.email`. Power Fx matches SharePoint column names case-insensitively so both forms work against the same column; keep both spellings in mind if this column is ever renamed |
 | `Department` | Choice | **No longer read anywhere in the app** — `ddDepartment_1` and the request-level `Department` field were both removed (this app is now an internal Production-department-only workflow) |
 | `JobTitle` | Text | |

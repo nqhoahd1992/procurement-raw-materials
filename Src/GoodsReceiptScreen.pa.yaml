@@ -8,7 +8,26 @@ Screens:
         NewForm(frmGRLog_GR);
         Set(gSelectedRequest, LookUp('RM Procurement Requests', ID = gSelectedRequest.ID));
         ClearCollect(colLineItemsDetail, Filter('RM Procurement Line Items', RequestIDText = Text(gSelectedRequest.ID)));
-        UpdateIf(colLineItemsDetail, IsBlank(RMPKCode1), {RMPKCode1: LookUp('Raw Materials', ID = MaterialID.Id).Code});
+        ClearCollect(
+            colRoundEntry,
+            ForAll(
+                colLineItemsDetail As li,
+                {
+                    LineItemID: li.ID,
+                    MaterialID: li.MaterialID.Id,
+                    MaterialName: li.MaterialName,
+                    Unit: li.Unit,
+                    OrderedQty: li.Quantity,
+                    PrevReceivedQty: 0,
+                    ReceivedQty: 0,
+                    BatchNumber: "",
+                    ExpiryDate: Blank(),
+                    QCNumber: "",
+                    RMPKCode: Coalesce(LookUp('Raw Materials', ID = li.MaterialID.Id).Code, ""),
+                    COALink: ""
+                }
+            )
+        );
         Set(gGRDelegationMode, If(IsBlank(gSelectedRequest.GRAssignedToID) || gSelectedRequest.GRAssignedToID.Id = 0 || gSelectedRequest.GRAssignedToID.Id = gCurrentEmployee.ID, "I will receive", "Assign to someone else"))
     Children:
       - rectHeader_GR:
@@ -519,7 +538,7 @@ Screens:
                 Properties:
                   DropShadow: =DropShadow.None
                   FillPortions: =0
-                  Height: =40 + 36 + 4 + CountRows(colLineItemsDetail) * 56 + 8 + 60
+                  Height: =40 + 36 + 4 + CountRows(colRoundEntry) * 56 + 8 + 60
                   LayoutDirection: =LayoutDirection.Vertical
                   LayoutGap: =4
                   PaddingBottom: =8
@@ -645,8 +664,8 @@ Screens:
                       Variant: BrowseLayout_Vertical_TwoTextOneImageVariant_ver5.0
                       Properties:
                         FillPortions: =0
-                        Height: =CountRows(colLineItemsDetail) * 56 + 12
-                        Items: =colLineItemsDetail
+                        Height: =CountRows(colRoundEntry) * 56 + 12
+                        Items: =colRoundEntry
                         ShowScrollbar: =false
                         TemplatePadding: =4
                         TemplateSize: =56
@@ -657,7 +676,7 @@ Screens:
                             Variant: AutoLayout
                             Properties:
                               DropShadow: =DropShadow.None
-                              Fill: =If(Mod(ThisItem.ID, 2) = 0, RGBA(248, 247, 243, 1), RGBA(255, 255, 255, 1))
+                              Fill: =If(Mod(ThisItem.LineItemID, 2) = 0, RGBA(248, 247, 243, 1), RGBA(255, 255, 255, 1))
                               Height: =56
                               LayoutAlignItems: =LayoutAlignItems.Center
                               LayoutDirection: =LayoutDirection.Horizontal
@@ -698,7 +717,7 @@ Screens:
                                           Height: =16
                                           Size: =8
                                           Text: |-
-                                            =With({wMat: LookUp('Raw Materials', ID = ThisItem.MaterialID.Id)}, If(IsBlank(wMat), "", wMat.Category & " · " & wMat.Supplier))
+                                            =With({wMat: LookUp('Raw Materials', ID = ThisItem.MaterialID)}, If(IsBlank(wMat), "", wMat.Category & " · " & wMat.Supplier))
                                           Width: =Parent.Width
                                           Wrap: =false
                               - lblGRItemUnit:
@@ -714,29 +733,29 @@ Screens:
                                     Align: =Align.Center
                                     Height: =40
                                     OnChange: |-
-                                      =UpdateIf(colLineItemsDetail, ID = ThisItem.ID, {ReceivedQty1: Value(Self.Value)})
+                                      =UpdateIf(colRoundEntry, LineItemID = ThisItem.LineItemID, {ReceivedQty: Value(Self.Value)})
                                     Placeholder: ="0"
-                                    Value: =If(IsBlank(ThisItem.ReceivedQty1) || ThisItem.ReceivedQty1 = 0, "", Text(ThisItem.ReceivedQty1))
+                                    Value: =If(IsBlank(ThisItem.ReceivedQty) || ThisItem.ReceivedQty = 0, "", Text(ThisItem.ReceivedQty))
                                     Width: =Parent.Width * 0.1
                               - txtGRBatch:
                                   Control: TextInput@0.0.54
                                   Properties:
                                     Height: =40
                                     OnChange: |-
-                                      =UpdateIf(colLineItemsDetail, ID = ThisItem.ID, {BatchNumber1: Self.Value})
+                                      =UpdateIf(colRoundEntry, LineItemID = ThisItem.LineItemID, {BatchNumber: Self.Value})
                                     Placeholder: ="Batch no."
-                                    Value: =If(IsBlank(ThisItem.BatchNumber1), "", ThisItem.BatchNumber1)
+                                    Value: =If(IsBlank(ThisItem.BatchNumber), "", ThisItem.BatchNumber)
                                     Width: =Parent.Width * 0.11
                               - dpGRExpiry:
                                   Control: ModernDatePicker@1.0.1
                                   Properties:
                                     BorderStyle: =""
-                                    DefaultDate: =ThisItem.ExpiryDate1
+                                    DefaultDate: =ThisItem.ExpiryDate
                                     Font: =""
                                     FontWeight: =""
                                     Height: =40
                                     OnChange: |-
-                                      =UpdateIf(colLineItemsDetail, ID = ThisItem.ID, {ExpiryDate1: Self.SelectedDate})
+                                      =UpdateIf(colRoundEntry, LineItemID = ThisItem.LineItemID, {ExpiryDate: Self.SelectedDate})
                                     Placeholder: ="Expiry date"
                                     Size: =0
                                     Width: =Parent.Width * 0.11
@@ -745,27 +764,27 @@ Screens:
                                   Properties:
                                     Height: =40
                                     OnChange: |-
-                                      =UpdateIf(colLineItemsDetail, ID = ThisItem.ID, {QCNumber1: Self.Value})
+                                      =UpdateIf(colRoundEntry, LineItemID = ThisItem.LineItemID, {QCNumber: Self.Value})
                                     Placeholder: ="QC number"
-                                    Value: =If(IsBlank(ThisItem.QCNumber1), "", ThisItem.QCNumber1)
+                                    Value: =If(IsBlank(ThisItem.QCNumber), "", ThisItem.QCNumber)
                                     Width: =Parent.Width * 0.1
                               - txtGRRMPKCode:
                                   Control: TextInput@0.0.54
                                   Properties:
                                     Height: =40
                                     OnChange: |-
-                                      =UpdateIf(colLineItemsDetail, ID = ThisItem.ID, {RMPKCode1: Self.Value})
+                                      =UpdateIf(colRoundEntry, LineItemID = ThisItem.LineItemID, {RMPKCode: Self.Value})
                                     Placeholder: ="RM/PK code"
-                                    Value: =If(IsBlank(ThisItem.RMPKCode1), "", ThisItem.RMPKCode1)
+                                    Value: =If(IsBlank(ThisItem.RMPKCode), "", ThisItem.RMPKCode)
                                     Width: =Parent.Width * 0.1
                               - txtGRCOALink:
                                   Control: TextInput@0.0.54
                                   Properties:
                                     Height: =40
                                     OnChange: |-
-                                      =UpdateIf(colLineItemsDetail, ID = ThisItem.ID, {COALink1: Self.Value})
+                                      =UpdateIf(colRoundEntry, LineItemID = ThisItem.LineItemID, {COALink: Self.Value})
                                     Placeholder: ="Link to COA (URL)"
-                                    Value: =If(IsBlank(ThisItem.COALink1), "", ThisItem.COALink1)
+                                    Value: =If(IsBlank(ThisItem.COALink), "", ThisItem.COALink)
                                     Width: =Parent.Width * 0.15
             - rowReceiptFields_GR:
                 Control: GroupContainer@1.5.0
@@ -840,7 +859,7 @@ Screens:
                             Properties:
                               Height: =40
                               InputTextPlaceholder: ="Choose an option"
-                              Items: =Choices('RM Procurement Requests'.GoodsReceiptStatus)
+                              Items: =["Fully Received", "Partially Received", "Incorrect Items", "Damaged Items"]
                               Width: =Parent.Width
                   - rowAcceptanceDecision_GR:
                       Control: GroupContainer@1.5.0
@@ -870,7 +889,7 @@ Screens:
                             Properties:
                               Height: =40
                               InputTextPlaceholder: ="Choose an option"
-                              Items: =Choices('RM Procurement Requests'.GoodsAcceptanceDecision)
+                              Items: =["Accepted", "Requires Supplier Follow-up"]
                               Width: =Parent.Width
             - rowRemarks_GR:
                 Control: GroupContainer@1.5.0
@@ -1132,19 +1151,19 @@ Screens:
                                           CountRows(attGRPhotos.Attachments) = 0,
                                           Notify("Please fill in all required fields", NotificationType.Error),
                                           If(
-                                          ddAcceptanceDecision_GR.Selected.Value <> "Rejected" && CountRows(Filter(colLineItemsDetail, ReceivedQty1 > 0)) = 0,
+                                          CountRows(Filter(colRoundEntry, ReceivedQty > 0)) = 0,
                                           Notify("Please enter received quantity for at least one material", NotificationType.Error),
                                           If(
-                                          CountRows(Filter(colLineItemsDetail, ReceivedQty1 > 0 && IsBlank(BatchNumber1))) > 0,
+                                          CountRows(Filter(colRoundEntry, ReceivedQty > 0 && IsBlank(BatchNumber))) > 0,
                                           Notify("Please enter batch number for all received materials", NotificationType.Error),
                                           If(
-                                          CountRows(Filter(colLineItemsDetail, ReceivedQty1 > 0 && IsBlank(ExpiryDate1))) > 0,
+                                          CountRows(Filter(colRoundEntry, ReceivedQty > 0 && IsBlank(ExpiryDate))) > 0,
                                           Notify("Please enter expiry date for all received materials", NotificationType.Error),
                                           If(
-                                          CountRows(Filter(colLineItemsDetail, ReceivedQty1 > 0 && IsBlank(QCNumber1))) > 0,
+                                          CountRows(Filter(colRoundEntry, ReceivedQty > 0 && IsBlank(QCNumber))) > 0,
                                           Notify("Please enter QC number for all received materials", NotificationType.Error),
                                           If(
-                                          CountRows(Filter(colLineItemsDetail, ReceivedQty1 > 0 && IsBlank(RMPKCode1))) > 0,
+                                          CountRows(Filter(colRoundEntry, ReceivedQty > 0 && IsBlank(RMPKCode))) > 0,
                                           Notify("Please enter RM/PK code for all received materials", NotificationType.Error),
                                           With(
                                               {
@@ -1152,34 +1171,38 @@ Screens:
                                                       'RM Procurement Requests',
                                                       gSelectedRequest,
                                                       {
-                                                          Status: {Value: Switch(
-                                                              ddAcceptanceDecision_GR.Selected.Value,
-                                                              "Accepted",                    If(!wLatest.InvoiceSubmitted, "Pending Invoice", "Pending Accounting"),
-                                                              "Rejected",                    "Rejected",
-                                                              "Requires Supplier Follow-up", "Pending Supplier Follow-up"
+                                                          Status: {Value: If(
+                                                              ddAcceptanceDecision_GR.Selected.Value = "Requires Supplier Follow-up",
+                                                              "Pending Supplier Follow-up",
+                                                              If(!wLatest.InvoiceSubmitted, "Pending Invoice", "Pending Accounting")
                                                           )},
-                                                          GoodsReceiptBy: gCurrentEmployee.Title,
-                                                          GoodsReceiptDate: dpReceiptDate_GR.SelectedDate,
-                                                          GoodsReceiptStatus: {Value: ddReceiptStatus_GR.Selected.Value},
-                                                          GoodsAcceptanceDecision: {Value: ddAcceptanceDecision_GR.Selected.Value},
-                                                          GoodsReceiptRemarks: txtRemarks_GR.Value,
-                                                          GoodsReceiptAt: Now()
+                                                          ReceiptRoundCount: 1,
+                                                          LatestReceiptDecision: ddAcceptanceDecision_GR.Selected.Value
                                                       }
                                                   )
                                               },
                                               If(
                                                   IsBlank(wPatched.ID),
                                                   Notify("Failed to submit. Please try again.", NotificationType.Error),
+                                                  If(
+                                                      ddAcceptanceDecision_GR.Selected.Value = "Accepted",
+                                                      Patch('RM Procurement Requests', {ID: gSelectedRequest.ID}, {Fulfillment: {Value: "Fulfilled"}})
+                                                  );
                                                   With(
                                                       {wLog: Patch(
                                                           'RM Procurement Execution Log',
                                                           Defaults('RM Procurement Execution Log'),
                                                           {
-                                                              Title: "Step 3 - Goods Receipt - " & gSelectedRequest.Title,
+                                                              Title: "Step 3 - Goods Receipt Round 1 - " & gSelectedRequest.Title,
                                                               RequestID: {Id: gSelectedRequest.ID, Value: gSelectedRequest.Title},
                                                               RequestIDText: Text(gSelectedRequest.ID),
                                                               StepNumber: 3,
                                                               StepName: {Value: "Goods Receipt & Acceptance"},
+                                                              RoundNumber: 1,
+                                                              ReceivedBy: gCurrentEmployee.Title,
+                                                              ReceiptDate: dpReceiptDate_GR.SelectedDate,
+                                                              ReceiptStatus: ddReceiptStatus_GR.Selected.Value,
+                                                              AcceptanceDecision: ddAcceptanceDecision_GR.Selected.Value,
                                                               ExecutedBy: {Id: gCurrentEmployee.ID, Value: gCurrentEmployee.Title},
                                                               ExecutedAt: Now(),
                                                               Notes: txtRemarks_GR.Value
@@ -1193,26 +1216,35 @@ Screens:
                                                           EditForm(frmGRLog_GR);
                                                           SubmitForm(frmGRLog_GR);
                                                           ForAll(
-                                                              colLineItemsDetail,
+                                                              Filter(colRoundEntry, ReceivedQty > 0) As re,
                                                               Patch(
-                                                                  'RM Procurement Line Items',
-                                                                  {ID: ThisRecord.ID},
+                                                                  'RM Procurement Receipt Rounds',
+                                                                  Defaults('RM Procurement Receipt Rounds'),
                                                                   {
-                                                                      ReceivedQty1: ThisRecord.ReceivedQty1,
-                                                                      BatchNumber1: If(ThisRecord.ReceivedQty1 > 0, ThisRecord.BatchNumber1, ""),
-                                                                      ExpiryDate1: If(ThisRecord.ReceivedQty1 > 0, ThisRecord.ExpiryDate1, Blank()),
-                                                                      QCNumber1: If(ThisRecord.ReceivedQty1 > 0, ThisRecord.QCNumber1, ""),
-                                                                      RMPKCode1: If(ThisRecord.ReceivedQty1 > 0, ThisRecord.RMPKCode1, ""),
-                                                                      COALink1: If(ThisRecord.ReceivedQty1 > 0, ThisRecord.COALink1, ""),
-                                                                      COA1Missing: ThisRecord.ReceivedQty1 > 0 && IsBlank(ThisRecord.COALink1)
+                                                                      Title: "R1 - " & re.MaterialName,
+                                                                      RequestID: {Id: gSelectedRequest.ID, Value: gSelectedRequest.Title},
+                                                                      RequestIDText: Text(gSelectedRequest.ID),
+                                                                      LineItemID: re.LineItemID,
+                                                                      RoundNumber: 1,
+                                                                      MaterialName: re.MaterialName,
+                                                                      Unit: re.Unit,
+                                                                      ReceivedQty: re.ReceivedQty,
+                                                                      BatchNumber: re.BatchNumber,
+                                                                      ExpiryDate: re.ExpiryDate,
+                                                                      QCNumber: re.QCNumber,
+                                                                      RMPKCode: re.RMPKCode,
+                                                                      COALink: re.COALink,
+                                                                      COAMissing: IsBlank(re.COALink)
                                                                   }
                                                               )
                                                           );
-                                                          Switch(
-                                                              ddAcceptanceDecision_GR.Selected.Value,
-                                                              "Accepted",                    Notify("Goods receipt submitted. Request is now " & If(!wLatest.InvoiceSubmitted, "Pending Invoice.", "Pending Accounting."), NotificationType.Success),
-                                                              "Rejected",                    Notify("Goods receipt submitted. Request is now Rejected.", NotificationType.Success),
-                                                              "Requires Supplier Follow-up", Notify("Goods receipt submitted. Request is pending Supplier Follow-up.", NotificationType.Success)
+                                                          Notify(
+                                                              If(
+                                                                  ddAcceptanceDecision_GR.Selected.Value = "Requires Supplier Follow-up",
+                                                                  "Goods receipt submitted. Receipt round 2 is now open for supplier follow-up.",
+                                                                  "Goods receipt submitted. Request is now " & If(!wLatest.InvoiceSubmitted, "Pending Invoice.", "Pending Accounting.")
+                                                              ),
+                                                              NotificationType.Success
                                                           );
                                                           Navigate(HomeScreen)
                                                       )

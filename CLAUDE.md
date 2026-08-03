@@ -14,17 +14,20 @@ This folder keeps **only the screen logic + UI** (`Src/`). The generated metadat
 
 - `Src/*.pa.yaml` — one file per screen (the actual logic + UI). Screen order in `Src/_EditorState.pa.yaml`.
 - `Src/App.pa.yaml` — `App.OnStart`: resolves the signed-in user and sets global state.
-- `Src/COACompletionScreen.pa.yaml` — per-request screen (Procurement/Admin only, reached via a "Link to COA" button on that request's row in `HomeScreen`) for filling in `COALink1`/`COALink2` on `gSelectedRequest`'s `'RM Procurement Line Items'` rows left blank at Goods Receipt / Supplier Follow-up. See "Link to COA completion" below — it is intentionally **not** part of the request Status workflow.
+- `Src/SupplierFollowUpScreen.pa.yaml` — records **one receipt round (round ≥ 2)**, performed by the Requester or the person they assign. Nothing else: the Procurement side of the follow-up moved out to its own screen (below) because the two halves have different actors, and cramming both into one screen made the visibility gating unmanageable once rounds became unbounded.
+- `Src/ProcurementFollowUpScreen.pa.yaml` — **Procurement/Admin only**; runs **at most once per request** and only on the `Accepted with Adjustment` branch: remarks + Credit Note upload, which also ends the receiving process. Reached from `RequestDetailScreen`'s "Upload Credit Note →" button. Procurement does **not** sit between ordinary receipt rounds — a `Requires Supplier Follow-up` decision opens the next round immediately.
+- `Src/COACompletionScreen.pa.yaml` — per-request screen (Procurement/Admin only, reached via a "Link to COA" button on that request's row in `HomeScreen`) for filling in `COALink` on `gSelectedRequest`'s `'RM Procurement Receipt Rounds'` rows left blank at Goods Receipt / Supplier Follow-up — any round, any number of them. See "Link to COA completion" below — it is intentionally **not** part of the request Status workflow.
 
 ## Backend & connectors
 
 All data lives in **SharePoint Online** (`maxbiocare.sharepoint.com/sites/Powerapps`). Lists:
 - `'RM Procurement Requests'` — the central request record (status, approvers, costs, invoice, goods-receipt, follow-up fields). No longer carries `Category` or `PreferredSupplier` — both moved to the per-material line-item level (see `'Raw Materials'` below).
-- `'RM Procurement Line Items'` — one row per raw material on a request (`MaterialID`/`MaterialName`, `Unit`, `Quantity`, plus Goods-Receipt/Supplier-Follow-Up round-1 and round-2 received-quantity/batch/expiry fields).
+- `'RM Procurement Line Items'` — one row per raw material on a request (`MaterialID`/`MaterialName`, `Unit`, `Quantity`). Carries **no receipt data at all** — the old `…1`/`…2` received-quantity/batch/expiry/COA columns were deleted when rounds became unbounded.
+- `'RM Procurement Receipt Rounds'` — **one row per (line item × receipt round)**, only for materials actually received in that round. This is what makes an unbounded number of receipt rounds possible; the old fixed `…1`/`…2` columns could hold exactly two.
 - `'Raw Materials'` — the raw-material catalog. Only `ID`, `Title` (trade name), `Code`, and `Category` are currently wired into the app; other catalog columns that may exist on SharePoint are not yet referenced anywhere in this code.
 - `'RM User'` — maps an employee to a `Role` (Requester / Manager / Executive / Procurement / Accounting / Admin). **This list is now also the app's membership gate** — an employee must have a row here to use the app at all (see "Global state" and the membership note below). `Requester` must exist as an actual selectable value in this list's `Role` Choice column on SharePoint — that's a SharePoint list-settings change (List settings → `Role` column → edit choices), not something a `.pa.yaml` change can do. Because of this gate, the Goods Receipt / Supplier Follow-up "Assign to someone else" pickers (`ddAssignReceiver_GR`/`ddAssignReceiver_SFU`) are filtered to `Employee List` rows whose `ID` is among active `'RM User'` rows' `EmployeeID.Id` — an employee can only be assigned a receiving task if they can actually log into the app to perform it. Don't widen these pickers back to the full `Employee List` without re-adding some other way for the assignee to gain access.
 - `'RM Procurement Approval Log'` — manager/executive decisions (StepNumber 2 = Manager, 3 = Executive).
-- `'RM Procurement Execution Log'` — procurement/goods-receipt/follow-up/invoice step records (StepNumber 1 = Procurement Execution, 2 = Accounting Handover, 3 = Goods Receipt, 4 = Supplier Follow-up Requester, 5 = Supplier Follow-up Procurement, 6 = Invoice Submission).
+- `'RM Procurement Execution Log'` — procurement/goods-receipt/follow-up/invoice step records (StepNumber 1 = Procurement Execution, 2 = Accounting Handover, 3 = Goods Receipt **round 1**, 4 = Goods Receipt **round N ≥ 2**, 5 = Supplier Follow-up Procurement **for one round**, 6 = Invoice Submission). Steps 3/4/5 carry `RoundNumber` plus the round's header (`ReceivedBy`, `ReceiptDate`, `ReceiptStatus`, `AcceptanceDecision`, `Notes`, `Attachments`). **There are now multiple step-4 and step-5 rows per request** — never `LookUp` one expecting uniqueness.
 - `'Employee List'`, `Project_List` (cross-app list from the sibling `project-list` app).
 - `Product_Database_SKU_Master` — external product-SKU catalog, used only by `RequestFormScreen`'s optional multi-select `cmbSKU` picker (`SelectMultiple: =true`, writes `'RM Procurement Requests'.RelatedSKU` — a multi-value Lookup column — via `ForAll(cmbSKU.SelectedItems, {Id: ID, Value: Title})`). Not used anywhere else in this app.
 
@@ -68,8 +71,14 @@ Invoice-reminder flows (called from `RequesterInvoiceScreen` and `InvoiceSubmiss
 - `gSharePointAttachmentBase` — base URL used to resolve attachment links back to SharePoint.
 - `colRawMaterials` — the `'Raw Materials'` catalog collection backing the line-item material picker; seeded with `FirstN('Raw Materials', 1)` in `App.OnStart` (schema placeholder) and fully reloaded (`ClearCollect(colRawMaterials, 'Raw Materials')`) on `RequestFormScreen.OnVisible`.
 - `colLineItems` — the working collection of raw-material rows (`{RowID, MaterialID, MaterialName, Unit, Quantity}`) being built on `RequestFormScreen` before submit; persisted to `'RM Procurement Line Items'` via `ForAll` on successful submit, then cleared.
-- `colLineItemsDetail` — per-request line items loaded from `'RM Procurement Line Items'` for viewing/receiving on GoodsReceiptScreen / SupplierFollowUpScreen / RequestDetailScreen / AccountingScreen-adjacent screens; carries the round-1/round-2 `ReceivedQty`/`BatchNumber`/`ExpiryDate` fields.
-- `colCOAOutstanding` — `gSelectedRequest`-scoped `'RM Procurement Line Items'` rows still missing `COALink1`/`COALink2`, backing `COACompletionScreen`; seeded with a literal placeholder record in `App.OnStart` (schema placeholder, same reason as `colLineItemsDetail`'s) and fully reloaded on `COACompletionScreen.OnVisible`. Built via `ForAll(Filter(...), {...})` record literals rather than `AddColumns` — the Studio "Preview" YAML/code-paste editor failed to parse `AddColumns` here (rejected the new-column-name string arguments), so every added column is instead just named directly in the `ForAll` record. Carries added columns not on the base list: `COARound` (1 or 2, which field is missing), `ReceivedQty`/`BatchNumber`/`ExpiryDate`/`QCNumber`/`RMPKCode` (read-only copies of the matching round's fields, shown for reference next to the COA input), `NewCOALink` (working input value before save), `RowKey` (`ID * 10 + COARound`). `RowKey`, not `ID`, is the actual unique key per row in this collection — a single line item can appear **twice** (once for round 1, once for round 2) when both rounds are missing COA on the same material, so plain `ID` collides between those two rows; the input's `UpdateIf` keys off `RowKey` for this reason.
+- `colLineItemsDetail` — per-request line items loaded from `'RM Procurement Line Items'` on GoodsReceiptScreen / SupplierFollowUpScreen / RequestDetailScreen. Now a **read-only staging collection**: no screen patches receipt data back onto it. Each screen projects it into a purpose-built collection instead (below).
+- `colReceiptRounds` — the request's `'RM Procurement Receipt Rounds'` rows (one per line item × round). Single source of truth for everything received: `PrevReceivedQty` on the entry screens, `TotalReceivedQty` on `RequestDetailScreen`, and the per-line-item drill-down gallery.
+- `colRoundEntry` — the blank per-round data-entry buffer on GoodsReceiptScreen / SupplierFollowUpScreen: `{LineItemID, MaterialID, MaterialName, Unit, OrderedQty, PrevReceivedQty, ReceivedQty, BatchNumber, ExpiryDate, QCNumber, RMPKCode, COALink}`. `MaterialID` is a **plain number** here (`li.MaterialID.Id`), so the catalog lookup is `LookUp('Raw Materials', ID = ThisItem.MaterialID)` with no `.Id`. Built with `ForAll(colLineItemsDetail As li, {...})` — the `As li` alias is required, since `ThisRecord` inside the nested `Filter(colReceiptRounds, LineItemID = li.ID)` would otherwise rebind to the inner scope.
+- `colRoundHistory` — the per-round header timeline, built from `'RM Procurement Execution Log'` Step 3/4/5 rows sorted by `ID`: `{ID, RoundNumber, StepNumber, StepLabel, ActorName, ActionDate, ReceiptStatus, AcceptanceDecision, Notes}`. `ActorName`/`ActionDate` `Coalesce` the receipt fields against `ExecutedBy`/`ExecutedAt` because Step-5 rows have no receiver or receipt date. Backs the history galleries on SupplierFollowUpScreen / ProcurementFollowUpScreen / RequestDetailScreen.
+  - **Do not try to project `Attachments` into this collection.** `Attachments` is not part of the row scope of a `ForAll` over a SharePoint list — `lg.Attachments` evaluates to an Error there, so `Concat(lg.Attachments, DisplayName, …)` fails with *"'DisplayName' isn't recognized"* and adding an `As` alias just moves the error to *"'att' isn't recognized"*. An attachment column is only reachable on a **full record fetched by `LookUp`**, which is what the dialog below does.
+- `colReceiptPhotos` / `gShowReceiptPhotos` / `gPhotoRoundLabel` — the **receipt-attachments dialog**. A round can have any number of attachments and a gallery-inside-a-gallery with a fixed `TemplateSize` would clip them, so each history row carries a "View attachments" button that does `ClearCollect(colReceiptPhotos, LookUp('RM Procurement Execution Log', ID = ThisItem.ID).Attachments)` and flips `gShowReceiptPhotos`. The button is gated on `ThisItem.StepNumber <> 5`, **not** on an attachment count — because of the row-scope limitation above the row can't know how many files a round has. That gate is exact rather than approximate: Step 3 and Step 4 rows always carry photos (both submits reject an empty `attGRPhotos`/`attSFU1Photos`), and Step 5 rows never carry any, because the Credit Note is attached to the **request** by `formCreditNote_PFU`, not to the log row. The Credit Note stays reachable from `RequestDetailScreen`'s request-level `rowCreditNote` link. The dialog still shows "No files were attached to this round" as a fallback. All three history screens carry an identical scrim + dialog pair (`rectPhotoOverlay_*` / `conPhotoDialog_*`) as their **last two screen-level children** — z-order in Canvas is child order, so they must stay last. The dialog lists file names; each one `Launch(ThisItem.AbsoluteUri, {}, LaunchTarget.New)`. `gShowReceiptPhotos` is reset to `false` in each screen's `OnVisible`. `App.OnStart` seeds `colReceiptPhotos` from `First('RM Procurement Execution Log').Attachments` purely to fix its schema at design time (same trick as `FirstN('Raw Materials', 1)`).
+- `colLineItemsSummary` — RequestDetailScreen's line-items gallery source: `{ID, MaterialID, MaterialName, Unit, Quantity, TotalReceivedQty}` where `TotalReceivedQty` sums `colReceiptRounds` across all rounds. `gSelectedLineItem` is a row of **this** collection, not of `colLineItemsDetail`.
+- `colCOAOutstanding` — `gSelectedRequest`-scoped `'RM Procurement Receipt Rounds'` rows where `COAMissing` is true, backing `COACompletionScreen`; seeded with a literal placeholder record in `App.OnStart` (schema placeholder, same reason as `colLineItemsDetail`'s) and fully reloaded on `COACompletionScreen.OnVisible` and again after each save. Built via `ForAll(Filter(...), {...})` record literals rather than `AddColumns` — the Studio "Preview" YAML/code-paste editor failed to parse `AddColumns` here (rejected the new-column-name string arguments), so every column is instead just named directly in the `ForAll` record. `COARound` is the row's `RoundNumber`; `ReceivedQty`/`BatchNumber`/`ExpiryDate`/`QCNumber`/`RMPKCode` are read-only copies shown for reference next to the input; `NewCOALink` is the working input value before save. The receipt-round row `ID` is genuinely unique here (one row per line item **per round**), so the input's `UpdateIf` keys off `ID` — the `RowKey`/`Source` workaround the old two-column model needed is gone.
 - `gProjectInfo` / `colProjectInvoices` / `gShowRateInfo` — set in `ManagerReviewScreen.OnVisible` and `ExecutiveApprovalScreen.OnVisible` (**not** in `App.OnStart`), backing the "Project Information" panel: `gProjectInfo` is the `LookUp(Project_List, ProjectID = gSelectedRequest.ProjectID)` row (blank when the request isn't tied to a project), `colProjectInvoices` the matching `Procurement_InvoiceData` rows, `gShowRateInfo` the "Currency Exchange Reference" dialog toggle (reset to `false` on every screen entry). The AUD conversion rates behind the panel's Grand Total are hardcoded in a `Switch(Upper(Currency), ...)` inside the `lblProjectGrandTotal_MR`/`_EA` labels and mirrored as plain text in the dialog — change both together, and keep them in sync with the same table in the sibling `projects` app's `ViewProjectScreen`.
 - `gStatusFilter` — set in `HomeScreen.OnVisible`, **not** in `App.OnStart`.
 
@@ -100,22 +109,42 @@ Pending Procurement ──(ProcurementExecutionScreen)──┐
    │   (sets InvoiceMode: "Direct" | "Deferred" | "ViaRequester";
    │    InvoiceSubmitted = true only if the invoice was processed inline)
    ▼
-Goods Receipt & Acceptance ──(GoodsReceiptScreen)──┐
-   │ Accepted                    → Pending Invoice (if !InvoiceSubmitted) else Pending Accounting
-   │ Rejected                    → Rejected
-   │ Requires Supplier Follow-up → Pending Supplier Follow-up
+Goods Receipt & Acceptance ──(GoodsReceiptScreen — receipt ROUND 1, ExecutionLog Step 3)──┐
+   │ Always ends this screen. Writes ReceiptRoundCount = 1, LatestReceiptDecision = <decision>.
+   │ Only 2 options — there is no "Rejected" at goods receipt; a bad delivery enters the loop.
+   │ Accepted                    → Fulfillment = "Fulfilled"
+   │                             → Pending Invoice (if !InvoiceSubmitted) else Pending Accounting
+   │ Requires Supplier Follow-up → Pending Supplier Follow-up, receipt round 2 opens immediately
    ▼
-Pending Supplier Follow-up ──(SupplierFollowUpScreen, 2 steps)──┐
-   │ Step 1 = Requester detail (ExecutionLog StepNumber 4)
-   │   Accepted                  → Pending Invoice (if !InvoiceSubmitted) else Pending Accounting
-   │   Accepted with Adjustment  → Pending Invoice/Pending Accounting (if !InvoiceSubmitted... else stays Pending Supplier Follow-up → Step 2)
-   │ Step 2 = Procurement (ExecutionLog StepNumber 5, only if Step 1 = Adjustment; requires Credit Note)
-   │   → Pending Invoice (if !InvoiceSubmitted) else Pending Accounting
+Pending Supplier Follow-up ── THE RECEIVING LOOP, unbounded ──┐
+   │
+   │  ┌─ SupplierFollowUpScreen — Requester or SFU1AssignedToID, ExecutionLog Step 4, RoundNumber = N
+   │  │     shown when LatestReceiptDecision = "Requires Supplier Follow-up"; the round being
+   │  │     entered is ReceiptRoundCount + 1. Receiver is re-chosen every round.
+   │  │     Writes ReceiptRoundCount = N, LatestReceiptDecision = <decision>, clears SFU1AssignedToID.
+   │  │
+   │  │     Requires Supplier Follow-up → stays Pending Supplier Follow-up
+   │  │                                   → round N+1 opens immediately, NO Procurement step ─┐
+   │  │     Accepted                    → Fulfillment = "Fulfilled"                           │
+   │  │                                   → Pending Invoice / Pending Accounting  (loop ends) │
+   │  │     Accepted with Adjustment    → stays Pending Supplier Follow-up                    │
+   │  │                                   → hands over to Procurement ↓                       │
+   │  │                                                                                       │
+   │  └───────────────────────────────────────────────────────────────────────────────────────┘
+   │
+   │  ┌─ ProcurementFollowUpScreen — Procurement/Admin, ExecutionLog Step 5, RoundNumber = N
+   │  │     Runs at most ONCE per request, and only on the "Accepted with Adjustment" branch.
+   │  │     shown when Status = "Pending Supplier Follow-up" && LatestReceiptDecision = "Accepted with Adjustment"
+   │  │     Requires Remarks + a Credit Note attachment. Writes CreditNote,
+   │  │     Fulfillment = "Fulfilled with Adjustment", and ends the receiving process:
+   │  │     → Pending Invoice (if !InvoiceSubmitted) else Pending Accounting
+   │  └─
    ▼
 Pending Invoice ──(InvoiceSubmissionScreen [Procurement/Admin] or RequesterInvoiceScreen [Requester])──
-   │ InvoiceSubmissionScreen submit (ExecutionLog StepNumber 6) →
-   │   Pending Supplier Follow-up (if a Step-4 log exists but no Step-5 log yet)
-   │   else Pending Accounting
+   │ InvoiceSubmissionScreen submit (ExecutionLog StepNumber 6) → Pending Accounting
+   │   (it never bounces back to Pending Supplier Follow-up: under the loop above, "Pending Invoice"
+   │    is only ever reached *after* the final Procurement follow-up, so the old `locSFUStep2Pending`
+   │    variable was removed outright.)
    │ RequesterInvoiceScreen only uploads RequesterInvoiceURL + notifies Procurement — never changes Status
    ▼
 Pending Accounting ──(AccountingScreen)──
@@ -130,17 +159,45 @@ Completed
 
 Routing relies on these status strings being exact and consistent across `HomeScreen` (filters + gallery `Items` per-role filter), each action screen, and the `Switch`/`If` color maps. **When changing status names or the flow, update every screen that references the string** — there is no shared constant.
 
+### The receiving loop's state — two fields on the request, not the log
+
+`Status` alone can't say where inside "Pending Supplier Follow-up" a request is, and a per-row `LookUp` into the execution log is non-delegable and too slow for `HomeScreen`'s gallery. The loop's position therefore lives in two plain request columns:
+
+| Field | Meaning |
+|---|---|
+| `ReceiptRoundCount` | receipt rounds submitted so far — the round being entered next is `+1` |
+| `LatestReceiptDecision` | the most recent round's acceptance decision (plain **Text**, so both the round-1 and round-N option sets fit) |
+
+Inside `Status = "Pending Supplier Follow-up"` there are exactly two states:
+
+| `LatestReceiptDecision` | Meaning | Screen |
+|---|---|---|
+| `Requires Supplier Follow-up` | receipt round `ReceiptRoundCount + 1` is open | `SupplierFollowUpScreen` (Requester / `SFU1AssignedToID`) |
+| `Accepted with Adjustment` | Credit Note pending | `ProcurementFollowUpScreen` (Procurement/Admin) |
+
+**Always gate on the pair `(Status, LatestReceiptDecision)`, never on the decision alone** — `gSFURoundOpen` and `gPFUPending` both do. The reason is that `LatestReceiptDecision` is a *historical* field: it records what the latest round decided and is never cleared. After Procurement uploads the Credit Note it still reads `Accepted with Adjustment` forever, so a gate reading only the decision would re-open that screen indefinitely. What actually consumes the pending state is `Status` moving to `Pending Invoice` / `Pending Accounting`; the decision only says *which kind* of work was pending.
+
+The receipt-round side is self-clearing for a different reason — the decision is **overwritten** on every submit, so `Requires Supplier Follow-up` always describes the newest round and therefore means "the next round hasn't been recorded yet". Round N+1's submit replaces it. The `Status` half of that gate is defensive rather than load-bearing, but both gates are written the same way so the invariant is enforced rather than assumed.
+
+`Accepted` never leaves a request in this status at all — whichever screen records it routes straight to Pending Invoice / Pending Accounting. That is also why **no third counter is needed**: an earlier design had Procurement follow up after *every* round and needed a `FollowUpRoundCount` to track whose turn it was. That column was dropped once Procurement was scoped down to the single `Accepted with Adjustment` branch.
+
+`ReceiptRoundCount` is read as `Coalesce(ReceiptRoundCount, 0)` on `HomeScreen`, `RequestDetailScreen`, `SupplierFollowUpScreen` and `ProcurementFollowUpScreen` — purely so a request that hasn't reached Goods Receipt yet reads as `0` rather than blank, **not** as a migration fallback. There is no legacy read path anywhere: the columns those fallbacks used were deleted. Keep the four copies in sync.
+
+Both submit buttons re-read the request and abort if it moved under them — `btnSubmitStep1_SFU` checks `ReceiptRoundCount`, `btnSubmit_PFU` checks that `Status`/`LatestReceiptDecision` still say a Credit Note is owed — so two people acting at once can't create a duplicate round or a duplicate close-out.
+
 `SkippedManagerReview` on `'RM Procurement Requests'` and the `ExecutiveApprovalScreen` "Manager Review Skipped" banner (`rowManagerSkipped`, gated on `gSelectedRequest.SkippedManagerReview`) are now **write-only false going forward** — `RequestFormScreen` always writes `false` since every request goes through both approval levels. The field/banner are kept only so older requests submitted before this change (where it may be `true`) still display correctly; don't remove them.
 
 `CostCenter` and `DeliveryLocation` on `RequestFormScreen` are no longer user-selectable — both are hardcoded to `"Port Melbourne Warehouse"` (read-only labels `lblCostCenterValue_1`/`lblDeliveryLocationValue_1`), and `InvoiceRegion` is hardcoded to `"AU"` accordingly. `Currency` is a manual `ddCurrency_1` dropdown (`AUD`/`USD`, default `AUD`) — no longer derived from Cost Center.
 
 ### Link to COA completion (decoupled from the Status workflow)
 
-`COALink1` (Goods Receipt round 1) and `COALink2` (Supplier Follow-up round 2) on `'RM Procurement Line Items'` are **optional** at submit time on `GoodsReceiptScreen`/`SupplierFollowUpScreen` — neither screen's submit validation blocks on them, so a request keeps advancing through its normal `Status` even if these are left blank. Completing them later does **not** re-route the request or touch `Status` at all; it's handled entirely outside the workflow via `Src/COACompletionScreen.pa.yaml`, a per-request screen (Procurement/Admin only) reached via a "Link to COA" button on that request's row in `HomeScreen` (`btnCOACompletion_Request`, in the row's `rowActions` bar below the description — `Visible` only when the signed-in user is Procurement/Admin, `ThisItem.Status.Value <> "Rejected"`, and that request has at least one `'RM Procurement Line Items'` row with `COA1Missing` or `COA2Missing` true). The screen itself re-resolves `gSelectedRequest` and loads only that request's outstanding rows, lets Procurement fill in the missing link per row, and patches `COALink1`/`COALink2` directly (clearing the matching `COA1Missing`/`COA2Missing` flag) — no execution-log row, no Status change. A companion standalone Power Automate flow (not called from Power Fx — see `docs/daily-coa-completion-reminder-flow.md`) sends one daily digest email to every `'RM User'` row with `Role = "Procurement"` listing all outstanding rows across all requests (that flow queries SharePoint directly and is unaffected by how the Canvas screen is scoped).
+`COALink` on `'RM Procurement Receipt Rounds'` is **optional** at submit time on `GoodsReceiptScreen`/`SupplierFollowUpScreen` — neither screen's submit validation blocks on it, so a request keeps advancing through its normal `Status` (and the receiving loop keeps turning) even if it's left blank. Completing it later does **not** re-route the request or touch `Status` at all; it's handled entirely outside the workflow via `Src/COACompletionScreen.pa.yaml`, a per-request screen (Procurement/Admin only) reached via a "Link to COA" button on that request's row in `HomeScreen` (`btnCOACompletion_Request`, in the row's `rowActions` bar below the description — `Visible` only when the signed-in user is Procurement/Admin, `ThisItem.Status.Value <> "Rejected"`, and that request has at least one outstanding row). The screen re-resolves `gSelectedRequest`, loads only that request's outstanding rows, lets Procurement fill in the missing link per row, and patches it back directly (clearing the matching missing-flag) — no execution-log row, no Status change. A companion standalone Power Automate flow (not called from Power Fx — see `docs/daily-coa-completion-reminder-flow.md`) sends one daily digest email to every `'RM User'` row with `Role = "Procurement"` listing all outstanding rows across all requests (that flow queries SharePoint directly and is unaffected by how the Canvas screen is scoped). **That flow still queries the now-deleted `'RM Procurement Line Items'.COA1Missing`/`COA2Missing` columns and must be repointed at `'RM Procurement Receipt Rounds'.COAMissing`, or it breaks outright.**
 
-**Why `COA1Missing`/`COA2Missing` exist (delegation):** filtering `'RM Procurement Line Items'` on `IsBlank(COALink1)`/`IsBlank(COALink2)` triggers a Power Apps delegation warning that no formula rewrite can clear — the SharePoint connector never delegates `IsBlank()` on a Text column. `COA1Missing`/`COA2Missing` are Yes/No columns computed and written locally (fully delegation-safe to filter on) at the same points `COALink1`/`COALink2` are written: `GoodsReceiptScreen.btnSubmit_GR` sets `COA1Missing`, `SupplierFollowUpScreen.btnSubmitStep1_SFU` sets `COA2Missing`, `COACompletionScreen`'s save clears whichever one it just filled in. **These columns are new** — any line item row created before this change has them blank (falsy), so a one-time manual backfill on SharePoint (set `COA1Missing`/`COA2Missing` correctly for existing rows matching the old `ReceivedQty > 0 && IsBlank(COALink)` condition) is required, or those older outstanding rows will silently stop surfacing. See `docs/sharepoint-schema.md` for the full column notes.
+`colCOAOutstanding` has exactly one source — `'RM Procurement Receipt Rounds'` rows with `COAMissing` — so the receipt-round row `ID` is its unique key and the input's `UpdateIf` keys off it directly. The old `RowKey`/`Source` disambiguation is gone: back when round data lived in `…1`/`…2` columns a single line-item `ID` could produce two outstanding rows, but each round is now its own row in the new list.
 
-`btnCOACompletion_Request.Visible` on `HomeScreen` also uses `Not(IsEmpty(Filter('RM Procurement Line Items', ...)))`, not `CountRows(Filter(...)) > 0` — `CountRows` over a `Filter` against a SharePoint data source is itself non-delegable (separate from whatever's inside the `Filter`), while `IsEmpty` is. Follow this `Not(IsEmpty(...))` pattern for any future "does at least one matching row exist" check against a SharePoint list; `CountRows(Filter(...))` is fine only when the source being filtered is a local collection (e.g. `colLineItemsDetail`, `colCOAOutstanding`), never a live data source.
+**Why the `COAMissing` flag exists (delegation):** filtering on `IsBlank(COALink)` triggers a Power Apps delegation warning that no formula rewrite can clear — the SharePoint connector never delegates `IsBlank()` on a Text column. `COAMissing` is a Yes/No column computed and written locally (fully delegation-safe to filter on) at the same points the link itself is written: `GoodsReceiptScreen.btnSubmit_GR` and `SupplierFollowUpScreen.btnSubmitStep1_SFU` set it on the receipt-round rows they create; `COACompletionScreen`'s save clears it. See `docs/sharepoint-schema.md` for the full column notes.
+
+`btnCOACompletion_Request.Visible` on `HomeScreen` uses `Not(IsEmpty(Filter(...)))` against both sources, not `CountRows(Filter(...)) > 0` — `CountRows` over a `Filter` against a SharePoint data source is itself non-delegable (separate from whatever's inside the `Filter`), while `IsEmpty` is. Follow this `Not(IsEmpty(...))` pattern for any future "does at least one matching row exist" check against a SharePoint list; `CountRows(Filter(...))` is fine only when the source being filtered is a local collection (e.g. `colReceiptRounds`, `colRoundEntry`, `colCOAOutstanding`), never a live data source.
 
 ## Role-based visibility (HomeScreen)
 
@@ -149,13 +206,34 @@ The gallery `Items` filters `'RM Procurement Requests'` differently per `gUserRo
 - **Procurement** → requests in status `"Pending Procurement"`, `"Pending Invoice"`, `"Pending Accounting"`, `"Goods Receipt & Acceptance"`, `"Pending Supplier Follow-up"`, `"Completed"`, `"Rejected"`, or their own requests. Does not include `"Pending Manager"`/`"Pending Executive"`.
 - **Accounting** → a narrower version of Procurement's list: `"Pending Accounting"`, `"Goods Receipt & Acceptance"`, `"Pending Supplier Follow-up"`, `"Completed"`, or their own requests (no `"Pending Procurement"`, `"Pending Invoice"`, or `"Rejected"`).
 - **Executive / Admin** → all requests, unfiltered.
-- **Requester (default, and any unrecognized role)** → own requests (`RequesterEmail = User().Email`), plus requests where they're the current Goods Receipt or Supplier Follow-up assignee (`GRAssignedToID.Id = gCurrentEmployee.ID || SFU1AssignedToID.Id = gCurrentEmployee.ID`).
+- **Requester (default, and any unrecognized role)** → own requests (`RequesterEmail = User().Email`), plus requests where they're the current Goods Receipt or receipt-round assignee (`GRAssignedToID.Id = gCurrentEmployee.ID || SFU1AssignedToID.Id = gCurrentEmployee.ID`). Note `SFU1AssignedToID` is cleared at the end of every round, so this only matches while a round is actually open and assigned to them.
+
+The status pill for `"Pending Supplier Follow-up"` is a **computed sub-status**, same pattern as "Pending Payment From Executive" — the real `Status` string never changes inside the loop. It renders `"Supplier Follow-up (Credit Note)"` when `LatestReceiptDecision = "Accepted with Adjustment"`, otherwise `"Goods Receipt (Round <n+1>)"`. It reads only `ThisItem.*` fields — no `LookUp` — which is both delegable and faster than the old Step-4 log probe it replaced.
 
 Filter buttons and "+ New Request" are **not** role-gated — every user who passes the membership gate (`Not(IsBlank(gCurrentEmployee.ID)) && Not(IsBlank(gCurrentUser.ID))`) sees the same filter bar and "+ New Request" button; only the underlying gallery `Items` differ per role. Keep the per-role `Items` filter in sync when adding new statuses, but don't assume the buttons themselves need per-role `Visible` logic — they currently don't have any.
+
+## Pending manual SharePoint work for the unlimited-rounds change
+
+None of this can be done from `.pa.yaml`. **The app will not run correctly until all of it is applied**, and the new screens must be added as data sources in Studio.
+
+1. **Create list `'RM Procurement Receipt Rounds'`** with the columns in `docs/sharepoint-schema.md`, and add it as a data source in Studio.
+2. **`'RM Procurement Requests'`** → add `ReceiptRoundCount` (Number) and `LatestReceiptDecision` (Single line of text). Two columns, not three — there is no `FollowUpRoundCount`.
+3. **`'RM Procurement Requests'.FollowUpAcceptanceDecision`** → add `Requires Supplier Follow-up` as a third Choice option. Without it the loop can never continue past round 2.
+4. **`'RM Procurement Execution Log'`** → add `RoundNumber` (Number), `ReceivedBy` (text), `ReceiptDate` (Date), `ReceiptStatus` (text), `AcceptanceDecision` (text).
+5. **Delete the superseded columns.** There was no live receipt data when this change was made, so they were removed outright rather than kept as fallbacks — **the app has no legacy read path**, and conversely it will not compile if any deleted column is still referenced.
+   - `'RM Procurement Line Items'` → delete all 14: `ReceivedQty1` `BatchNumber1` `ExpiryDate1` `QCNumber1` `RMPKCode1` `COALink1` `COA1Missing` `ReceivedQty2` `BatchNumber2` `ExpiryDate2` `QCNumber2` `RMPKCode2` `COALink2` `COA2Missing`.
+   - `'RM Procurement Requests'` → delete 10: `GoodsReceiptBy` `GoodsReceiptDate` `GoodsReceiptRemarks` `GoodsReceiptAt` `FollowUpReceiptBy` `FollowUpReceiptDate` `FollowUpRemarks` `FollowUpReceiptAt` `SupplierFollowUpNotes` `FollowUpCompletedAt`. (`FollowUpCompletedAt` was write-only even before this change — the same timestamp is `ExecutedAt` on the final Step-5 log row.)
+   - `'RM Procurement Requests'` → also delete all four receipt Choice columns: `GoodsReceiptStatus`, `GoodsAcceptanceDecision`, `FollowUpReceiptStatus`, `FollowUpAcceptanceDecision`. Their four dropdowns now hold the options inline as literal tables, so nothing references the columns.
+6. **`docs/daily-coa-completion-reminder-flow.md`'s flow** queries `'RM Procurement Line Items'.COA1Missing`/`COA2Missing`, which no longer exist. Repoint it at `'RM Procurement Receipt Rounds'.COAMissing` or it breaks.
 
 ## Conventions
 
 - All UI text, field names, comments, and code are **English** (per global instruction). Vietnamese appears only as SharePoint system-column internal names and the `vi-VN` UserLocale.
 - Patches use the `With({wPatched: Patch(...)}, If(IsBlank(wPatched.ID), Notify(error), ...success...))` pattern to guard against write failures — follow it for new writes.
-- `RequestIDText` (text copy of the request ID) is used to look up log rows: `LookUp('RM Procurement Execution Log', RequestIDText = Text(gSelectedRequest.ID) && StepNumber = N)`.
+- `RequestIDText` (text copy of the request ID) is used to look up log rows. **Steps 1/2/6 are unique per request and can still be `LookUp`ed; steps 3/4/5 are not** — there is one row per receipt round, so filter and sort them instead.
 - Colors are inline `RGBA(...)`; brand purple is `RGBA(83, 74, 183, 1)`.
+- The four receipt dropdowns hold their options as **inline literal tables**, not `Choices()` — the backing SharePoint columns are gone. A literal `["a", "b"]` is a one-column table whose column is named `Value`, so `.Selected.Value` reads the same as it did with `Choices()`. Changing an option is now a code edit pasted into Studio; and since `LatestReceiptDecision` / the log's `AcceptanceDecision`/`ReceiptStatus` store these as plain text, renaming an option also means updating every `= "..."` comparison in the receiving loop.
+  - `ddReceiptStatus_GR`, `ddReceiptStatus2_SFU` → `Fully Received` · `Partially Received` · `Incorrect Items` · `Damaged Items`
+  - `ddAcceptanceDecision_GR` (round 1) → `Accepted` · `Requires Supplier Follow-up`
+  - `ddAcceptanceDecision2_SFU` (round ≥ 2) → `Requires Supplier Follow-up` · `Accepted` · `Accepted with Adjustment`
+  - Round 1 deliberately has **no `Rejected`** — a bad delivery goes into the receiving loop instead of terminating the request. The `Rejected` *Status* value is untouched; Manager/Executive/Procurement still set it.

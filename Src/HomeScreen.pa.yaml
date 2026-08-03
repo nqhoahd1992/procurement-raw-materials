@@ -471,9 +471,9 @@ Screens:
                                 =If(
                                   ThisItem.Status.Value = "Pending Supplier Follow-up",
                                   If(
-                                    IsBlank(LookUp('RM Procurement Execution Log', RequestIDText = Text(ThisItem.ID) And StepNumber = 4)),
-                                    "Supplier Follow-up (Step 1)",
-                                    "Supplier Follow-up (Step 2)"
+                                    ThisItem.LatestReceiptDecision = "Accepted with Adjustment",
+                                    "Supplier Follow-up (Credit Note)",
+                                    "Goods Receipt (Round " & (Coalesce(ThisItem.ReceiptRoundCount, 0) + 1) & ")"
                                   ),
                                   If(
                                     ThisItem.Status.Value = "Pending Executive" && ThisItem.isExecutivePayment,
@@ -519,7 +519,7 @@ Screens:
                                   ThisItem.Status.Value = "Goods Receipt & Acceptance" && Not(IsBlank(ThisItem.GRAssignedToID)),
                                   " | Receiver: " & ThisItem.GRAssignedToID.Value,
                                   If(
-                                    ThisItem.Status.Value = "Pending Supplier Follow-up" && Not(IsBlank(ThisItem.SFU1AssignedToID)) && IsBlank(LookUp('RM Procurement Execution Log', RequestIDText = Text(ThisItem.ID) && StepNumber = 4)),
+                                    ThisItem.Status.Value = "Pending Supplier Follow-up" && Not(IsBlank(ThisItem.SFU1AssignedToID)) && ThisItem.LatestReceiptDecision = "Requires Supplier Follow-up",
                                     " | Receiver: " & ThisItem.SFU1AssignedToID.Value,
                                     ""
                                   )
@@ -573,9 +573,9 @@ Screens:
                               Visible: |-
                                 =(gCurrentUser.Role.Value = "Procurement" || gCurrentUser.Role.Value = "Admin") &&
                                 ThisItem.Status.Value <> "Rejected" &&
-                                Not(IsEmpty(Filter('RM Procurement Line Items',
+                                Not(IsEmpty(Filter('RM Procurement Receipt Rounds',
                                     RequestIDText = Text(ThisItem.ID) &&
-                                    (COA1Missing || COA2Missing)
+                                    COAMissing
                                 )))
                               Width: =150
                         - btnSubmitInvoice:
