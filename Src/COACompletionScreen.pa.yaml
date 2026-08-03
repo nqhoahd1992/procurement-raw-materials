@@ -8,20 +8,10 @@ Screens:
             colCOAOutstanding,
             ForAll(
                 Filter(
-                    'RM Procurement Line Items',
-                    RequestIDText = Text(gSelectedRequest.ID) && COA1Missing
+                    'RM Procurement Receipt Rounds',
+                    RequestIDText = Text(gSelectedRequest.ID) && COAMissing
                 ),
-                {ID: ID, RowKey: ID * 10 + 1, MaterialName: MaterialName, COARound: 1, ReceivedQty: ReceivedQty1, BatchNumber: BatchNumber1, ExpiryDate: ExpiryDate1, QCNumber: QCNumber1, RMPKCode: RMPKCode1, NewCOALink: ""}
-            )
-        );
-        Collect(
-            colCOAOutstanding,
-            ForAll(
-                Filter(
-                    'RM Procurement Line Items',
-                    RequestIDText = Text(gSelectedRequest.ID) && COA2Missing
-                ),
-                {ID: ID, RowKey: ID * 10 + 2, MaterialName: MaterialName, COARound: 2, ReceivedQty: ReceivedQty2, BatchNumber: BatchNumber2, ExpiryDate: ExpiryDate2, QCNumber: QCNumber2, RMPKCode: RMPKCode2, NewCOALink: ""}
+                {ID: ID, MaterialName: MaterialName, COARound: RoundNumber, ReceivedQty: ReceivedQty, BatchNumber: BatchNumber, ExpiryDate: ExpiryDate, QCNumber: QCNumber, RMPKCode: RMPKCode, NewCOALink: ""}
             )
         )
     Children:
@@ -309,7 +299,7 @@ Screens:
                         FillPortions: =1
                         Height: =36
                         OnChange: |-
-                          =UpdateIf(colCOAOutstanding, RowKey = ThisItem.RowKey, {NewCOALink: Self.Value})
+                          =UpdateIf(colCOAOutstanding, ID = ThisItem.ID, {NewCOALink: Self.Value})
                         Placeholder: ="Link to COA (URL)"
                         Value: =ThisItem.NewCOALink
                         Width: =Parent.Width * 0.28
@@ -348,36 +338,18 @@ Screens:
                         CountRows(Filter(colCOAOutstanding, Not(IsBlank(NewCOALink)))) = 0,
                         Notify("Please enter at least one Link to COA before saving.", NotificationType.Warning),
                         ForAll(
-                            Filter(colCOAOutstanding, Not(IsBlank(NewCOALink))),
-                            Patch(
-                                'RM Procurement Line Items',
-                                {ID: ThisRecord.ID},
-                                If(
-                                    ThisRecord.COARound = 1,
-                                    {COALink1: ThisRecord.NewCOALink, COA1Missing: false},
-                                    {COALink2: ThisRecord.NewCOALink, COA2Missing: false}
-                                )
-                            )
+                            Filter(colCOAOutstanding, Not(IsBlank(NewCOALink))) As co,
+                            Patch('RM Procurement Receipt Rounds', {ID: co.ID}, {COALink: co.NewCOALink, COAMissing: false})
                         );
                         Notify("Link to COA saved.", NotificationType.Success);
                         ClearCollect(
                             colCOAOutstanding,
                             ForAll(
                                 Filter(
-                                    'RM Procurement Line Items',
-                                    RequestIDText = Text(gSelectedRequest.ID) && COA1Missing
+                                    'RM Procurement Receipt Rounds',
+                                    RequestIDText = Text(gSelectedRequest.ID) && COAMissing
                                 ),
-                                {ID: ID, RowKey: ID * 10 + 1, MaterialName: MaterialName, COARound: 1, ReceivedQty: ReceivedQty1, BatchNumber: BatchNumber1, ExpiryDate: ExpiryDate1, QCNumber: QCNumber1, RMPKCode: RMPKCode1, NewCOALink: ""}
-                            )
-                        );
-                        Collect(
-                            colCOAOutstanding,
-                            ForAll(
-                                Filter(
-                                    'RM Procurement Line Items',
-                                    RequestIDText = Text(gSelectedRequest.ID) && COA2Missing
-                                ),
-                                {ID: ID, RowKey: ID * 10 + 2, MaterialName: MaterialName, COARound: 2, ReceivedQty: ReceivedQty2, BatchNumber: BatchNumber2, ExpiryDate: ExpiryDate2, QCNumber: QCNumber2, RMPKCode: RMPKCode2, NewCOALink: ""}
+                                {ID: ID, MaterialName: MaterialName, COARound: RoundNumber, ReceivedQty: ReceivedQty, BatchNumber: BatchNumber, ExpiryDate: ExpiryDate, QCNumber: QCNumber, RMPKCode: RMPKCode, NewCOALink: ""}
                             )
                         )
                     )

@@ -379,7 +379,7 @@ Screens:
                   "ID", SortOrder.Descending
               )
             OnSelect: =Set(gSelectedRequest, ThisItem); If(ThisItem.Status.Value = "Pending Invoice" && (gCurrentUser.Role.Value = "Procurement" || gCurrentUser.Role.Value = "Admin"), Navigate(InvoiceSubmissionScreen), Navigate(RequestDetailScreen))
-            TemplateSize: =132
+            TemplateSize: =164
             Visible: =Not(IsBlank(gCurrentEmployee.ID)) && Not(IsBlank(gCurrentUser.ID))
             Width: =Parent.Width
             Y: =188
@@ -397,7 +397,7 @@ Screens:
                 Variant: AutoLayout
                 Properties:
                   DropShadow: =DropShadow.None
-                  Height: =132
+                  Height: =164
                   LayoutDirection: =LayoutDirection.Vertical
                   LayoutGap: =4
                   PaddingBottom: =10
@@ -471,9 +471,9 @@ Screens:
                                 =If(
                                   ThisItem.Status.Value = "Pending Supplier Follow-up",
                                   If(
-                                    IsBlank(LookUp('RM Procurement Execution Log', RequestIDText = Text(ThisItem.ID) And StepNumber = 4)),
-                                    "Supplier Follow-up (Step 1)",
-                                    "Supplier Follow-up (Step 2)"
+                                    ThisItem.LatestReceiptDecision = "Accepted with Adjustment",
+                                    "Supplier Follow-up (Credit Note)",
+                                    "Goods Receipt (Round " & (Coalesce(ThisItem.ReceiptRoundCount, 0) + 1) & ")"
                                   ),
                                   If(
                                     ThisItem.Status.Value = "Pending Executive" && ThisItem.isExecutivePayment,
@@ -519,7 +519,7 @@ Screens:
                                   ThisItem.Status.Value = "Goods Receipt & Acceptance" && Not(IsBlank(ThisItem.GRAssignedToID)),
                                   " | Receiver: " & ThisItem.GRAssignedToID.Value,
                                   If(
-                                    ThisItem.Status.Value = "Pending Supplier Follow-up" && Not(IsBlank(ThisItem.SFU1AssignedToID)) && IsBlank(LookUp('RM Procurement Execution Log', RequestIDText = Text(ThisItem.ID) && StepNumber = 4)),
+                                    ThisItem.Status.Value = "Pending Supplier Follow-up" && Not(IsBlank(ThisItem.SFU1AssignedToID)) && ThisItem.LatestReceiptDecision = "Requires Supplier Follow-up",
                                     " | Receiver: " & ThisItem.SFU1AssignedToID.Value,
                                     ""
                                   )
@@ -530,9 +530,10 @@ Screens:
                       Control: Label@2.5.1
                       Properties:
                         Color: =RGBA(136, 135, 128, 1)
-                        Height: =18
+                        Overflow: =Overflow.Scroll
                         Size: =9
                         Text: =ThisItem.ProcurementDescription
+                        VerticalAlign: =VerticalAlign.Top
                         Width: =Parent.Width - 32
                         Wrap: =false
                   - rowActions:
@@ -573,9 +574,9 @@ Screens:
                               Visible: |-
                                 =(gCurrentUser.Role.Value = "Procurement" || gCurrentUser.Role.Value = "Admin") &&
                                 ThisItem.Status.Value <> "Rejected" &&
-                                Not(IsEmpty(Filter('RM Procurement Line Items',
+                                Not(IsEmpty(Filter('RM Procurement Receipt Rounds',
                                     RequestIDText = Text(ThisItem.ID) &&
-                                    (COA1Missing || COA2Missing)
+                                    COAMissing
                                 )))
                               Width: =150
                         - btnSubmitInvoice:
@@ -661,4 +662,4 @@ Screens:
                   Fill: =RGBA(210, 209, 199, 1)
                   Height: =1
                   Width: =Parent.Width
-                  Y: =131
+                  Y: =163

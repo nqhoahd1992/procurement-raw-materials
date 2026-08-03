@@ -6,12 +6,65 @@ Screens:
         =Set(gSFU1LogEntry, Blank());
         Set(gSFU1PendingAttachments, Blank());
         NewForm(frmSFU1Log_SFU);
+        Reset(chkSFU1);
+        Reset(chkSFU2);
+        Reset(chkSFU3);
+        Reset(chkSFU4);
+        Reset(chkSFU5);
+        Reset(dpReceiptDate2_SFU);
+        Reset(ddReceiptStatus2_SFU);
+        Reset(ddAcceptanceDecision2_SFU);
+        Reset(txtRemarks2_SFU);
         Set(gSelectedRequest, LookUp('RM Procurement Requests', ID = gSelectedRequest.ID));
+        Set(gRoundsDone, Coalesce(gSelectedRequest.ReceiptRoundCount, 0));
+        Set(gLatestDecision, gSelectedRequest.LatestReceiptDecision);
+        Set(gCurrentRound, gRoundsDone + 1);
+        Set(gSFURoundOpen, gSelectedRequest.Status.Value = "Pending Supplier Follow-up" && gLatestDecision = "Requires Supplier Follow-up");
         ClearCollect(colLineItemsDetail, Filter('RM Procurement Line Items', RequestIDText = Text(gSelectedRequest.ID)));
-        UpdateIf(colLineItemsDetail, IsBlank(RMPKCode2), {RMPKCode2: LookUp('Raw Materials', ID = MaterialID.Id).Code});
+        ClearCollect(colReceiptRounds, Filter('RM Procurement Receipt Rounds', RequestIDText = Text(gSelectedRequest.ID)));
+        ClearCollect(
+            colRoundHistory,
+            ForAll(
+                Sort(
+                    Filter('RM Procurement Execution Log', RequestIDText = Text(gSelectedRequest.ID) && StepNumber >= 3 && StepNumber <= 5),
+                    ID,
+                    SortOrder.Ascending
+                ) As lg,
+                {
+                    ID: lg.ID,
+                    StepNumber: lg.StepNumber,
+                    StepLabel: If(lg.StepNumber = 5, "Procurement follow-up", "Goods receipt"),
+                    RoundNumber: lg.RoundNumber,
+                    ActorName: Coalesce(lg.ReceivedBy, lg.ExecutedBy.Value),
+                    ActionDate: Coalesce(lg.ReceiptDate, lg.ExecutedAt),
+                    ReceiptStatus: lg.ReceiptStatus,
+                    AcceptanceDecision: lg.AcceptanceDecision,
+                    Notes: lg.Notes
+                }
+            )
+        );
+        ClearCollect(
+            colRoundEntry,
+            ForAll(
+                colLineItemsDetail As li,
+                {
+                    LineItemID: li.ID,
+                    MaterialID: li.MaterialID.Id,
+                    MaterialName: li.MaterialName,
+                    Unit: li.Unit,
+                    OrderedQty: li.Quantity,
+                    PrevReceivedQty: Sum(Filter(colReceiptRounds, LineItemID = li.ID), ReceivedQty),
+                    ReceivedQty: 0,
+                    BatchNumber: "",
+                    ExpiryDate: Blank(),
+                    QCNumber: "",
+                    RMPKCode: Coalesce(LookUp('Raw Materials', ID = li.MaterialID.Id).Code, ""),
+                    COALink: ""
+                }
+            )
+        );
         Set(gSFU1DelegationMode, If(IsBlank(gSelectedRequest.SFU1AssignedToID) || gSelectedRequest.SFU1AssignedToID.Id = 0 || gSelectedRequest.SFU1AssignedToID.Id = gCurrentEmployee.ID, "I will receive", "Assign to someone else"));
-        Set(locCreditNoteURL_SFU, "");
-        Set(gPendingCreditNoteName_SFU, "")
+        Set(gShowReceiptPhotos, false)
     Children:
       - rectHeader_SFU:
           Control: Rectangle@2.3.0
@@ -26,7 +79,7 @@ Screens:
             FontWeight: =FontWeight.Bold
             Height: =60
             Size: =14
-            Text: ="Raw Material Procurement - Supplier Follow-up"
+            Text: ="Raw Material Procurement - Goods Receipt Round " & gCurrentRound
             Width: =600
             X: =20
       - rowInfoBlock_SFU:
@@ -170,6 +223,37 @@ Screens:
                               Size: =11
                               Text: =gSelectedRequest.Currency & " " & Text(gSelectedRequest.EstimatedCost, "#,###")
                               Width: =240
+                  - colRoundsSoFar_SFU:
+                      Control: GroupContainer@1.5.0
+                      Variant: AutoLayout
+                      Properties:
+                        DropShadow: =DropShadow.None
+                        LayoutDirection: =LayoutDirection.Vertical
+                        LayoutGap: =2
+                        RadiusBottomLeft: =0
+                        RadiusBottomRight: =0
+                        RadiusTopLeft: =0
+                        RadiusTopRight: =0
+                        Width: =240
+                      Children:
+                        - lblRoundsSoFarLabel_SFU:
+                            Control: Label@2.5.1
+                            Properties:
+                              Color: =RGBA(136, 135, 128, 1)
+                              Height: =18
+                              PaddingLeft: =0
+                              Size: =9
+                              Text: ="Receipt Rounds Completed"
+                              Width: =240
+                        - lblRoundsSoFarValue_SFU:
+                            Control: Label@2.5.1
+                            Properties:
+                              FontWeight: =FontWeight.Semibold
+                              Height: =20
+                              PaddingLeft: =0
+                              Size: =11
+                              Text: =Text(gRoundsDone)
+                              Width: =240
       - conScrollable_SFU:
           Control: GroupContainer@1.5.0
           Variant: AutoLayout
@@ -185,15 +269,268 @@ Screens:
             Width: =Parent.Width
             Y: =180
           Children:
-            - rowGR1Header_SFU:
+            - rowHistoryHeader_SFU:
                 Control: GroupContainer@1.5.0
                 Variant: AutoLayout
                 Properties:
                   DropShadow: =DropShadow.None
                   Fill: =RGBA(241, 239, 232, 1)
+                  FillPortions: =0
+                  Height: =40 + 32 + CountRows(colRoundHistory) * 88 + 16
                   LayoutDirection: =LayoutDirection.Vertical
                   LayoutGap: =4
-                  LayoutMinHeight: =50
+                  PaddingBottom: =12
+                  PaddingLeft: =20
+                  PaddingRight: =20
+                  PaddingTop: =16
+                  RadiusBottomLeft: =0
+                  RadiusBottomRight: =0
+                  RadiusTopLeft: =0
+                  RadiusTopRight: =0
+                  Visible: =CountRows(colRoundHistory) > 0
+                  Width: =Parent.Width
+                Children:
+                  - lblHistoryHeader_SFU:
+                      Control: Label@2.5.1
+                      Properties:
+                        FontWeight: =FontWeight.Semibold
+                        Height: =24
+                        Size: =12
+                        Text: ="Receipt History"
+                        Width: =Parent.Width
+                  - rowHistoryColHeader_SFU:
+                      Control: GroupContainer@1.5.0
+                      Variant: AutoLayout
+                      Properties:
+                        DropShadow: =DropShadow.None
+                        Fill: =RGBA(225, 223, 214, 1)
+                        FillPortions: =0
+                        Height: =32
+                        LayoutAlignItems: =LayoutAlignItems.Center
+                        LayoutDirection: =LayoutDirection.Horizontal
+                        LayoutGap: =8
+                        PaddingLeft: =8
+                        PaddingRight: =8
+                        RadiusBottomLeft: =0
+                        RadiusBottomRight: =0
+                        RadiusTopLeft: =0
+                        RadiusTopRight: =0
+                        Width: =Parent.Width
+                      Children:
+                        - lblHistColRound_SFU:
+                            Control: Label@2.5.1
+                            Properties:
+                              Color: =RGBA(68, 68, 65, 1)
+                              FontWeight: =FontWeight.Semibold
+                              Height: =32
+                              Size: =9
+                              Text: ="Round"
+                              Width: =Parent.Width * 0.07
+                        - lblHistColStep_SFU:
+                            Control: Label@2.5.1
+                            Properties:
+                              Color: =RGBA(68, 68, 65, 1)
+                              FontWeight: =FontWeight.Semibold
+                              Height: =32
+                              Size: =9
+                              Text: ="Step"
+                              Width: =Parent.Width * 0.16
+                        - lblHistColBy_SFU:
+                            Control: Label@2.5.1
+                            Properties:
+                              Color: =RGBA(68, 68, 65, 1)
+                              FontWeight: =FontWeight.Semibold
+                              Height: =32
+                              Size: =9
+                              Text: ="By"
+                              Width: =Parent.Width * 0.16
+                        - lblHistColDate_SFU:
+                            Control: Label@2.5.1
+                            Properties:
+                              Color: =RGBA(68, 68, 65, 1)
+                              FontWeight: =FontWeight.Semibold
+                              Height: =32
+                              Size: =9
+                              Text: ="Date"
+                              Width: =Parent.Width * 0.11
+                        - lblHistColStatus_SFU:
+                            Control: Label@2.5.1
+                            Properties:
+                              Color: =RGBA(68, 68, 65, 1)
+                              FontWeight: =FontWeight.Semibold
+                              Height: =32
+                              Size: =9
+                              Text: ="Receipt Status"
+                              Width: =Parent.Width * 0.2
+                        - lblHistColDecision_SFU:
+                            Control: Label@2.5.1
+                            Properties:
+                              Color: =RGBA(68, 68, 65, 1)
+                              FontWeight: =FontWeight.Semibold
+                              Height: =32
+                              Size: =9
+                              Text: ="Acceptance Decision"
+                              Width: =Parent.Width * 0.26
+                  - galRoundHistory_SFU:
+                      Control: Gallery@2.15.0
+                      Variant: BrowseLayout_Vertical_TwoTextOneImageVariant_ver5.0
+                      Properties:
+                        FillPortions: =0
+                        Height: =CountRows(colRoundHistory) * 88 + 8
+                        Items: =colRoundHistory
+                        ShowScrollbar: =false
+                        TemplatePadding: =0
+                        TemplateSize: =88
+                        Width: =Parent.Width
+                      Children:
+                        - rowHistItem_SFU:
+                            Control: GroupContainer@1.5.0
+                            Variant: AutoLayout
+                            Properties:
+                              DropShadow: =DropShadow.None
+                              Fill: =If(Mod(ThisItem.RoundNumber, 2) = 0, RGBA(248, 247, 243, 1), RGBA(255, 255, 255, 1))
+                              Height: =88
+                              LayoutDirection: =LayoutDirection.Vertical
+                              LayoutGap: =2
+                              PaddingBottom: =4
+                              PaddingLeft: =8
+                              PaddingRight: =8
+                              PaddingTop: =6
+                              RadiusBottomLeft: =0
+                              RadiusBottomRight: =0
+                              RadiusTopLeft: =0
+                              RadiusTopRight: =0
+                              Width: =Parent.Width
+                            Children:
+                              - rowHistItemTop_SFU:
+                                  Control: GroupContainer@1.5.0
+                                  Variant: AutoLayout
+                                  Properties:
+                                    DropShadow: =DropShadow.None
+                                    FillPortions: =0
+                                    Height: =24
+                                    LayoutAlignItems: =LayoutAlignItems.Center
+                                    LayoutDirection: =LayoutDirection.Horizontal
+                                    LayoutGap: =8
+                                    RadiusBottomLeft: =0
+                                    RadiusBottomRight: =0
+                                    RadiusTopLeft: =0
+                                    RadiusTopRight: =0
+                                    Width: =Parent.Width
+                                  Children:
+                                    - lblHistRound_SFU:
+                                        Control: Label@2.5.1
+                                        Properties:
+                                          Color: =RGBA(83, 74, 183, 1)
+                                          FontWeight: =FontWeight.Bold
+                                          Height: =24
+                                          Size: =10
+                                          Text: ="R" & ThisItem.RoundNumber
+                                          Width: =Parent.Width * 0.07
+                                    - lblHistStep_SFU:
+                                        Control: Label@2.5.1
+                                        Properties:
+                                          Height: =24
+                                          Size: =10
+                                          Text: =ThisItem.StepLabel
+                                          Width: =Parent.Width * 0.16
+                                          Wrap: =false
+                                    - lblHistBy_SFU:
+                                        Control: Label@2.5.1
+                                        Properties:
+                                          Color: =RGBA(68, 68, 65, 1)
+                                          Height: =24
+                                          Size: =10
+                                          Text: =If(IsBlank(ThisItem.ActorName), "—", ThisItem.ActorName)
+                                          Width: =Parent.Width * 0.16
+                                          Wrap: =false
+                                    - lblHistDate_SFU:
+                                        Control: Label@2.5.1
+                                        Properties:
+                                          Color: =RGBA(68, 68, 65, 1)
+                                          Height: =24
+                                          Size: =10
+                                          Text: =If(IsBlank(ThisItem.ActionDate), "—", Text(ThisItem.ActionDate, "dd/mm/yyyy"))
+                                          Width: =Parent.Width * 0.11
+                                    - lblHistStatus_SFU:
+                                        Control: Label@2.5.1
+                                        Properties:
+                                          Color: =RGBA(68, 68, 65, 1)
+                                          Height: =24
+                                          Size: =10
+                                          Text: =If(IsBlank(ThisItem.ReceiptStatus), "—", ThisItem.ReceiptStatus)
+                                          Width: =Parent.Width * 0.2
+                                          Wrap: =false
+                                    - lblHistDecision_SFU:
+                                        Control: Label@2.5.1
+                                        Properties:
+                                          Color: =If(ThisItem.AcceptanceDecision = "Requires Supplier Follow-up", RGBA(133, 79, 11, 1), RGBA(15, 110, 86, 1))
+                                          FontWeight: =FontWeight.Semibold
+                                          Height: =24
+                                          Size: =10
+                                          Text: =If(IsBlank(ThisItem.AcceptanceDecision), "—", ThisItem.AcceptanceDecision)
+                                          Width: =Parent.Width * 0.26
+                                          Wrap: =false
+                              - lblHistNotes_SFU:
+                                  Control: Label@2.5.1
+                                  Properties:
+                                    Color: =RGBA(136, 135, 128, 1)
+                                    Height: =28
+                                    Size: =9
+                                    Text: |-
+                                      =If(IsBlank(ThisItem.Notes), "", "Notes: " & ThisItem.Notes)
+                                    Width: =Parent.Width
+                                    Wrap: =false
+                              - rowHistAttachments_SFU:
+                                  Control: GroupContainer@1.5.0
+                                  Variant: AutoLayout
+                                  Properties:
+                                    DropShadow: =DropShadow.None
+                                    FillPortions: =0
+                                    Height: =24
+                                    LayoutAlignItems: =LayoutAlignItems.Center
+                                    LayoutDirection: =LayoutDirection.Horizontal
+                                    LayoutGap: =8
+                                    RadiusBottomLeft: =0
+                                    RadiusBottomRight: =0
+                                    RadiusTopLeft: =0
+                                    RadiusTopRight: =0
+                                    Visible: =ThisItem.StepNumber <> 5
+                                    Width: =Parent.Width
+                                  Children:
+                                    - btnViewRoundPhotos_SFU:
+                                        Control: ModernButton@1.0.0
+                                        Properties:
+                                          Align: =Align.Center
+                                          BasePaletteColor: =RGBA(83, 74, 183, 1)
+                                          FontWeight: =FontWeight.Semibold
+                                          Height: =24
+                                          OnSelect: |-
+                                            =ClearCollect(colReceiptPhotos, LookUp('RM Procurement Execution Log', ID = ThisItem.ID).Attachments);
+                                            Set(gPhotoRoundLabel, "Round " & ThisItem.RoundNumber & " · " & ThisItem.StepLabel);
+                                            Set(gShowReceiptPhotos, true)
+                                          PaddingBottom: =2
+                                          PaddingLeft: =10
+                                          PaddingRight: =10
+                                          PaddingTop: =2
+                                          RadiusBottomLeft: =4
+                                          RadiusBottomRight: =4
+                                          RadiusTopLeft: =4
+                                          RadiusTopRight: =4
+                                          Size: =9
+                                          Text: ="View attachments"
+                                          VerticalAlign: =VerticalAlign.Middle
+                                          Width: =140
+            - rowWaitingBanner_SFU:
+                Control: GroupContainer@1.5.0
+                Variant: AutoLayout
+                Properties:
+                  DropShadow: =DropShadow.None
+                  Fill: =RGBA(250, 238, 218, 1)
+                  LayoutDirection: =LayoutDirection.Vertical
+                  LayoutGap: =4
+                  LayoutMinHeight: =80
+                  PaddingBottom: =16
                   PaddingLeft: =20
                   PaddingRight: =20
                   PaddingTop: =20
@@ -201,186 +538,31 @@ Screens:
                   RadiusBottomRight: =0
                   RadiusTopLeft: =0
                   RadiusTopRight: =0
+                  Visible: =Not(gSFURoundOpen)
                   Width: =Parent.Width
                 Children:
-                  - lblGR1Header_SFU:
+                  - lblWaitingBanner_SFU:
                       Control: Label@2.5.1
                       Properties:
-                        FontWeight: =FontWeight.Semibold
+                        Color: =RGBA(133, 79, 11, 1)
+                        FontWeight: =FontWeight.Bold
                         Height: =24
-                        Size: =12
-                        Text: ="Goods Receipt — Round 1"
-                        Width: =Parent.Width - 40
-            - rowGR1Fields_SFU:
-                Control: GroupContainer@1.5.0
-                Variant: AutoLayout
-                Properties:
-                  DropShadow: =DropShadow.None
-                  Fill: =RGBA(241, 239, 232, 1)
-                  LayoutDirection: =LayoutDirection.Horizontal
-                  LayoutGap: =20
-                  LayoutMinHeight: =60
-                  PaddingBottom: =12
-                  PaddingLeft: =20
-                  PaddingRight: =20
-                  PaddingTop: =4
-                  RadiusBottomLeft: =0
-                  RadiusBottomRight: =0
-                  RadiusTopLeft: =0
-                  RadiusTopRight: =0
-                  Width: =Parent.Width
-                Children:
-                  - colGR1ReceivedBy_SFU:
-                      Control: GroupContainer@1.5.0
-                      Variant: AutoLayout
-                      Properties:
-                        DropShadow: =DropShadow.None
-                        LayoutDirection: =LayoutDirection.Vertical
-                        LayoutGap: =2
-                        RadiusBottomLeft: =0
-                        RadiusBottomRight: =0
-                        RadiusTopLeft: =0
-                        RadiusTopRight: =0
-                        Width: =200
-                      Children:
-                        - lblGR1ReceivedByLabel_SFU:
-                            Control: Label@2.5.1
-                            Properties:
-                              Color: =RGBA(136, 135, 128, 1)
-                              Height: =20
-                              Size: =9
-                              Text: ="Received By"
-                              Width: =200
-                        - lblGR1ReceivedByValue_SFU:
-                            Control: Label@2.5.1
-                            Properties:
-                              FontWeight: =FontWeight.Semibold
-                              Height: =24
-                              Size: =11
-                              Text: =If(IsBlank(gSelectedRequest.GoodsReceiptBy), "—", gSelectedRequest.GoodsReceiptBy)
-                              Width: =Parent.Width
-                  - colGR1ReceiptDate_SFU:
-                      Control: GroupContainer@1.5.0
-                      Variant: AutoLayout
-                      Properties:
-                        DropShadow: =DropShadow.None
-                        LayoutDirection: =LayoutDirection.Vertical
-                        LayoutGap: =2
-                        RadiusBottomLeft: =0
-                        RadiusBottomRight: =0
-                        RadiusTopLeft: =0
-                        RadiusTopRight: =0
-                        Width: =180
-                      Children:
-                        - lblGR1ReceiptDateLabel_SFU:
-                            Control: Label@2.5.1
-                            Properties:
-                              Color: =RGBA(136, 135, 128, 1)
-                              Height: =20
-                              Size: =9
-                              Text: ="Receipt Date"
-                              Width: =180
-                        - lblGR1ReceiptDateValue_SFU:
-                            Control: Label@2.5.1
-                            Properties:
-                              FontWeight: =FontWeight.Semibold
-                              Height: =24
-                              Size: =11
-                              Text: =If(IsBlank(gSelectedRequest.GoodsReceiptDate), "—", Text(gSelectedRequest.GoodsReceiptDate, "dd/mm/yyyy"))
-                              Width: =Parent.Width
-                  - colGR1ReceiptStatus_SFU:
-                      Control: GroupContainer@1.5.0
-                      Variant: AutoLayout
-                      Properties:
-                        DropShadow: =DropShadow.None
-                        LayoutDirection: =LayoutDirection.Vertical
-                        LayoutGap: =2
-                        RadiusBottomLeft: =0
-                        RadiusBottomRight: =0
-                        RadiusTopLeft: =0
-                        RadiusTopRight: =0
-                        Width: =200
-                      Children:
-                        - lblGR1ReceiptStatusLabel_SFU:
-                            Control: Label@2.5.1
-                            Properties:
-                              Color: =RGBA(136, 135, 128, 1)
-                              Height: =20
-                              Size: =9
-                              Text: ="Receipt Status"
-                              Width: =200
-                        - lblGR1ReceiptStatusValue_SFU:
-                            Control: Label@2.5.1
-                            Properties:
-                              FontWeight: =FontWeight.Semibold
-                              Height: =24
-                              Size: =11
-                              Text: =If(IsBlank(gSelectedRequest.GoodsReceiptStatus.Value), "—", gSelectedRequest.GoodsReceiptStatus.Value)
-                              Width: =Parent.Width
-                  - colGR1AcceptanceDecision_SFU:
-                      Control: GroupContainer@1.5.0
-                      Variant: AutoLayout
-                      Properties:
-                        DropShadow: =DropShadow.None
-                        LayoutDirection: =LayoutDirection.Vertical
-                        LayoutGap: =2
-                        RadiusBottomLeft: =0
-                        RadiusBottomRight: =0
-                        RadiusTopLeft: =0
-                        RadiusTopRight: =0
-                        Width: =240
-                      Children:
-                        - lblGR1AcceptanceDecisionLabel_SFU:
-                            Control: Label@2.5.1
-                            Properties:
-                              Color: =RGBA(136, 135, 128, 1)
-                              Height: =20
-                              Size: =9
-                              Text: ="Acceptance Decision"
-                              Width: =240
-                        - lblGR1AcceptanceDecisionValue_SFU:
-                            Control: Label@2.5.1
-                            Properties:
-                              FontWeight: =FontWeight.Semibold
-                              Height: =24
-                              Size: =11
-                              Text: =If(IsBlank(gSelectedRequest.GoodsAcceptanceDecision.Value), "—", gSelectedRequest.GoodsAcceptanceDecision.Value)
-                              Width: =Parent.Width
-            - rowGR1Remarks_SFU:
-                Control: GroupContainer@1.5.0
-                Variant: AutoLayout
-                Properties:
-                  DropShadow: =DropShadow.None
-                  Fill: =RGBA(241, 239, 232, 1)
-                  LayoutDirection: =LayoutDirection.Vertical
-                  LayoutGap: =2
-                  PaddingBottom: =12
-                  PaddingLeft: =20
-                  PaddingRight: =20
-                  PaddingTop: =4
-                  RadiusBottomLeft: =0
-                  RadiusBottomRight: =0
-                  RadiusTopLeft: =0
-                  RadiusTopRight: =0
-                  Visible: =Not(IsBlank(gSelectedRequest.GoodsReceiptRemarks))
-                  Width: =Parent.Width
-                Children:
-                  - lblGR1RemarksLabel_SFU:
-                      Control: Label@2.5.1
-                      Properties:
-                        Color: =RGBA(136, 135, 128, 1)
-                        Height: =20
-                        Size: =9
-                        Text: ="Remarks (Round 1)"
-                        Width: =Parent.Width - 40
-                  - lblGR1RemarksValue_SFU:
-                      Control: Label@2.5.1
-                      Properties:
-                        AutoHeight: =true
-                        FillPortions: =1
-                        FontWeight: =FontWeight.Semibold
                         Size: =11
-                        Text: =gSelectedRequest.GoodsReceiptRemarks
+                        Text: |-
+                          =If(
+                              gLatestDecision = "Accepted with Adjustment",
+                              "Waiting for Procurement to upload the Credit Note for Round " & gRoundsDone & ".",
+                              "No further receipt round is required for this request."
+                          )
+                        Width: =Parent.Width - 40
+                  - lblWaitingBannerHint_SFU:
+                      Control: Label@2.5.1
+                      Properties:
+                        Color: =RGBA(133, 79, 11, 1)
+                        Height: =40
+                        Size: =10
+                        Text: |-
+                          ="The last receipt round was closed with decision: " & If(IsBlank(gLatestDecision), "—", gLatestDecision) & "."
                         Width: =Parent.Width - 40
             - rowStep1Header_SFU:
                 Control: GroupContainer@1.5.0
@@ -398,7 +580,7 @@ Screens:
                   RadiusBottomRight: =0
                   RadiusTopLeft: =0
                   RadiusTopRight: =0
-                  Visible: =IsBlank(LookUp('RM Procurement Execution Log', RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 4))
+                  Visible: =gSFURoundOpen
                   Width: =Parent.Width
                 Children:
                   - lblStep1Header_SFU:
@@ -407,7 +589,7 @@ Screens:
                         FontWeight: =FontWeight.Semibold
                         Height: =24
                         Size: =12
-                        Text: ="Goods Receipt — Round 2"
+                        Text: ="Goods Receipt — Round " & gCurrentRound
                         Width: =Parent.Width - 40
                   - lblStep1Note_SFU:
                       Control: Label@2.5.1
@@ -434,9 +616,7 @@ Screens:
                   RadiusBottomRight: =0
                   RadiusTopLeft: =0
                   RadiusTopRight: =0
-                  Visible: |-
-                    =gSelectedRequest.RequesterEmail = gCurrentEmployee.Email
-                    && IsBlank(LookUp('RM Procurement Execution Log', RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 4))
+                  Visible: =gSFURoundOpen && gSelectedRequest.RequesterEmail = gCurrentEmployee.Email
                   Width: =Parent.Width
                 Children:
                   - lblDelegationHeader_SFU:
@@ -445,7 +625,7 @@ Screens:
                         FontWeight: =FontWeight.Semibold
                         Height: =24
                         Size: =12
-                        Text: ="Round 2 Receiver"
+                        Text: ="Round " & gCurrentRound & " Receiver"
                         Width: =Parent.Width - 40
                   - rowReceiverToggle_SFU:
                       Control: GroupContainer@1.5.0
@@ -557,9 +737,7 @@ Screens:
                   RadiusBottomRight: =0
                   RadiusTopLeft: =0
                   RadiusTopRight: =0
-                  Visible: |-
-                    =IsBlank(LookUp('RM Procurement Execution Log', RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 4))
-                    && gSFU1DelegationMode = "I will receive"
+                  Visible: =gSFURoundOpen && gSFU1DelegationMode = "I will receive"
                   Width: =Parent.Width
                 Children:
                   - lblStep1ChecklistHeader_SFU:
@@ -595,9 +773,7 @@ Screens:
                   RadiusBottomRight: =0
                   RadiusTopLeft: =0
                   RadiusTopRight: =0
-                  Visible: |-
-                    =IsBlank(LookUp('RM Procurement Execution Log', RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 4))
-                    && gSFU1DelegationMode = "I will receive"
+                  Visible: =gSFURoundOpen && gSFU1DelegationMode = "I will receive"
                   Width: =Parent.Width
                 Children:
                   - chkSFU1:
@@ -632,9 +808,7 @@ Screens:
                   RadiusBottomRight: =0
                   RadiusTopLeft: =0
                   RadiusTopRight: =0
-                  Visible: |-
-                    =IsBlank(LookUp('RM Procurement Execution Log', RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 4))
-                    && gSFU1DelegationMode = "I will receive"
+                  Visible: =gSFURoundOpen && gSFU1DelegationMode = "I will receive"
                   Width: =Parent.Width
                 Children:
                   - chkSFU2:
@@ -668,9 +842,7 @@ Screens:
                   RadiusBottomRight: =0
                   RadiusTopLeft: =0
                   RadiusTopRight: =0
-                  Visible: |-
-                    =IsBlank(LookUp('RM Procurement Execution Log', RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 4))
-                    && gSFU1DelegationMode = "I will receive"
+                  Visible: =gSFURoundOpen && gSFU1DelegationMode = "I will receive"
                   Width: =Parent.Width
                 Children:
                   - chkSFU3:
@@ -704,9 +876,7 @@ Screens:
                   RadiusBottomRight: =0
                   RadiusTopLeft: =0
                   RadiusTopRight: =0
-                  Visible: |-
-                    =IsBlank(LookUp('RM Procurement Execution Log', RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 4))
-                    && gSFU1DelegationMode = "I will receive"
+                  Visible: =gSFURoundOpen && gSFU1DelegationMode = "I will receive"
                   Width: =Parent.Width
                 Children:
                   - chkSFU4:
@@ -740,9 +910,7 @@ Screens:
                   RadiusBottomRight: =0
                   RadiusTopLeft: =0
                   RadiusTopRight: =0
-                  Visible: |-
-                    =IsBlank(LookUp('RM Procurement Execution Log', RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 4))
-                    && gSFU1DelegationMode = "I will receive"
+                  Visible: =gSFURoundOpen && gSFU1DelegationMode = "I will receive"
                   Width: =Parent.Width
                 Children:
                   - chkSFU5:
@@ -774,9 +942,7 @@ Screens:
                   RadiusBottomRight: =0
                   RadiusTopLeft: =0
                   RadiusTopRight: =0
-                  Visible: |-
-                    =IsBlank(LookUp('RM Procurement Execution Log', RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 4))
-                    && gSFU1DelegationMode = "I will receive"
+                  Visible: =gSFURoundOpen && gSFU1DelegationMode = "I will receive"
                   Width: =Parent.Width
                 Children:
                   - colReceiptDate2_SFU:
@@ -834,7 +1000,7 @@ Screens:
                             Properties:
                               Height: =40
                               InputTextPlaceholder: ="Choose an option"
-                              Items: =Choices('RM Procurement Requests'.FollowUpReceiptStatus)
+                              Items: =["Fully Received", "Partially Received", "Incorrect Items", "Damaged Items"]
                               Width: =Parent.Width
                   - rowStep1AcceptanceDecision_SFU:
                       Control: GroupContainer@1.5.0
@@ -847,7 +1013,6 @@ Screens:
                         RadiusBottomRight: =0
                         RadiusTopLeft: =0
                         RadiusTopRight: =0
-                        Visible: =IsBlank(LookUp('RM Procurement Execution Log', RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 4))
                         Width: =Parent.Width
                         X: =40
                         Y: =40
@@ -865,7 +1030,7 @@ Screens:
                             Properties:
                               Height: =40
                               InputTextPlaceholder: ="Choose an option"
-                              Items: =Choices('RM Procurement Requests'.FollowUpAcceptanceDecision)
+                              Items: =["Requires Supplier Follow-up", "Accepted", "Accepted with Adjustment"]
                               Width: =Parent.Width
             - rowStep1LineItems_SFU:
                 Control: GroupContainer@1.5.0
@@ -873,7 +1038,7 @@ Screens:
                 Properties:
                   DropShadow: =DropShadow.None
                   FillPortions: =0
-                  Height: =40 + 36 + 4 + CountRows(colLineItemsDetail) * 56 + 8 + 60
+                  Height: =40 + 36 + 4 + CountRows(colRoundEntry) * 56 + 8 + 60
                   LayoutDirection: =LayoutDirection.Vertical
                   LayoutGap: =4
                   PaddingBottom: =8
@@ -884,9 +1049,7 @@ Screens:
                   RadiusBottomRight: =0
                   RadiusTopLeft: =0
                   RadiusTopRight: =0
-                  Visible: |-
-                    =IsBlank(LookUp('RM Procurement Execution Log', RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 4))
-                    && gSFU1DelegationMode = "I will receive"
+                  Visible: =gSFURoundOpen && gSFU1DelegationMode = "I will receive"
                   Width: =Parent.Width
                 Children:
                   - lblLineItemsHeader_SFU:
@@ -895,7 +1058,7 @@ Screens:
                         FontWeight: =FontWeight.Semibold
                         Height: =24
                         Size: =12
-                        Text: ="Raw Material Receipt Details *"
+                        Text: ="Raw Material Receipt Details — Round " & gCurrentRound & " *"
                         Width: =Parent.Width
                   - lblLineItemsNote_SFU:
                       Control: Label@2.5.1
@@ -903,7 +1066,7 @@ Screens:
                         Color: =RGBA(133, 79, 11, 1)
                         PaddingTop: =0
                         Size: =10
-                        Text: ="Enter actual received quantity, batch number, expiry date, QC number, RM/PK code and Link to COA (optional) for each item"
+                        Text: ="Enter the quantity received in THIS round only, plus batch number, expiry date, QC number, RM/PK code and Link to COA (optional) for each item"
                         Width: =Parent.Width
                   - rowLineItemsColHeader_SFU:
                       Control: GroupContainer@1.5.0
@@ -941,7 +1104,7 @@ Screens:
                               Size: =9
                               Text: ="Unit"
                               Width: =Parent.Width * 0.04
-                        - lblGRColRecQtyR1:
+                        - lblGRColOrdered_1:
                             Control: Label@2.5.1
                             Properties:
                               Align: =Align.Center
@@ -949,9 +1112,9 @@ Screens:
                               FontWeight: =FontWeight.Semibold
                               Height: =36
                               Size: =9
-                              Text: ="Received Quantity R1"
-                              Width: =Parent.Width * 0.07
-                        - lblGRColRecQtyR1_1:
+                              Text: ="Ordered"
+                              Width: =Parent.Width * 0.05
+                        - lblGRColPrevQty_1:
                             Control: Label@2.5.1
                             Properties:
                               Align: =Align.Center
@@ -959,7 +1122,17 @@ Screens:
                               FontWeight: =FontWeight.Semibold
                               Height: =36
                               Size: =9
-                              Text: ="Received Quantity R2 *"
+                              Text: ="Received So Far"
+                              Width: =Parent.Width * 0.06
+                        - lblGRColRecQty_1:
+                            Control: Label@2.5.1
+                            Properties:
+                              Align: =Align.Center
+                              Color: =RGBA(68, 68, 65, 1)
+                              FontWeight: =FontWeight.Semibold
+                              Height: =36
+                              Size: =9
+                              Text: ="Received This Round *"
                               Width: =Parent.Width * 0.07
                         - lblGRColBatch_1:
                             Control: Label@2.5.1
@@ -1011,8 +1184,8 @@ Screens:
                       Variant: BrowseLayout_Vertical_TwoTextOneImageVariant_ver5.0
                       Properties:
                         FillPortions: =0
-                        Height: =CountRows(colLineItemsDetail) * 56 + 12
-                        Items: =colLineItemsDetail
+                        Height: =CountRows(colRoundEntry) * 56 + 12
+                        Items: =colRoundEntry
                         ShowScrollbar: =false
                         TemplatePadding: =4
                         TemplateSize: =56
@@ -1023,7 +1196,7 @@ Screens:
                             Variant: AutoLayout
                             Properties:
                               DropShadow: =DropShadow.None
-                              Fill: =If(Mod(ThisItem.ID, 2) = 0, RGBA(248, 247, 243, 1), RGBA(255, 255, 255, 1))
+                              Fill: =If(Mod(ThisItem.LineItemID, 2) = 0, RGBA(248, 247, 243, 1), RGBA(255, 255, 255, 1))
                               Height: =56
                               LayoutAlignItems: =LayoutAlignItems.Center
                               LayoutDirection: =LayoutDirection.Horizontal
@@ -1064,7 +1237,7 @@ Screens:
                                           Height: =16
                                           Size: =8
                                           Text: |-
-                                            =With({wMat: LookUp('Raw Materials', ID = ThisItem.MaterialID.Id)}, If(IsBlank(wMat), "", wMat.Category & " · " & wMat.Supplier))
+                                            =With({wMat: LookUp('Raw Materials', ID = ThisItem.MaterialID)}, If(IsBlank(wMat), "", wMat.Category & " · " & wMat.Supplier))
                                           Width: =Parent.Width
                                           Wrap: =false
                               - lblSFUItemUnit:
@@ -1074,43 +1247,52 @@ Screens:
                                     Size: =11
                                     Text: =ThisItem.Unit
                                     Width: =Parent.Width * 0.04
-                              - lblSFURound1Qty:
+                              - lblSFUOrderedQty:
                                   Control: Label@2.5.1
                                   Properties:
                                     Align: =Align.Center
                                     Color: =RGBA(136, 135, 128, 1)
                                     Size: =11
-                                    Text: =If(IsBlank(ThisItem.ReceivedQty1), "-", Text(ThisItem.ReceivedQty1))
-                                    Width: =Parent.Width * 0.07
+                                    Text: =Text(ThisItem.OrderedQty)
+                                    Width: =Parent.Width * 0.05
+                              - lblSFUPrevQty:
+                                  Control: Label@2.5.1
+                                  Properties:
+                                    Align: =Align.Center
+                                    Color: =If(ThisItem.PrevReceivedQty >= ThisItem.OrderedQty, RGBA(15, 110, 86, 1), RGBA(163, 45, 45, 1))
+                                    FontWeight: =FontWeight.Semibold
+                                    Size: =11
+                                    Text: =Text(ThisItem.PrevReceivedQty)
+                                    Width: =Parent.Width * 0.06
                               - txtSFURecQty:
                                   Control: TextInput@0.0.54
                                   Properties:
                                     Align: =Align.Center
                                     Height: =40
                                     OnChange: |-
-                                      =UpdateIf(colLineItemsDetail, ID = ThisItem.ID, {ReceivedQty2: Value(Self.Value)})
+                                      =UpdateIf(colRoundEntry, LineItemID = ThisItem.LineItemID, {ReceivedQty: Value(Self.Value)})
                                     Placeholder: ="0"
-                                    Value: =If(IsBlank(ThisItem.ReceivedQty2) || ThisItem.ReceivedQty2 = 0, "", Text(ThisItem.ReceivedQty2))
+                                    Value: =If(IsBlank(ThisItem.ReceivedQty) || ThisItem.ReceivedQty = 0, "", Text(ThisItem.ReceivedQty))
                                     Width: =Parent.Width * 0.07
                               - txtSFUBatch:
                                   Control: TextInput@0.0.54
                                   Properties:
                                     Height: =40
                                     OnChange: |-
-                                      =UpdateIf(colLineItemsDetail, ID = ThisItem.ID, {BatchNumber2: Self.Value})
+                                      =UpdateIf(colRoundEntry, LineItemID = ThisItem.LineItemID, {BatchNumber: Self.Value})
                                     Placeholder: ="Batch no."
-                                    Value: =If(IsBlank(ThisItem.BatchNumber2), "", ThisItem.BatchNumber2)
+                                    Value: =If(IsBlank(ThisItem.BatchNumber), "", ThisItem.BatchNumber)
                                     Width: =Parent.Width * 0.1
                               - dpSFUExpiry:
                                   Control: ModernDatePicker@1.0.1
                                   Properties:
                                     BorderStyle: =""
-                                    DefaultDate: =ThisItem.ExpiryDate2
+                                    DefaultDate: =ThisItem.ExpiryDate
                                     Font: =""
                                     FontWeight: =""
                                     Height: =40
                                     OnChange: |-
-                                      =UpdateIf(colLineItemsDetail, ID = ThisItem.ID, {ExpiryDate2: Self.SelectedDate})
+                                      =UpdateIf(colRoundEntry, LineItemID = ThisItem.LineItemID, {ExpiryDate: Self.SelectedDate})
                                     Placeholder: ="Expiry date"
                                     Size: =0
                                     Width: =Parent.Width * 0.1
@@ -1119,27 +1301,27 @@ Screens:
                                   Properties:
                                     Height: =40
                                     OnChange: |-
-                                      =UpdateIf(colLineItemsDetail, ID = ThisItem.ID, {QCNumber2: Self.Value})
+                                      =UpdateIf(colRoundEntry, LineItemID = ThisItem.LineItemID, {QCNumber: Self.Value})
                                     Placeholder: ="QC number"
-                                    Value: =If(IsBlank(ThisItem.QCNumber2), "", ThisItem.QCNumber2)
+                                    Value: =If(IsBlank(ThisItem.QCNumber), "", ThisItem.QCNumber)
                                     Width: =Parent.Width * 0.09
                               - txtSFURMPKCode:
                                   Control: TextInput@0.0.54
                                   Properties:
                                     Height: =40
                                     OnChange: |-
-                                      =UpdateIf(colLineItemsDetail, ID = ThisItem.ID, {RMPKCode2: Self.Value})
+                                      =UpdateIf(colRoundEntry, LineItemID = ThisItem.LineItemID, {RMPKCode: Self.Value})
                                     Placeholder: ="RM/PK code"
-                                    Value: =If(IsBlank(ThisItem.RMPKCode2), "", ThisItem.RMPKCode2)
+                                    Value: =If(IsBlank(ThisItem.RMPKCode), "", ThisItem.RMPKCode)
                                     Width: =Parent.Width * 0.09
                               - txtSFUCOALink:
                                   Control: TextInput@0.0.54
                                   Properties:
                                     Height: =40
                                     OnChange: |-
-                                      =UpdateIf(colLineItemsDetail, ID = ThisItem.ID, {COALink2: Self.Value})
+                                      =UpdateIf(colRoundEntry, LineItemID = ThisItem.LineItemID, {COALink: Self.Value})
                                     Placeholder: ="Link to COA (URL)"
-                                    Value: =If(IsBlank(ThisItem.COALink2), "", ThisItem.COALink2)
+                                    Value: =If(IsBlank(ThisItem.COALink), "", ThisItem.COALink)
                                     Width: =Parent.Width * 0.15
             - rowStep1Remarks_SFU:
                 Control: GroupContainer@1.5.0
@@ -1157,9 +1339,7 @@ Screens:
                   RadiusBottomRight: =0
                   RadiusTopLeft: =0
                   RadiusTopRight: =0
-                  Visible: |-
-                    =IsBlank(LookUp('RM Procurement Execution Log', RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 4))
-                    && gSFU1DelegationMode = "I will receive"
+                  Visible: =gSFURoundOpen && gSFU1DelegationMode = "I will receive"
                   Width: =Parent.Width
                 Children:
                   - lblRemarks2Label_SFU:
@@ -1192,9 +1372,7 @@ Screens:
                   RadiusBottomRight: =0
                   RadiusTopLeft: =0
                   RadiusTopRight: =0
-                  Visible: |-
-                    =IsBlank(LookUp('RM Procurement Execution Log', RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 4))
-                    && gSFU1DelegationMode = "I will receive"
+                  Visible: =gSFURoundOpen && gSFU1DelegationMode = "I will receive"
                   Width: =Parent.Width
                   X: =40
                   Y: =40
@@ -1211,9 +1389,7 @@ Screens:
                         OnFailure: |-
                           =Notify("Receipt saved, but photo upload failed. Please contact IT with reference: " & gSelectedRequest.Title, NotificationType.Warning)
                         SnapToColumns: =false
-                        Visible: |-
-                          =IsBlank(LookUp('RM Procurement Execution Log', RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 4))
-                          && gSFU1DelegationMode = "I will receive"
+                        Visible: =gSFURoundOpen && gSFU1DelegationMode = "I will receive"
                         Width: =Parent.Width
                         X: =40
                         Y: =40
@@ -1224,7 +1400,7 @@ Screens:
                             Properties:
                               DataField: ="{Attachments}"
                               Default: =ThisItem.Attachments
-                              DisplayName: ="Round 2 Receipt Photos"
+                              DisplayName: ="Receipt Photos"
                               Height: =200
                               Required: =false
                               Update: =attSFU1Photos.Attachments
@@ -1241,7 +1417,7 @@ Screens:
                                     PaddingLeft: =0
                                     PaddingRight: =0
                                     Size: =11
-                                    Text: ="Round 2 Receipt Photos *"
+                                    Text: ="Round " & gCurrentRound & " Receipt Photos *"
                                     Width: =Parent.Width
                                     Y: =8
                               - attSFU1Photos:
@@ -1267,464 +1443,6 @@ Screens:
                                     Visible: =Parent.DisplayMode = DisplayMode.Edit
                                     Width: =Parent.Width
                                     Y: =attSFU1Photos.Y + attSFU1Photos.Height
-            - rowGR2Header_SFU:
-                Control: GroupContainer@1.5.0
-                Variant: AutoLayout
-                Properties:
-                  DropShadow: =DropShadow.None
-                  Fill: =RGBA(241, 239, 232, 1)
-                  LayoutDirection: =LayoutDirection.Vertical
-                  LayoutGap: =4
-                  LayoutMinHeight: =40
-                  PaddingBottom: =8
-                  PaddingLeft: =20
-                  PaddingRight: =20
-                  PaddingTop: =12
-                  RadiusBottomLeft: =0
-                  RadiusBottomRight: =0
-                  RadiusTopLeft: =0
-                  RadiusTopRight: =0
-                  Visible: =Not(IsBlank(LookUp('RM Procurement Execution Log', RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 4)))
-                  Width: =Parent.Width
-                Children:
-                  - lblGR2Header_SFU:
-                      Control: Label@2.5.1
-                      Properties:
-                        FontWeight: =FontWeight.Semibold
-                        Height: =24
-                        Size: =12
-                        Text: ="Goods Receipt — Round 2"
-                        Width: =Parent.Width - 40
-            - rowGR2Fields_SFU:
-                Control: GroupContainer@1.5.0
-                Variant: AutoLayout
-                Properties:
-                  DropShadow: =DropShadow.None
-                  Fill: =RGBA(241, 239, 232, 1)
-                  LayoutDirection: =LayoutDirection.Horizontal
-                  LayoutGap: =20
-                  LayoutMinHeight: =60
-                  PaddingBottom: =8
-                  PaddingLeft: =20
-                  PaddingRight: =20
-                  PaddingTop: =4
-                  RadiusBottomLeft: =0
-                  RadiusBottomRight: =0
-                  RadiusTopLeft: =0
-                  RadiusTopRight: =0
-                  Visible: =Not(IsBlank(LookUp('RM Procurement Execution Log', RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 4)))
-                  Width: =Parent.Width
-                Children:
-                  - colGR2ReceivedBy_SFU:
-                      Control: GroupContainer@1.5.0
-                      Variant: AutoLayout
-                      Properties:
-                        DropShadow: =DropShadow.None
-                        LayoutDirection: =LayoutDirection.Vertical
-                        LayoutGap: =2
-                        RadiusBottomLeft: =0
-                        RadiusBottomRight: =0
-                        RadiusTopLeft: =0
-                        RadiusTopRight: =0
-                        Width: =200
-                      Children:
-                        - lblGR2ReceivedByLabel_SFU:
-                            Control: Label@2.5.1
-                            Properties:
-                              Color: =RGBA(136, 135, 128, 1)
-                              Height: =20
-                              Size: =9
-                              Text: ="Received By"
-                              Width: =200
-                        - lblGR2ReceivedByValue_SFU:
-                            Control: Label@2.5.1
-                            Properties:
-                              FontWeight: =FontWeight.Semibold
-                              Height: =24
-                              Size: =11
-                              Text: =If(IsBlank(gSelectedRequest.FollowUpReceiptBy), "—", gSelectedRequest.FollowUpReceiptBy)
-                              Width: =200
-                  - colGR2ReceiptDate_SFU:
-                      Control: GroupContainer@1.5.0
-                      Variant: AutoLayout
-                      Properties:
-                        DropShadow: =DropShadow.None
-                        LayoutDirection: =LayoutDirection.Vertical
-                        LayoutGap: =2
-                        RadiusBottomLeft: =0
-                        RadiusBottomRight: =0
-                        RadiusTopLeft: =0
-                        RadiusTopRight: =0
-                        Width: =180
-                      Children:
-                        - lblGR2ReceiptDateLabel_SFU:
-                            Control: Label@2.5.1
-                            Properties:
-                              Color: =RGBA(136, 135, 128, 1)
-                              Height: =20
-                              Size: =9
-                              Text: ="Receipt Date"
-                              Width: =180
-                        - lblGR2ReceiptDateValue_SFU:
-                            Control: Label@2.5.1
-                            Properties:
-                              FontWeight: =FontWeight.Semibold
-                              Height: =24
-                              Size: =11
-                              Text: =If(IsBlank(gSelectedRequest.FollowUpReceiptDate), "—", Text(gSelectedRequest.FollowUpReceiptDate, "dd/mm/yyyy"))
-                              Width: =180
-                  - colGR2ReceiptStatus_SFU:
-                      Control: GroupContainer@1.5.0
-                      Variant: AutoLayout
-                      Properties:
-                        DropShadow: =DropShadow.None
-                        LayoutDirection: =LayoutDirection.Vertical
-                        LayoutGap: =2
-                        RadiusBottomLeft: =0
-                        RadiusBottomRight: =0
-                        RadiusTopLeft: =0
-                        RadiusTopRight: =0
-                        Width: =200
-                      Children:
-                        - lblGR2ReceiptStatusLabel_SFU:
-                            Control: Label@2.5.1
-                            Properties:
-                              Color: =RGBA(136, 135, 128, 1)
-                              Height: =20
-                              Size: =9
-                              Text: ="Receipt Status"
-                              Width: =200
-                        - lblGR2ReceiptStatusValue_SFU:
-                            Control: Label@2.5.1
-                            Properties:
-                              FontWeight: =FontWeight.Semibold
-                              Height: =24
-                              Size: =11
-                              Text: =If(IsBlank(gSelectedRequest.FollowUpReceiptStatus.Value), "—", gSelectedRequest.FollowUpReceiptStatus.Value)
-                              Width: =200
-                  - colGR2AcceptanceDecision_SFU:
-                      Control: GroupContainer@1.5.0
-                      Variant: AutoLayout
-                      Properties:
-                        DropShadow: =DropShadow.None
-                        LayoutDirection: =LayoutDirection.Vertical
-                        LayoutGap: =2
-                        RadiusBottomLeft: =0
-                        RadiusBottomRight: =0
-                        RadiusTopLeft: =0
-                        RadiusTopRight: =0
-                        Width: =240
-                      Children:
-                        - lblGR2AcceptanceDecisionLabel_SFU:
-                            Control: Label@2.5.1
-                            Properties:
-                              Color: =RGBA(136, 135, 128, 1)
-                              Height: =20
-                              Size: =9
-                              Text: ="Acceptance Decision"
-                              Width: =240
-                        - lblGR2AcceptanceDecisionValue_SFU:
-                            Control: Label@2.5.1
-                            Properties:
-                              FontWeight: =FontWeight.Semibold
-                              Height: =24
-                              Size: =11
-                              Text: =If(IsBlank(gSelectedRequest.FollowUpAcceptanceDecision.Value), "—", gSelectedRequest.FollowUpAcceptanceDecision.Value)
-                              Width: =240
-            - rowGR2CreditNote_SFU:
-                Control: GroupContainer@1.5.0
-                Variant: AutoLayout
-                Properties:
-                  DropShadow: =DropShadow.None
-                  Fill: =RGBA(241, 239, 232, 1)
-                  LayoutDirection: =LayoutDirection.Vertical
-                  LayoutGap: =2
-                  LayoutMinHeight: =60
-                  PaddingBottom: =8
-                  PaddingLeft: =20
-                  PaddingRight: =20
-                  PaddingTop: =4
-                  RadiusBottomLeft: =0
-                  RadiusBottomRight: =0
-                  RadiusTopLeft: =0
-                  RadiusTopRight: =0
-                  Visible: =Not(IsBlank(LookUp('RM Procurement Execution Log', RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 4))) && Not(IsBlank(gSelectedRequest.CreditNote))
-                  Width: =Parent.Width
-                Children:
-                  - lblGR2CreditNoteLabel_SFU:
-                      Control: Label@2.5.1
-                      Properties:
-                        Color: =RGBA(136, 135, 128, 1)
-                        Height: =20
-                        Size: =9
-                        Text: ="Credit Note"
-                        Width: =Parent.Width - 40
-                  - lblGR2CreditNoteValue_SFU:
-                      Control: Label@2.5.1
-                      Properties:
-                        FontWeight: =FontWeight.Semibold
-                        Height: =24
-                        Size: =11
-                        Text: =gSelectedRequest.CreditNote
-                        Width: =Parent.Width - 40
-                        Wrap: =false
-            - rowGR2Remarks_SFU:
-                Control: GroupContainer@1.5.0
-                Variant: AutoLayout
-                Properties:
-                  DropShadow: =DropShadow.None
-                  Fill: =RGBA(241, 239, 232, 1)
-                  LayoutDirection: =LayoutDirection.Vertical
-                  LayoutGap: =2
-                  PaddingBottom: =12
-                  PaddingLeft: =20
-                  PaddingRight: =20
-                  PaddingTop: =4
-                  RadiusBottomLeft: =0
-                  RadiusBottomRight: =0
-                  RadiusTopLeft: =0
-                  RadiusTopRight: =0
-                  Visible: =Not(IsBlank(LookUp('RM Procurement Execution Log', RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 4))) && Not(IsBlank(gSelectedRequest.FollowUpRemarks))
-                  Width: =Parent.Width
-                Children:
-                  - lblGR2RemarksLabel_SFU:
-                      Control: Label@2.5.1
-                      Properties:
-                        Color: =RGBA(136, 135, 128, 1)
-                        Height: =20
-                        Size: =9
-                        Text: ="Remarks (Round 2)"
-                        Width: =Parent.Width - 40
-                  - lblGR2RemarksValue_SFU:
-                      Control: Label@2.5.1
-                      Properties:
-                        AutoHeight: =true
-                        FillPortions: =1
-                        FontWeight: =FontWeight.Semibold
-                        Overflow: =Overflow.Scroll
-                        Size: =11
-                        Text: =gSelectedRequest.FollowUpRemarks
-                        Width: =Parent.Width - 40
-            - rowStep2Header_SFU:
-                Control: GroupContainer@1.5.0
-                Variant: AutoLayout
-                Properties:
-                  DropShadow: =DropShadow.None
-                  LayoutDirection: =LayoutDirection.Vertical
-                  LayoutGap: =4
-                  LayoutMinHeight: =80
-                  PaddingBottom: =8
-                  PaddingLeft: =20
-                  PaddingRight: =20
-                  PaddingTop: =16
-                  RadiusBottomLeft: =0
-                  RadiusBottomRight: =0
-                  RadiusTopLeft: =0
-                  RadiusTopRight: =0
-                  Visible: =Not(IsBlank(LookUp('RM Procurement Execution Log', RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 4))) && IsBlank(LookUp('RM Procurement Execution Log', RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 5))
-                  Width: =Parent.Width
-                Children:
-                  - lblStep2Header_SFU:
-                      Control: Label@2.5.1
-                      Properties:
-                        FontWeight: =FontWeight.Semibold
-                        Height: =24
-                        Size: =12
-                        Text: ="Procurement Follow-up"
-                        Width: =Parent.Width - 40
-                  - lblStep2Note_SFU:
-                      Control: Label@2.5.1
-                      Properties:
-                        Color: =RGBA(133, 79, 11, 1)
-                        Height: =20
-                        Size: =10
-                        Text: '="Review the goods receipt details above and complete the follow-up" '
-                        Width: =Parent.Width - 40
-            - rowStep2CreditNote_SFU:
-                Control: GroupContainer@1.5.0
-                Variant: AutoLayout
-                Properties:
-                  DropShadow: =DropShadow.None
-                  FillPortions: =0
-                  LayoutDirection: =LayoutDirection.Vertical
-                  LayoutGap: =4
-                  PaddingBottom: =8
-                  PaddingLeft: =20
-                  PaddingRight: =20
-                  PaddingTop: =4
-                  RadiusBottomLeft: =0
-                  RadiusBottomRight: =0
-                  RadiusTopLeft: =0
-                  RadiusTopRight: =0
-                  Visible: |-
-                    =Not(IsBlank(LookUp('RM Procurement Execution Log', RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 4))) &&
-                    IsBlank(LookUp('RM Procurement Execution Log', RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 5)) &&
-                    gSelectedRequest.FollowUpAcceptanceDecision.Value = "Accepted with Adjustment"
-                  Width: =Parent.Width
-                Children:
-                  - lblCreditNoteHeader_SFU:
-                      Control: Label@2.5.1
-                      Properties:
-                        FontWeight: =FontWeight.Bold
-                        Height: =24
-                        Size: =12
-                        Text: ="Upload Credit Note *"
-                        Width: =Parent.Width - 40
-                  - lblCreditNoteHint_SFU:
-                      Control: Label@2.5.1
-                      Properties:
-                        Color: =RGBA(136, 135, 128, 1)
-                        Size: =10
-                        Text: ="Upload the credit note file from the supplier."
-                        Width: =Parent.Width - 40
-                  - formCreditNote_SFU:
-                      Control: Form@2.4.4
-                      Variant: Classic
-                      Layout: Vertical
-                      Properties:
-                        DataSource: ='RM Procurement Requests'
-                        Height: =120
-                        Item: =gSelectedRequest
-                        LayoutMinWidth: =100
-                        NumberOfColumns: =1
-                        OnFailure: =Notify("Upload failed. Please try again.", NotificationType.Error)
-                        OnSuccess: |-
-                          =Set(locCreditNoteURL_SFU,
-                              gSharePointAttachmentBase & Text(gSelectedRequest.ID) & "/" & EncodeUrl(gPendingCreditNoteName_SFU)
-                          );
-                          With(
-                              {wPatched: Patch(
-                                  'RM Procurement Requests',
-                                  gSelectedRequest,
-                                  {
-                                      Status: {Value: If(!gSelectedRequest.InvoiceSubmitted, "Pending Invoice", "Pending Accounting")},
-                                      CreditNote: locCreditNoteURL_SFU,
-                                      SupplierFollowUpNotes: txtFollowUpNotes_SFU.Value,
-                                      FollowUpCompletedAt: Now()
-                                  }
-                              )},
-                              If(
-                                  IsBlank(wPatched.ID),
-                                  Notify("Failed to submit. Please try again.", NotificationType.Error),
-                                  With(
-                                      {wLog: Patch(
-                                          'RM Procurement Execution Log',
-                                          Defaults('RM Procurement Execution Log'),
-                                          {
-                                              Title: "Step 5 - Supplier Follow-up Procurement - " & gSelectedRequest.Title,
-                                              RequestID: {Id: gSelectedRequest.ID, Value: gSelectedRequest.Title},
-                                              RequestIDText: Text(gSelectedRequest.ID),
-                                              StepNumber: 5,
-                                              StepName: {Value: "Supplier Follow-up — Procurement"},
-                                              ExecutedBy: {Id: gCurrentEmployee.ID, Value: gCurrentEmployee.Title},
-                                              ExecutedAt: Now()
-                                          }
-                                      )},
-                                      If(
-                                          IsBlank(wLog.ID),
-                                          Notify("Failed to save execution log. Please try again.", NotificationType.Error),
-                                          Notify("Follow-up completed. Request is now " & If(!gSelectedRequest.InvoiceSubmitted, "Pending Invoice.", "Pending Accounting."), NotificationType.Success);
-                                          Navigate(HomeScreen)
-                                      )
-                                  )
-                              )
-                          )
-                        Width: =Parent.Width - 40
-                      Children:
-                        - dcCreditNote_SFU:
-                            Control: TypedDataCard@1.0.7
-                            Variant: ClassicAttachmentsEdit
-                            Properties:
-                              DataField: ="{Attachments}"
-                              Default: =Blank()
-                              DisplayMode: =DisplayMode.Edit
-                              DisplayName: =""
-                              Height: =100
-                              Required: =false
-                              Update: =attCreditNote_SFU.Attachments
-                              Width: =Parent.Width
-                              X: =0
-                              Y: =0
-                            Children:
-                              - attCreditNote_SFU:
-                                  Control: Attachments@2.3.0
-                                  Properties:
-                                    Height: =100
-                                    Items: =Parent.Default
-                                    MaxAttachments: =1
-                                    Width: =Parent.Width
-            - rowStep2Notes_SFU:
-                Control: GroupContainer@1.5.0
-                Variant: AutoLayout
-                Properties:
-                  DropShadow: =DropShadow.None
-                  LayoutDirection: =LayoutDirection.Vertical
-                  LayoutGap: =4
-                  LayoutMinHeight: =140
-                  PaddingBottom: =8
-                  PaddingLeft: =20
-                  PaddingRight: =20
-                  PaddingTop: =4
-                  RadiusBottomLeft: =0
-                  RadiusBottomRight: =0
-                  RadiusTopLeft: =0
-                  RadiusTopRight: =0
-                  Visible: =Not(IsBlank(LookUp('RM Procurement Execution Log', RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 4))) && IsBlank(LookUp('RM Procurement Execution Log', RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 5))
-                  Width: =Parent.Width
-                Children:
-                  - lblFollowUpNotesLabel_SFU:
-                      Control: Label@2.5.1
-                      Properties:
-                        FontWeight: =FontWeight.Semibold
-                        Height: =24
-                        Size: =11
-                        Text: ="Remarks *"
-                        Width: =Parent.Width - 40
-                        X: =40
-                        Y: =40
-                  - txtFollowUpNotes_SFU:
-                      Control: TextInput@0.0.54
-                      Properties:
-                        Height: =80
-                        Mode: ='TextInputCanvas.Mode'.Multiline
-                        Placeholder: ="Describe the outcome of follow-up with supplier..."
-                        Width: =Parent.Width - 40
-            - rowCompletedBanner_SFU:
-                Control: GroupContainer@1.5.0
-                Variant: AutoLayout
-                Properties:
-                  DropShadow: =DropShadow.None
-                  Fill: =RGBA(225, 245, 238, 1)
-                  LayoutDirection: =LayoutDirection.Vertical
-                  LayoutGap: =4
-                  PaddingBottom: =12
-                  PaddingLeft: =20
-                  PaddingRight: =20
-                  PaddingTop: =20
-                  RadiusBottomLeft: =0
-                  RadiusBottomRight: =0
-                  RadiusTopLeft: =0
-                  RadiusTopRight: =0
-                  Visible: =Not(IsBlank(LookUp('RM Procurement Execution Log', RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 5)))
-                  Width: =Parent.Width
-                Children:
-                  - lblCompletedBanner_SFU:
-                      Control: Label@2.5.1
-                      Properties:
-                        Color: =RGBA(15, 110, 86, 1)
-                        FontWeight: =FontWeight.Bold
-                        Height: =24
-                        Size: =11
-                        Text: ="✅ Supplier follow-up completed. Request is now Completed."
-                        Width: =Parent.Width - 40
-                  - lblFollowUpNotesReadOnly_SFU:
-                      Control: Label@2.5.1
-                      Properties:
-                        Color: =RGBA(68, 68, 65, 1)
-                        Size: =11
-                        Text: |-
-                          ="Follow-up Notes: " & If(IsBlank(gSelectedRequest.SupplierFollowUpNotes), "—", gSelectedRequest.SupplierFollowUpNotes)
-                        Width: =Parent.Width - 40
       - conActionBar_SFU:
           Control: GroupContainer@1.5.0
           Variant: AutoLayout
@@ -1780,7 +1498,6 @@ Screens:
                         Height: =36
                         OnSelect: =Navigate(HomeScreen)
                         Text: ="Cancel"
-                        Visible: =IsBlank(LookUp('RM Procurement Execution Log', RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 5))
                         Width: =120
                         X: =40
                         Y: =40
@@ -1827,7 +1544,7 @@ Screens:
                             )
                           )
                         Text: ="Save Assignment"
-                        Visible: =gSFU1DelegationMode = "Assign to someone else"
+                        Visible: =gSFURoundOpen && gSFU1DelegationMode = "Assign to someone else"
                         Width: =160
                         X: =40
                         Y: =40
@@ -1846,184 +1563,137 @@ Screens:
                                   Notify("This assignment has been reassigned to someone else. Your submission has been cancelled.", NotificationType.Warning);
                                   Navigate(HomeScreen),
                                   If(
-                                      Not(chkSFU1.Checked && chkSFU2.Checked && chkSFU3.Checked && chkSFU4.Checked && chkSFU5.Checked),
-                                      Notify("Please complete all checklist items", NotificationType.Error),
+                                      Coalesce(wLatest.ReceiptRoundCount, gRoundsDone) <> gRoundsDone,
+                                      Notify("Another receipt round has already been recorded for this request. Your submission has been cancelled.", NotificationType.Warning);
+                                      Navigate(HomeScreen),
                                       If(
-                                          IsBlank(dpReceiptDate2_SFU.SelectedDate) ||
-                                          IsBlank(ddReceiptStatus2_SFU.Selected.Value) ||
-                                          IsBlank(ddAcceptanceDecision2_SFU.Selected) ||
-                                          IsBlank(txtRemarks2_SFU.Value) ||
-                                          CountRows(attSFU1Photos.Attachments) = 0,
-                                          Notify("Please fill in all required fields", NotificationType.Error),
+                                          Not(chkSFU1.Checked && chkSFU2.Checked && chkSFU3.Checked && chkSFU4.Checked && chkSFU5.Checked),
+                                          Notify("Please complete all checklist items", NotificationType.Error),
                                           If(
-                                          CountRows(Filter(colLineItemsDetail, ReceivedQty2 > 0)) = 0,
-                                          Notify("Please enter received quantity for at least one material", NotificationType.Error),
-                                          If(
-                                          CountRows(Filter(colLineItemsDetail, ReceivedQty2 > 0 && IsBlank(BatchNumber2))) > 0,
-                                          Notify("Please enter batch number for all received materials", NotificationType.Error),
-                                          If(
-                                          CountRows(Filter(colLineItemsDetail, ReceivedQty2 > 0 && IsBlank(ExpiryDate2))) > 0,
-                                          Notify("Please enter expiry date for all received materials", NotificationType.Error),
-                                          If(
-                                          CountRows(Filter(colLineItemsDetail, ReceivedQty2 > 0 && IsBlank(QCNumber2))) > 0,
-                                          Notify("Please enter QC number for all received materials", NotificationType.Error),
-                                          If(
-                                          CountRows(Filter(colLineItemsDetail, ReceivedQty2 > 0 && IsBlank(RMPKCode2))) > 0,
-                                          Notify("Please enter RM/PK code for all received materials", NotificationType.Error),
-                                          With(
-                                              {
-                                                  wPatched: Patch(
-                                                      'RM Procurement Requests',
-                                                      gSelectedRequest,
-                                                      {
-                                                          Status: {Value: If(
-                                                              ddAcceptanceDecision2_SFU.Selected.Value = "Accepted",
-                                                              If(!wLatest.InvoiceSubmitted, "Pending Invoice", "Pending Accounting"),
-                                                              If(!wLatest.InvoiceSubmitted, "Pending Invoice", "Pending Supplier Follow-up")
-                                                          )},
-                                                          FollowUpReceiptBy: gCurrentEmployee.Title,
-                                                          FollowUpReceiptDate: dpReceiptDate2_SFU.SelectedDate,
-                                                          FollowUpReceiptStatus: {Value: ddReceiptStatus2_SFU.Selected.Value},
-                                                          FollowUpAcceptanceDecision: {Value: ddAcceptanceDecision2_SFU.Selected.Value},
-                                                          Fulfillment: {Value: If(
-                                                              ddAcceptanceDecision2_SFU.Selected.Value = "Accepted with Adjustment",
-                                                              "Fulfilled with Adjustment",
-                                                              "Fulfilled"
-                                                          )},
-                                                          FollowUpRemarks: txtRemarks2_SFU.Value,
-                                                          FollowUpReceiptAt: Now()
-                                                      }
-                                                  )
-                                              },
+                                              IsBlank(dpReceiptDate2_SFU.SelectedDate) ||
+                                              IsBlank(ddReceiptStatus2_SFU.Selected.Value) ||
+                                              IsBlank(ddAcceptanceDecision2_SFU.Selected) ||
+                                              IsBlank(txtRemarks2_SFU.Value) ||
+                                              CountRows(attSFU1Photos.Attachments) = 0,
+                                              Notify("Please fill in all required fields", NotificationType.Error),
                                               If(
-                                                  IsBlank(wPatched.ID),
-                                                  Notify("Failed to submit. Please try again.", NotificationType.Error),
-                                                  With(
-                                                      {wLog: Patch(
-                                                          'RM Procurement Execution Log',
-                                                          Defaults('RM Procurement Execution Log'),
+                                              CountRows(Filter(colRoundEntry, ReceivedQty > 0)) = 0,
+                                              Notify("Please enter received quantity for at least one material", NotificationType.Error),
+                                              If(
+                                              CountRows(Filter(colRoundEntry, ReceivedQty > 0 && IsBlank(BatchNumber))) > 0,
+                                              Notify("Please enter batch number for all received materials", NotificationType.Error),
+                                              If(
+                                              CountRows(Filter(colRoundEntry, ReceivedQty > 0 && IsBlank(ExpiryDate))) > 0,
+                                              Notify("Please enter expiry date for all received materials", NotificationType.Error),
+                                              If(
+                                              CountRows(Filter(colRoundEntry, ReceivedQty > 0 && IsBlank(QCNumber))) > 0,
+                                              Notify("Please enter QC number for all received materials", NotificationType.Error),
+                                              If(
+                                              CountRows(Filter(colRoundEntry, ReceivedQty > 0 && IsBlank(RMPKCode))) > 0,
+                                              Notify("Please enter RM/PK code for all received materials", NotificationType.Error),
+                                              With(
+                                                  {
+                                                      wPatched: Patch(
+                                                          'RM Procurement Requests',
+                                                          gSelectedRequest,
                                                           {
-                                                              Title: "Step 4 - Supplier Follow-up Requester - " & gSelectedRequest.Title,
-                                                              RequestID: {Id: gSelectedRequest.ID, Value: gSelectedRequest.Title},
-                                                              RequestIDText: Text(gSelectedRequest.ID),
-                                                              StepNumber: 4,
-                                                              StepName: {Value: "Supplier Follow-up — Requester Detail"},
-                                                              ExecutedBy: {Id: gCurrentEmployee.ID, Value: gCurrentEmployee.Title},
-                                                              ExecutedAt: Now()
+                                                              Status: {Value: If(
+                                                                  ddAcceptanceDecision2_SFU.Selected.Value = "Accepted",
+                                                                  If(!wLatest.InvoiceSubmitted, "Pending Invoice", "Pending Accounting"),
+                                                                  "Pending Supplier Follow-up"
+                                                              )},
+                                                              ReceiptRoundCount: gCurrentRound,
+                                                              LatestReceiptDecision: ddAcceptanceDecision2_SFU.Selected.Value,
+                                                              SFU1AssignedToID: Blank()
                                                           }
-                                                      )},
+                                                      )
+                                                  },
+                                                  If(
+                                                      IsBlank(wPatched.ID),
+                                                      Notify("Failed to submit. Please try again.", NotificationType.Error),
                                                       If(
-                                                          IsBlank(wLog.ID),
-                                                          Notify("Failed to save execution log. Please try again.", NotificationType.Error),
-                                                          Set(gSFU1PendingAttachments, attSFU1Photos.Attachments);
-                                                          Set(gSFU1LogEntry, wLog);
-                                                          EditForm(frmSFU1Log_SFU);
-                                                          SubmitForm(frmSFU1Log_SFU);
-                                                          ForAll(
-                                                              colLineItemsDetail,
-                                                              Patch(
-                                                                  'RM Procurement Line Items',
-                                                                  {ID: ThisRecord.ID},
-                                                                  {
-                                                                      ReceivedQty2: ThisRecord.ReceivedQty2,
-                                                                      BatchNumber2: If(ThisRecord.ReceivedQty2 > 0, ThisRecord.BatchNumber2, ""),
-                                                                      ExpiryDate2: If(ThisRecord.ReceivedQty2 > 0, ThisRecord.ExpiryDate2, Blank()),
-                                                                      QCNumber2: If(ThisRecord.ReceivedQty2 > 0, ThisRecord.QCNumber2, ""),
-                                                                      RMPKCode2: If(ThisRecord.ReceivedQty2 > 0, ThisRecord.RMPKCode2, ""),
-                                                                      COALink2: If(ThisRecord.ReceivedQty2 > 0, ThisRecord.COALink2, ""),
-                                                                      COA2Missing: ThisRecord.ReceivedQty2 > 0 && IsBlank(ThisRecord.COALink2)
-                                                                  }
-                                                              )
-                                                          );
-                                                          Switch(
-                                                              ddAcceptanceDecision2_SFU.Selected.Value,
-                                                              "Accepted", Notify("Submitted. Request is now " & If(!wLatest.InvoiceSubmitted, "Pending Invoice.", "Pending Accounting."), NotificationType.Success),
-                                                              "Accepted with Adjustment", Notify("Submitted. Request is now " & If(!wLatest.InvoiceSubmitted, "Pending Invoice.", "Pending Supplier Follow-up."), NotificationType.Success)
-                                                          );
-                                                          Refresh('RM Procurement Requests');
-                                                          Navigate(HomeScreen)
+                                                          ddAcceptanceDecision2_SFU.Selected.Value = "Accepted",
+                                                          Patch('RM Procurement Requests', {ID: gSelectedRequest.ID}, {Fulfillment: {Value: "Fulfilled"}})
+                                                      );
+                                                      With(
+                                                          {wLog: Patch(
+                                                              'RM Procurement Execution Log',
+                                                              Defaults('RM Procurement Execution Log'),
+                                                              {
+                                                                  Title: "Step 4 - Goods Receipt Round " & gCurrentRound & " - " & gSelectedRequest.Title,
+                                                                  RequestID: {Id: gSelectedRequest.ID, Value: gSelectedRequest.Title},
+                                                                  RequestIDText: Text(gSelectedRequest.ID),
+                                                                  StepNumber: 4,
+                                                                  StepName: {Value: "Supplier Follow-up — Requester Detail"},
+                                                                  RoundNumber: gCurrentRound,
+                                                                  ReceivedBy: gCurrentEmployee.Title,
+                                                                  ReceiptDate: dpReceiptDate2_SFU.SelectedDate,
+                                                                  ReceiptStatus: ddReceiptStatus2_SFU.Selected.Value,
+                                                                  AcceptanceDecision: ddAcceptanceDecision2_SFU.Selected.Value,
+                                                                  ExecutedBy: {Id: gCurrentEmployee.ID, Value: gCurrentEmployee.Title},
+                                                                  ExecutedAt: Now(),
+                                                                  Notes: txtRemarks2_SFU.Value
+                                                              }
+                                                          )},
+                                                          If(
+                                                              IsBlank(wLog.ID),
+                                                              Notify("Failed to save execution log. Please try again.", NotificationType.Error),
+                                                              Set(gSFU1PendingAttachments, attSFU1Photos.Attachments);
+                                                              Set(gSFU1LogEntry, wLog);
+                                                              EditForm(frmSFU1Log_SFU);
+                                                              SubmitForm(frmSFU1Log_SFU);
+                                                              ForAll(
+                                                                  Filter(colRoundEntry, ReceivedQty > 0) As re,
+                                                                  Patch(
+                                                                      'RM Procurement Receipt Rounds',
+                                                                      Defaults('RM Procurement Receipt Rounds'),
+                                                                      {
+                                                                          Title: "R" & gCurrentRound & " - " & re.MaterialName,
+                                                                          RequestID: {Id: gSelectedRequest.ID, Value: gSelectedRequest.Title},
+                                                                          RequestIDText: Text(gSelectedRequest.ID),
+                                                                          LineItemID: re.LineItemID,
+                                                                          RoundNumber: gCurrentRound,
+                                                                          MaterialName: re.MaterialName,
+                                                                          Unit: re.Unit,
+                                                                          ReceivedQty: re.ReceivedQty,
+                                                                          BatchNumber: re.BatchNumber,
+                                                                          ExpiryDate: re.ExpiryDate,
+                                                                          QCNumber: re.QCNumber,
+                                                                          RMPKCode: re.RMPKCode,
+                                                                          COALink: re.COALink,
+                                                                          COAMissing: IsBlank(re.COALink)
+                                                                      }
+                                                                  )
+                                                              );
+                                                              Notify(
+                                                                  "Round " & gCurrentRound & " receipt submitted. " &
+                                                                  Switch(
+                                                                      ddAcceptanceDecision2_SFU.Selected.Value,
+                                                                      "Requires Supplier Follow-up", "Receipt round " & (gCurrentRound + 1) & " is now open.",
+                                                                      "Accepted", "Request is now " & If(!wLatest.InvoiceSubmitted, "Pending Invoice.", "Pending Accounting."),
+                                                                      "Accepted with Adjustment", "Procurement will now upload the Credit Note."
+                                                                  ),
+                                                                  NotificationType.Success
+                                                              );
+                                                              Refresh('RM Procurement Requests');
+                                                              Navigate(HomeScreen)
+                                                          )
                                                       )
                                                   )
                                               )
-                                          )
-                                          )
-                                          )
-                                          )
-                                          )
+                                              )
+                                              )
+                                              )
+                                              )
+                                              )
                                           )
                                       )
                                   )
                               )
                           )
                         Text: ="Submit →"
-                        Visible: |-
-                          =IsBlank(LookUp('RM Procurement Execution Log', RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 4))
-                          && gSFU1DelegationMode = "I will receive"
+                        Visible: =gSFURoundOpen && gSFU1DelegationMode = "I will receive"
                         Width: =160
-                        X: =40
-                        Y: =40
-                  - btnSubmitStep2_SFU:
-                      Control: Button@0.0.45
-                      Properties:
-                        Height: =44
-                        OnSelect: |-
-                          =If(
-                              IsBlank(txtFollowUpNotes_SFU.Value),
-                              Notify("Supplier Follow-up Notes is required", NotificationType.Error),
-                              If(
-                                  gSelectedRequest.FollowUpAcceptanceDecision.Value = "Accepted with Adjustment",
-                                  If(
-                                      CountRows(attCreditNote_SFU.Attachments) = 0,
-                                      Notify("Credit Note file is required for Invoice Adjustment", NotificationType.Error),
-                                      Set(gPendingCreditNoteName_SFU, Last(attCreditNote_SFU.Attachments).Name);
-                                      SubmitForm(formCreditNote_SFU)
-                                  ),
-                                  With(
-                                      {wPatched: Patch(
-                                          'RM Procurement Requests',
-                                          gSelectedRequest,
-                                          {
-                                              Status: {Value: If(!gSelectedRequest.InvoiceSubmitted, "Pending Invoice", "Pending Accounting")},
-                                              CreditNote: "",
-                                              SupplierFollowUpNotes: txtFollowUpNotes_SFU.Value,
-                                              FollowUpCompletedAt: Now()
-                                          }
-                                      )},
-                                      If(
-                                          IsBlank(wPatched.ID),
-                                          Notify("Failed to submit. Please try again.", NotificationType.Error),
-                                          With(
-                                              {wLog: Patch(
-                                                  'RM Procurement Execution Log',
-                                                  Defaults('RM Procurement Execution Log'),
-                                                  {
-                                                      Title: "Step 5 - Supplier Follow-up Procurement - " & gSelectedRequest.Title,
-                                                      RequestID: {Id: gSelectedRequest.ID, Value: gSelectedRequest.Title},
-                                                      RequestIDText: Text(gSelectedRequest.ID),
-                                                      StepNumber: 5,
-                                                      StepName: {Value: "Supplier Follow-up — Procurement"},
-                                                      ExecutedBy: {Id: gCurrentEmployee.ID, Value: gCurrentEmployee.Title},
-                                                      ExecutedAt: Now()
-                                                  }
-                                              )},
-                                              If(
-                                                  IsBlank(wLog.ID),
-                                                  Notify("Failed to save execution log. Please try again.", NotificationType.Error),
-                                                  Refresh('RM Procurement Requests');
-                                                  Notify("Follow-up completed. Request is now " & If(!gSelectedRequest.InvoiceSubmitted, "Pending Invoice.", "Pending Accounting."), NotificationType.Success);
-                                                  Navigate(HomeScreen)
-                                              )
-                                          )
-                                      )
-                                  )
-                              )
-                          )
-                        Text: ="Complete Follow-up →"
-                        Visible: |-
-                          =Not(IsBlank(LookUp('RM Procurement Execution Log', RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 4))) &&
-                            IsBlank(LookUp('RM Procurement Execution Log', RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 5)) &&
-                            (gCurrentUser.Role.Value = "Procurement" || gCurrentUser.Role.Value = "Admin")
-                        Width: =200
                         X: =40
                         Y: =40
       - lblUserInfo_SFU:
@@ -2042,3 +1712,152 @@ Screens:
               )
             Width: =280
             X: =Parent.Width - 300
+      - rectPhotoOverlay_SFU:
+          Control: Rectangle@2.3.0
+          Properties:
+            BorderColor: =RGBA(0, 0, 0, 0)
+            Fill: =RGBA(0, 0, 0, 0.5)
+            Height: =Parent.Height
+            OnSelect: =Set(gShowReceiptPhotos, false)
+            Visible: =gShowReceiptPhotos
+            Width: =Parent.Width
+      - conPhotoDialog_SFU:
+          Control: GroupContainer@1.5.0
+          Variant: AutoLayout
+          Properties:
+            DropShadow: =DropShadow.Bold
+            Fill: =RGBA(255, 255, 255, 1)
+            Height: =420
+            LayoutDirection: =LayoutDirection.Vertical
+            LayoutGap: =8
+            PaddingBottom: =16
+            PaddingLeft: =20
+            PaddingRight: =20
+            PaddingTop: =16
+            RadiusBottomLeft: =8
+            RadiusBottomRight: =8
+            RadiusTopLeft: =8
+            RadiusTopRight: =8
+            Visible: =gShowReceiptPhotos
+            Width: =620
+            X: =(Parent.Width - 620) / 2
+            Y: =(Parent.Height - 420) / 2
+          Children:
+            - rowPhotoDialogHeader_SFU:
+                Control: GroupContainer@1.5.0
+                Variant: AutoLayout
+                Properties:
+                  DropShadow: =DropShadow.None
+                  FillPortions: =0
+                  Height: =36
+                  LayoutAlignItems: =LayoutAlignItems.Center
+                  LayoutDirection: =LayoutDirection.Horizontal
+                  LayoutGap: =8
+                  LayoutJustifyContent: =LayoutJustifyContent.SpaceBetween
+                  RadiusBottomLeft: =0
+                  RadiusBottomRight: =0
+                  RadiusTopLeft: =0
+                  RadiusTopRight: =0
+                  Width: =Parent.Width - 40
+                Children:
+                  - lblPhotoDialogTitle_SFU:
+                      Control: Label@2.5.1
+                      Properties:
+                        Color: =RGBA(83, 74, 183, 1)
+                        FillPortions: =1
+                        FontWeight: =FontWeight.Bold
+                        Height: =32
+                        PaddingLeft: =0
+                        Size: =12
+                        Text: ="Receipt Attachments — " & gPhotoRoundLabel
+                        Width: =440
+                        Wrap: =false
+                  - btnClosePhotoDialog_SFU:
+                      Control: Button@0.0.45
+                      Properties:
+                        Height: =32
+                        OnSelect: =Set(gShowReceiptPhotos, false)
+                        Text: ="Close"
+                        Width: =100
+            - rectPhotoDialogDivider_SFU:
+                Control: Rectangle@2.3.0
+                Properties:
+                  BorderColor: =RGBA(0, 0, 0, 0)
+                  Fill: =RGBA(210, 209, 199, 1)
+                  Height: =1
+                  LayoutMinHeight: =1
+                  Width: =Parent.Width - 40
+            - lblPhotoDialogHint_SFU:
+                Control: Label@2.5.1
+                Properties:
+                  Color: =RGBA(136, 135, 128, 1)
+                  Height: =20
+                  PaddingLeft: =0
+                  Size: =9
+                  Text: ="Click a file name to open it in a new tab."
+                  Width: =Parent.Width - 40
+            - lblPhotoDialogEmpty_SFU:
+                Control: Label@2.5.1
+                Properties:
+                  Align: =Align.Center
+                  Color: =RGBA(136, 135, 128, 1)
+                  Height: =60
+                  Size: =11
+                  Text: ="No files were attached to this round."
+                  Visible: =CountRows(colReceiptPhotos) = 0
+                  Width: =Parent.Width - 40
+            - galReceiptPhotos_SFU:
+                Control: Gallery@2.15.0
+                Variant: BrowseLayout_Vertical_TwoTextOneImageVariant_ver5.0
+                Properties:
+                  FillPortions: =1
+                  Items: =colReceiptPhotos
+                  TemplatePadding: =2
+                  TemplateSize: =44
+                  Visible: =CountRows(colReceiptPhotos) > 0
+                  Width: =Parent.Width - 40
+                Children:
+                  - rowPhotoItem_SFU:
+                      Control: GroupContainer@1.5.0
+                      Variant: AutoLayout
+                      Properties:
+                        DropShadow: =DropShadow.None
+                        Fill: =RGBA(248, 247, 243, 1)
+                        Height: =44
+                        LayoutAlignItems: =LayoutAlignItems.Center
+                        LayoutDirection: =LayoutDirection.Horizontal
+                        LayoutGap: =8
+                        PaddingLeft: =12
+                        PaddingRight: =12
+                        RadiusBottomLeft: =4
+                        RadiusBottomRight: =4
+                        RadiusTopLeft: =4
+                        RadiusTopRight: =4
+                        Width: =Parent.Width
+                      Children:
+                        - lblReceiptPhotoName_SFU:
+                            Control: Label@2.5.1
+                            Properties:
+                              Color: =RGBA(56, 96, 178, 1)
+                              FillPortions: =1
+                              FontWeight: =FontWeight.Semibold
+                              Height: =40
+                              OnSelect: =Launch(ThisItem.AbsoluteUri, {}, LaunchTarget.New)
+                              PaddingLeft: =0
+                              Size: =11
+                              Text: =If(IsBlank(ThisItem.DisplayName), "—", ThisItem.DisplayName)
+                              Underline: =true
+                              Width: =Parent.Width - 100
+                              Wrap: =false
+                        - lblReceiptPhotoOpen_SFU:
+                            Control: Label@2.5.1
+                            Properties:
+                              Align: =Align.Right
+                              Color: =RGBA(136, 135, 128, 1)
+                              Height: =40
+                              OnSelect: =Launch(ThisItem.AbsoluteUri, {}, LaunchTarget.New)
+                              PaddingRight: =0
+                              Size: =10
+                              Text: ="Open ↗"
+                              Width: =80
+                              Wrap: =false

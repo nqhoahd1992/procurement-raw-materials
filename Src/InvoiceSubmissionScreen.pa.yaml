@@ -3,11 +3,7 @@ Screens:
     Properties:
       LoadingSpinnerColor: =RGBA(56, 96, 178, 1)
       OnVisible: |-
-        =Set(locSFUStep2Pending,
-            Not(IsBlank(LookUp('RM Procurement Execution Log', RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 4))) &&
-            IsBlank(LookUp('RM Procurement Execution Log', RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 5))
-        );
-        Set(gHasInvoiceResult, false);
+        =Set(gHasInvoiceResult, false);
         Set(gInvoiceResult, Blank());
         Set(gParsingInvoice, false);
         Set(locInvoiceVerified, Blank());
@@ -1067,46 +1063,6 @@ Screens:
                                     "—"
                                 )
                               Width: =Parent.Width - 24
-            - rowAccountingHandler_ISS:
-                Control: GroupContainer@1.5.0
-                Variant: AutoLayout
-                Properties:
-                  DropShadow: =DropShadow.None
-                  LayoutDirection: =LayoutDirection.Vertical
-                  LayoutGap: =4
-                  LayoutMinHeight: =120
-                  PaddingBottom: =8
-                  PaddingLeft: =20
-                  PaddingRight: =20
-                  PaddingTop: =20
-                  RadiusBottomLeft: =0
-                  RadiusBottomRight: =0
-                  RadiusTopLeft: =0
-                  RadiusTopRight: =0
-                  Width: =Parent.Width
-                Children:
-                  - lblAccountingHandlerLabel_ISS:
-                      Control: Label@2.5.1
-                      Properties:
-                        FontWeight: =FontWeight.Semibold
-                        Height: =24
-                        PaddingLeft: =0
-                        PaddingRight: =0
-                        Size: =11
-                        Text: ="Assign to Accounting Staff *"
-                        Width: =Parent.Width - 40
-                  - ddAccountingHandler_ISS:
-                      Control: ModernCombobox@1.1.1
-                      Properties:
-                        AllowExternalSelectedItems: =false
-                        FontWeight: =""
-                        Height: =40
-                        InputTextPlaceholder: ="Choose an option"
-                        ItemDisplayText: =ThisItem.EmployeeID.Value
-                        Items: =Filter('RM User', Role.Value = "Accounting")
-                        SelectMultiple: =false
-                        Size: =0
-                        Width: =Parent.Width - 40
       - conActionBar_ISS:
           Control: GroupContainer@1.5.0
           Variant: AutoLayout
@@ -1143,10 +1099,7 @@ Screens:
                   DisplayMode: =If(gSelectedRequest.InvoiceMode.Value = "ViaRequester" && (IsBlank(gSelectedRequest.RequesterInvoiceURL) || locInvoiceVerified <> true), DisplayMode.Disabled, DisplayMode.Edit)
                   Height: =36
                   OnSelect: |-
-                    =If(
-                        IsBlank(ddAccountingHandler_ISS.Selected) || IsBlank(ddAccountingHandler_ISS.Selected.EmployeeID.Id),
-                        Notify("Please assign an Accounting Staff member before submitting.", NotificationType.Error),
-                        Set(locInvoiceURL_ISS,
+                    =Set(locInvoiceURL_ISS,
                             If(
                                 gSelectedRequest.InvoiceMode.Value = "ViaRequester",
                                 gSelectedRequest.RequesterInvoiceURL,
@@ -1176,11 +1129,10 @@ Screens:
                                                 InvoiceSubmitted: true,
                                                 Status: If(
                                                     gSelectedRequest.Status.Value = "Pending Invoice",
-                                                    {Value: If(locSFUStep2Pending, "Pending Supplier Follow-up", "Pending Accounting")},
+                                                    {Value: "Pending Accounting"},
                                                     gSelectedRequest.Status
                                                 ),
-                                                OfficialInvoiceLink: locInvoiceURL_ISS,
-                                                AccountingHandlerID: {Id: ddAccountingHandler_ISS.Selected.EmployeeID.Id, Value: ddAccountingHandler_ISS.Selected.EmployeeID.Value}
+                                                OfficialInvoiceLink: locInvoiceURL_ISS
                                             }
                                         )},
                                         If(
@@ -1197,9 +1149,7 @@ Screens:
                                                         StepNumber: 6,
                                                         StepName: {Value: "Invoice Submission"},
                                                         ExecutedBy: {Id: gCurrentEmployee.ID, Value: gCurrentEmployee.Title},
-                                                        ExecutedAt: Now(),
-                                                        HandoverToID: {Id: ddAccountingHandler_ISS.Selected.EmployeeID.Id, Value: ddAccountingHandler_ISS.Selected.EmployeeID.Value},
-                                                        HandoverToIDText: ddAccountingHandler_ISS.Selected.EmployeeID.Value
+                                                        ExecutedAt: Now()
                                                     }
                                                 )},
                                                 If(
@@ -1231,7 +1181,7 @@ Screens:
                                                         IsError(gSubmitInvoiceResult),
                                                         Notify("Saved but invoice processing failed. Please contact IT with reference: " & gSelectedRequest.Title, NotificationType.Warning);
                                                         Navigate(HomeScreen),
-                                                        Notify(If(gSelectedRequest.Status.Value = "Pending Invoice", "Invoice submitted successfully. Request is now " & If(locSFUStep2Pending, "Pending Supplier Follow-up.", "Pending Accounting."), "Invoice submitted successfully. Goods Receipt is still in progress."), NotificationType.Success);
+                                                        Notify(If(gSelectedRequest.Status.Value = "Pending Invoice", "Invoice submitted successfully. Request is now Pending Accounting.", "Invoice submitted successfully. Goods Receipt is still in progress."), NotificationType.Success);
                                                         Navigate(HomeScreen)
                                                     )
                                                 )
@@ -1240,7 +1190,6 @@ Screens:
                                     )
                                 )
                             )
-                    )
                     )
                   Text: ="Submit Invoice →"
                   Width: =180
