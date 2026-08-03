@@ -830,7 +830,7 @@ Screens:
                                     Items: =["AUD", "USD"]
                                     SelectMultiple: =false
                                     Size: =0
-                                    Width: =100
+                                    Width: =160
                   - colBudgetRef:
                       Control: GroupContainer@1.5.0
                       Variant: AutoLayout

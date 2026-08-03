@@ -379,7 +379,7 @@ Screens:
                   "ID", SortOrder.Descending
               )
             OnSelect: =Set(gSelectedRequest, ThisItem); If(ThisItem.Status.Value = "Pending Invoice" && (gCurrentUser.Role.Value = "Procurement" || gCurrentUser.Role.Value = "Admin"), Navigate(InvoiceSubmissionScreen), Navigate(RequestDetailScreen))
-            TemplateSize: =132
+            TemplateSize: =164
             Visible: =Not(IsBlank(gCurrentEmployee.ID)) && Not(IsBlank(gCurrentUser.ID))
             Width: =Parent.Width
             Y: =188
@@ -397,7 +397,7 @@ Screens:
                 Variant: AutoLayout
                 Properties:
                   DropShadow: =DropShadow.None
-                  Height: =132
+                  Height: =164
                   LayoutDirection: =LayoutDirection.Vertical
                   LayoutGap: =4
                   PaddingBottom: =10
@@ -530,9 +530,10 @@ Screens:
                       Control: Label@2.5.1
                       Properties:
                         Color: =RGBA(136, 135, 128, 1)
-                        Height: =18
+                        Overflow: =Overflow.Scroll
                         Size: =9
                         Text: =ThisItem.ProcurementDescription
+                        VerticalAlign: =VerticalAlign.Top
                         Width: =Parent.Width - 32
                         Wrap: =false
                   - rowActions:
@@ -661,4 +662,4 @@ Screens:
                   Fill: =RGBA(210, 209, 199, 1)
                   Height: =1
                   Width: =Parent.Width
-                  Y: =131
+                  Y: =163
