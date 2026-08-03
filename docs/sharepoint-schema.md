@@ -58,7 +58,7 @@ Does **not** have a `Category`, `PreferredSupplier`, or `Department` column (all
 | `OfficialInvoiceLink` | Text (URL) | Final official invoice link, set by `Submit_Invoice` flow result |
 | `ProcurementExecutedBy` | Lookup→Employee List | |
 | `ProcurementExecutedAt` | DateTime | |
-| `AccountingHandlerID` | Lookup→Employee List | chosen by Procurement on `InvoiceSubmissionScreen`/`ProcurementExecutionScreen` |
+| `AccountingHandlerID` | Lookup→Employee List | **who actually completed the accounting step.** Written in exactly one place — `AccountingScreen`'s submit, as `gCurrentEmployee` — so it is blank until the request reaches `Completed`. It is *not* an assignment: there used to be an "Assign to Accounting Staff" picker on `ProcurementExecutionScreen` and `InvoiceSubmissionScreen` writing this field ahead of time, but the value was overwritten downstream anyway and never gated anything, so both pickers were removed. Read-only display on `RequestDetailScreen` ("Accounting Completed By") |
 | `AccountingCompletedAt` | DateTime | set by `AccountingScreen` submit, alongside `Status = "Completed"` |
 | `ConditionsText` | Text (multiline) | set on "Approve with conditions" |
 | `PurchaseRequestLink` | Text (URL) | read-only in `RequestDetailScreen`; no `Patch` site found anywhere in the app — appears unwritten by current app code |
@@ -208,7 +208,7 @@ Required ⚠: none.
 | `Title` (Title) | Text | `Step <n> - <name> - <request title>` |
 | `RequestID` | Lookup (→ID) | `{Id,Value}` |
 | `RequestIDText` | Text | join key |
-| `StepNumber` | Number | `1` Procurement Execution · `2` Accounting Handover · `3` Goods Receipt **round 1** · `4` Goods Receipt **round N ≥ 2** · `5` Supplier Follow-up (Procurement, one row **per round**) · `6` Invoice Submission |
+| `StepNumber` | Number | `1` Procurement Execution · `2` Accounting Handover (written by `AccountingScreen`'s submit, i.e. at completion — despite the "handover" name it records the accounting step being *done*, not assigned) · `3` Goods Receipt **round 1** · `4` Goods Receipt **round N ≥ 2** · `5` Supplier Follow-up (Procurement, the `Accepted with Adjustment` close-out) · `6` Invoice Submission |
 | `StepName` | Choice | matches the step |
 | `RoundNumber` ⬅ **new** | Number | which receipt round this row belongs to. Step 3 always `1`; step 4 = `N`; step 5 = the round it follows up on. **Blank on rows written before the unlimited-rounds change** — every reader coalesces to `If(StepNumber = 3, 1, 2)` |
 | `ReceivedBy` ⬅ **new** | Text | steps 3/4 — display name of whoever physically received the goods |
@@ -217,8 +217,8 @@ Required ⚠: none.
 | `AcceptanceDecision` ⬅ **new** | Text | steps 3/4 — copy of the chosen acceptance decision. Plain Text, same reason |
 | `ExecutedBy` | Lookup→Employee List | |
 | `ExecutedAt` | DateTime | |
-| `HandoverToID` | Lookup→Employee List | step 1 — accounting handler |
-| `HandoverToIDText` | Text | step 1 |
+| `HandoverToID` | Lookup→Employee List | ⚠ **no longer written** — held the Accounting staff picked at step 1 / step 6. Both pickers were removed; safe to delete from the list |
+| `HandoverToIDText` | Text | ⚠ **no longer written** — same; safe to delete |
 | `SupplierSummary` | Text (multiline) | step 1 |
 | `PurchaseOrderLink` | Text (URL) | step 1 |
 | `Notes` | Text (multiline) | **shared column, meaning depends on `StepNumber`**: step 1 (reject reason) / 2 · steps 3 & 4 = that receipt round's Remarks · step 5 = that round's Procurement follow-up notes |

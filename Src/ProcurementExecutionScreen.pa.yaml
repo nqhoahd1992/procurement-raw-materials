@@ -750,7 +750,6 @@ Screens:
                                           InvoiceSubmitted: gPendingPath = "A",
                                           OrderConfirmationURL: wURL,
                                           OfficialInvoiceLink: wOfficialInvoiceLink,
-                                          AccountingHandlerID: If(gPendingPath = "B", Blank(), {Id: ddAccountingHandler_PE.Selected.EmployeeID.Id, Value: ddAccountingHandler_PE.Selected.EmployeeID.Value}),
                                           ProcurementExecutedBy: {Id: gCurrentEmployee.ID, Value: gCurrentEmployee.Title},
                                           ProcurementExecutedAt: Now()
                                       }
@@ -769,8 +768,6 @@ Screens:
                                               StepName: {Value: "Procurement Execution"},
                                               ExecutedBy: {Id: gCurrentEmployee.ID, Value: gCurrentEmployee.Title},
                                               ExecutedAt: Now(),
-                                              HandoverToID: If(gPendingPath = "B", Blank(), {Id: ddAccountingHandler_PE.Selected.EmployeeID.Id, Value: ddAccountingHandler_PE.Selected.EmployeeID.Value}),
-                                              HandoverToIDText: If(gPendingPath = "B", "", ddAccountingHandler_PE.Selected.EmployeeID.Value),
                                               SupplierSummary: txtSupplierSummary_PE.Value,
                                               PurchaseOrderLink: txtPurchaseOrder_PE.Value
                                           }
@@ -956,7 +953,6 @@ Screens:
                                           RemittanceURL: wURL,
                                           OfficialInvoiceLink: wOfficialInvoiceLink,
                                           RequesterInvoiceURL: If(wInvoiceCorrect, gSelectedRequest.RequesterInvoiceURL, ""),
-                                          AccountingHandlerID: If(Not(wInvoiceCorrect), Blank(), {Id: ddAccountingHandler_PE.Selected.EmployeeID.Id, Value: ddAccountingHandler_PE.Selected.EmployeeID.Value}),
                                           ProcurementExecutedBy: {Id: gCurrentEmployee.ID, Value: gCurrentEmployee.Title},
                                           ProcurementExecutedAt: Now()
                                       }
@@ -975,8 +971,6 @@ Screens:
                                               StepName: {Value: "Procurement Execution"},
                                               ExecutedBy: {Id: gCurrentEmployee.ID, Value: gCurrentEmployee.Title},
                                               ExecutedAt: Now(),
-                                              HandoverToID: If(Not(wInvoiceCorrect), Blank(), {Id: ddAccountingHandler_PE.Selected.EmployeeID.Id, Value: ddAccountingHandler_PE.Selected.EmployeeID.Value}),
-                                              HandoverToIDText: If(Not(wInvoiceCorrect), "", ddAccountingHandler_PE.Selected.EmployeeID.Value),
                                               SupplierSummary: txtSupplierSummary_PE.Value,
                                               PurchaseOrderLink: txtPurchaseOrder_PE.Value
                                           }
@@ -1762,52 +1756,6 @@ Screens:
                         Size: =9
                         Text: ="Please double-check the above information before submitting!"
                         Width: =Parent.Width - 50
-            - rowAccountingHandler_PE:
-                Control: GroupContainer@1.5.0
-                Variant: AutoLayout
-                Properties:
-                  DropShadow: =DropShadow.None
-                  LayoutDirection: =LayoutDirection.Vertical
-                  LayoutGap: =4
-                  LayoutMinHeight: =120
-                  PaddingBottom: =8
-                  PaddingLeft: =20
-                  PaddingRight: =20
-                  PaddingTop: =20
-                  RadiusBottomLeft: =0
-                  RadiusBottomRight: =0
-                  RadiusTopLeft: =0
-                  RadiusTopRight: =0
-                  Visible: |-
-                    =rdoDecision_PE.Selected.Value = "Proceed" &&
-                    Not(
-                        (Not(locIsViaRequester) && rdoInvoiceChoice_PE.Selected.Value = "Defer Invoice") ||
-                        (locIsViaRequester && rdoInvoiceCorrect_PE.Selected.Value = "No")
-                    )
-                  Width: =Parent.Width
-                Children:
-                  - lblAccountingHandlerLabel_PE:
-                      Control: Label@2.5.1
-                      Properties:
-                        FontWeight: =FontWeight.Semibold
-                        Height: =24
-                        PaddingLeft: =0
-                        PaddingRight: =0
-                        Size: =11
-                        Text: ="Assign to Accounting Staff *"
-                        Width: =Parent.Width - 40
-                  - ddAccountingHandler_PE:
-                      Control: ModernCombobox@1.1.1
-                      Properties:
-                        AllowExternalSelectedItems: =false
-                        FontWeight: =""
-                        Height: =40
-                        InputTextPlaceholder: ="Choose an option"
-                        ItemDisplayText: =ThisItem.EmployeeID.Value
-                        Items: =Filter('RM User', Role.Value = "Accounting")
-                        SelectMultiple: =false
-                        Size: =0
-                        Width: =Parent.Width - 40
       - conActionBar_PE:
           Control: GroupContainer@1.5.0
           Variant: AutoLayout
@@ -1914,14 +1862,7 @@ Screens:
                               ),
                               // --- PROCEED ---
                               If(
-                                  IsBlank(txtSupplierSummary_PE.Value) ||
-                                  (
-                                      Not(
-                                          (Not(locIsViaRequester) && rdoInvoiceChoice_PE.Selected.Value = "Defer Invoice") ||
-                                          (locIsViaRequester && rdoInvoiceCorrect_PE.Selected.Value = "No")
-                                      ) &&
-                                      (IsBlank(ddAccountingHandler_PE.Selected) || IsBlank(ddAccountingHandler_PE.Selected.EmployeeID.Id))
-                                  ),
+                                  IsBlank(txtSupplierSummary_PE.Value),
                                   Notify("Please fill in all required fields", NotificationType.Error),
                                   If(
                                       locIsViaRequester,

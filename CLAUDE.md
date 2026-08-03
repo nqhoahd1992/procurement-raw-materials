@@ -199,6 +199,17 @@ Both submit buttons re-read the request and abort if it moved under them — `bt
 
 `btnCOACompletion_Request.Visible` on `HomeScreen` uses `Not(IsEmpty(Filter(...)))` against both sources, not `CountRows(Filter(...)) > 0` — `CountRows` over a `Filter` against a SharePoint data source is itself non-delegable (separate from whatever's inside the `Filter`), while `IsEmpty` is. Follow this `Not(IsEmpty(...))` pattern for any future "does at least one matching row exist" check against a SharePoint list; `CountRows(Filter(...))` is fine only when the source being filtered is a local collection (e.g. `colReceiptRounds`, `colRoundEntry`, `colCOAOutstanding`), never a live data source.
 
+### Accounting is a shared queue, not an assignment
+
+There is deliberately **no way to assign a request to a specific Accounting person.** `AccountingHandlerID` is written in exactly one place — `AccountingScreen`'s submit, as `gCurrentEmployee` — so it means *"who completed the accounting step"* and stays blank until the request is `Completed`. `RequestDetailScreen` shows it as "Accounting Completed By".
+
+`ProcurementExecutionScreen` and `InvoiceSubmissionScreen` used to carry an "Assign to Accounting Staff *" picker (`ddAccountingHandler_PE` / `ddAccountingHandler_ISS`, both required to submit) that wrote this field plus the log's `HandoverToID`. All of it was removed, because the assignment was never real:
+- It was overwritten twice downstream — by `InvoiceSubmissionScreen`, then unconditionally by `AccountingScreen` with whoever actually clicked submit.
+- It gated nothing. `HomeScreen`'s Accounting branch filters on **Status**, not on the assignee, so every Accounting user sees every request in `Pending Accounting` / `Goods Receipt & Acceptance` / `Pending Supplier Follow-up` / `Completed`; `AccountingScreen` has no assignee check either.
+- It was picked far too early to be meaningful — at Procurement time the request is only entering Goods Receipt, and with unbounded receipt rounds `Pending Accounting` can be arbitrarily far away.
+
+Don't reintroduce a picker without also making it load-bearing: gate `AccountingScreen`, filter `HomeScreen` by assignee, and stop `AccountingScreen` from overwriting the field. Related gap, currently accepted: **nothing notifies Accounting at any point**, not even when `Status` becomes `Pending Accounting` — they discover work by looking at `HomeScreen`.
+
 ## Role-based visibility (HomeScreen)
 
 The gallery `Items` filters `'RM Procurement Requests'` differently per `gUserRole` (always further filtered by `IsBlank(gStatusFilter) || Status.Value = gStatusFilter`):
@@ -224,6 +235,7 @@ None of this can be done from `.pa.yaml`. **The app will not run correctly until
    - `'RM Procurement Line Items'` → delete all 14: `ReceivedQty1` `BatchNumber1` `ExpiryDate1` `QCNumber1` `RMPKCode1` `COALink1` `COA1Missing` `ReceivedQty2` `BatchNumber2` `ExpiryDate2` `QCNumber2` `RMPKCode2` `COALink2` `COA2Missing`.
    - `'RM Procurement Requests'` → delete 10: `GoodsReceiptBy` `GoodsReceiptDate` `GoodsReceiptRemarks` `GoodsReceiptAt` `FollowUpReceiptBy` `FollowUpReceiptDate` `FollowUpRemarks` `FollowUpReceiptAt` `SupplierFollowUpNotes` `FollowUpCompletedAt`. (`FollowUpCompletedAt` was write-only even before this change — the same timestamp is `ExecutedAt` on the final Step-5 log row.)
    - `'RM Procurement Requests'` → also delete all four receipt Choice columns: `GoodsReceiptStatus`, `GoodsAcceptanceDecision`, `FollowUpReceiptStatus`, `FollowUpAcceptanceDecision`. Their four dropdowns now hold the options inline as literal tables, so nothing references the columns.
+   - `'RM Procurement Execution Log'` → delete `HandoverToID` and `HandoverToIDText`. They held the Accounting staff picked ahead of time on `ProcurementExecutionScreen` / `InvoiceSubmissionScreen`; both pickers were removed (see "Accounting is a shared queue" below), so nothing writes or reads them.
 6. **`docs/daily-coa-completion-reminder-flow.md`'s flow** queries `'RM Procurement Line Items'.COA1Missing`/`COA2Missing`, which no longer exist. Repoint it at `'RM Procurement Receipt Rounds'.COAMissing` or it breaks.
 
 ## Conventions
