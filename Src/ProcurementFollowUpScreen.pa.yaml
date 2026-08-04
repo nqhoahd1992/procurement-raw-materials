@@ -8,6 +8,7 @@ Screens:
         Set(gRoundsDone, Coalesce(gSelectedRequest.ReceiptRoundCount, 0));
         Set(gLatestDecision, gSelectedRequest.LatestReceiptDecision);
         Set(gPFUPending, gSelectedRequest.Status.Value = "Pending Supplier Follow-up" && gLatestDecision = "Accepted with Adjustment");
+        ClearCollect(colLineItemsDetail, Filter('RM Procurement Line Items', RequestIDText = Text(gSelectedRequest.ID)));
         ClearCollect(colReceiptRounds, Filter('RM Procurement Receipt Rounds', RequestIDText = Text(gSelectedRequest.ID)));
         ClearCollect(
             colRoundHistory,
@@ -32,7 +33,8 @@ Screens:
         );
         Set(locCreditNoteURL_PFU, "");
         Set(gPendingCreditNoteName_PFU, "");
-        Set(gShowReceiptPhotos, false)
+        Set(gShowReceiptPhotos, false);
+        Set(gShowRoundDetails, false)
     Children:
       - rectHeader_PFU:
           Control: Rectangle@2.3.0
@@ -640,6 +642,46 @@ Screens:
                                           Text: ="View attachments"
                                           VerticalAlign: =VerticalAlign.Middle
                                           Width: =140
+                                    - btnViewRoundDetails_PFU:
+                                        Control: ModernButton@1.0.0
+                                        Properties:
+                                          Align: =Align.Center
+                                          BasePaletteColor: =RGBA(56, 96, 178, 1)
+                                          FontWeight: =FontWeight.Semibold
+                                          Height: =24
+                                          OnSelect: |-
+                                            =ClearCollect(
+                                                colRoundDetails,
+                                                ForAll(
+                                                    Filter(colReceiptRounds, RoundNumber = ThisItem.RoundNumber) As rr,
+                                                    {
+                                                        LineItemID: rr.LineItemID,
+                                                        MaterialName: rr.MaterialName,
+                                                        Unit: rr.Unit,
+                                                        OrderedQty: LookUp(colLineItemsDetail, ID = rr.LineItemID).Quantity,
+                                                        ReceivedQty: rr.ReceivedQty,
+                                                        BatchNumber: rr.BatchNumber,
+                                                        ExpiryDate: rr.ExpiryDate,
+                                                        QCNumber: rr.QCNumber,
+                                                        RMPKCode: rr.RMPKCode,
+                                                        COALink: rr.COALink
+                                                    }
+                                                )
+                                            );
+                                            Set(gDetailRoundLabel, "Round " & ThisItem.RoundNumber);
+                                            Set(gShowRoundDetails, true)
+                                          PaddingBottom: =2
+                                          PaddingLeft: =10
+                                          PaddingRight: =10
+                                          PaddingTop: =2
+                                          RadiusBottomLeft: =4
+                                          RadiusBottomRight: =4
+                                          RadiusTopLeft: =4
+                                          RadiusTopRight: =4
+                                          Size: =9
+                                          Text: ="View receipt details"
+                                          VerticalAlign: =VerticalAlign.Middle
+                                          Width: =150
             - rowFollowUpNotes_PFU:
                 Control: GroupContainer@1.5.0
                 Variant: AutoLayout
@@ -1034,4 +1076,342 @@ Screens:
                               Size: =10
                               Text: ="Open ↗"
                               Width: =80
+                              Wrap: =false
+      - rectRoundDetailOverlay_PFU:
+          Control: Rectangle@2.3.0
+          Properties:
+            BorderColor: =RGBA(0, 0, 0, 0)
+            Fill: =RGBA(0, 0, 0, 0.5)
+            Height: =Parent.Height
+            OnSelect: =Set(gShowRoundDetails, false)
+            Visible: =gShowRoundDetails
+            Width: =Parent.Width
+      - conRoundDetailDialog_PFU:
+          Control: GroupContainer@1.5.0
+          Variant: AutoLayout
+          Properties:
+            DropShadow: =DropShadow.Bold
+            Fill: =RGBA(255, 255, 255, 1)
+            Height: =480
+            LayoutDirection: =LayoutDirection.Vertical
+            LayoutGap: =8
+            PaddingBottom: =16
+            PaddingLeft: =20
+            PaddingRight: =20
+            PaddingTop: =16
+            RadiusBottomLeft: =8
+            RadiusBottomRight: =8
+            RadiusTopLeft: =8
+            RadiusTopRight: =8
+            Visible: =gShowRoundDetails
+            Width: =1200
+            X: =(Parent.Width - 1200) / 2
+            Y: =(Parent.Height - 480) / 2
+          Children:
+            - rowDlgHeader_PFU:
+                Control: GroupContainer@1.5.0
+                Variant: AutoLayout
+                Properties:
+                  DropShadow: =DropShadow.None
+                  FillPortions: =0
+                  Height: =36
+                  LayoutAlignItems: =LayoutAlignItems.Center
+                  LayoutDirection: =LayoutDirection.Horizontal
+                  LayoutGap: =8
+                  LayoutJustifyContent: =LayoutJustifyContent.SpaceBetween
+                  RadiusBottomLeft: =0
+                  RadiusBottomRight: =0
+                  RadiusTopLeft: =0
+                  RadiusTopRight: =0
+                  Width: =Parent.Width - 40
+                Children:
+                  - lblDlgTitle_PFU:
+                      Control: Label@2.5.1
+                      Properties:
+                        Color: =RGBA(83, 74, 183, 1)
+                        FillPortions: =1
+                        FontWeight: =FontWeight.Bold
+                        Height: =32
+                        PaddingLeft: =0
+                        Size: =12
+                        Text: ="Goods Receipt Details - " & gDetailRoundLabel
+                        Width: =Parent.Width - 120
+                        Wrap: =false
+                  - btnCloseDlgDetail_PFU:
+                      Control: Button@0.0.45
+                      Properties:
+                        Height: =32
+                        OnSelect: =Set(gShowRoundDetails, false)
+                        Text: ="Close"
+                        Width: =100
+            - rectDlgDivider_PFU:
+                Control: Rectangle@2.3.0
+                Properties:
+                  BorderColor: =RGBA(0, 0, 0, 0)
+                  Fill: =RGBA(210, 209, 199, 1)
+                  Height: =1
+                  LayoutMinHeight: =1
+                  Width: =Parent.Width - 40
+            - lblDlgSummary_PFU:
+                Control: Label@2.5.1
+                Properties:
+                  Color: =RGBA(136, 135, 128, 1)
+                  Height: =20
+                  PaddingLeft: =0
+                  Size: =9
+                  Text: |-
+                    =Text(CountRows(colRoundDetails)) & " material(s) received in this round | Total received quantity: " &
+                    Text(Sum(colRoundDetails, ReceivedQty))
+                  Width: =Parent.Width - 40
+            - rowDlgCols_PFU:
+                Control: GroupContainer@1.5.0
+                Variant: AutoLayout
+                Properties:
+                  DropShadow: =DropShadow.None
+                  Fill: =RGBA(241, 239, 232, 1)
+                  FillPortions: =0
+                  Height: =32
+                  LayoutAlignItems: =LayoutAlignItems.Center
+                  LayoutDirection: =LayoutDirection.Horizontal
+                  LayoutGap: =8
+                  PaddingLeft: =12
+                  PaddingRight: =12
+                  RadiusBottomLeft: =0
+                  RadiusBottomRight: =0
+                  RadiusTopLeft: =4
+                  RadiusTopRight: =4
+                  Visible: =CountRows(colRoundDetails) > 0
+                  Width: =Parent.Width - 40
+                Children:
+                  - lblDlgColMaterial_PFU:
+                      Control: Label@2.5.1
+                      Properties:
+                        Color: =RGBA(68, 68, 65, 1)
+                        FontWeight: =FontWeight.Semibold
+                        Height: =32
+                        PaddingLeft: =0
+                        Size: =9
+                        Text: ="Trade Name"
+                        Width: =Parent.Width * 0.18
+                        Wrap: =false
+                  - lblDlgColUnit_PFU:
+                      Control: Label@2.5.1
+                      Properties:
+                        Color: =RGBA(68, 68, 65, 1)
+                        FontWeight: =FontWeight.Semibold
+                        Height: =32
+                        PaddingLeft: =0
+                        Size: =9
+                        Text: ="Unit"
+                        Width: =Parent.Width * 0.055
+                        Wrap: =false
+                  - lblDlgColOrdered_PFU:
+                      Control: Label@2.5.1
+                      Properties:
+                        Color: =RGBA(68, 68, 65, 1)
+                        FontWeight: =FontWeight.Semibold
+                        Height: =32
+                        PaddingLeft: =0
+                        Size: =9
+                        Text: ="Ordered"
+                        Width: =Parent.Width * 0.07
+                        Wrap: =false
+                  - lblDlgColReceived_PFU:
+                      Control: Label@2.5.1
+                      Properties:
+                        Color: =RGBA(68, 68, 65, 1)
+                        FontWeight: =FontWeight.Semibold
+                        Height: =32
+                        PaddingLeft: =0
+                        Size: =9
+                        Text: ="Received"
+                        Width: =Parent.Width * 0.075
+                        Wrap: =false
+                  - lblDlgColBatch_PFU:
+                      Control: Label@2.5.1
+                      Properties:
+                        Color: =RGBA(68, 68, 65, 1)
+                        FontWeight: =FontWeight.Semibold
+                        Height: =32
+                        PaddingLeft: =0
+                        Size: =9
+                        Text: ="Batch Number"
+                        Width: =Parent.Width * 0.12
+                        Wrap: =false
+                  - lblDlgColExpiry_PFU:
+                      Control: Label@2.5.1
+                      Properties:
+                        Color: =RGBA(68, 68, 65, 1)
+                        FontWeight: =FontWeight.Semibold
+                        Height: =32
+                        PaddingLeft: =0
+                        Size: =9
+                        Text: ="Expiry Date"
+                        Width: =Parent.Width * 0.095
+                        Wrap: =false
+                  - lblDlgColQC_PFU:
+                      Control: Label@2.5.1
+                      Properties:
+                        Color: =RGBA(68, 68, 65, 1)
+                        FontWeight: =FontWeight.Semibold
+                        Height: =32
+                        PaddingLeft: =0
+                        Size: =9
+                        Text: ="QC Number"
+                        Width: =Parent.Width * 0.105
+                        Wrap: =false
+                  - lblDlgColRMPK_PFU:
+                      Control: Label@2.5.1
+                      Properties:
+                        Color: =RGBA(68, 68, 65, 1)
+                        FontWeight: =FontWeight.Semibold
+                        Height: =32
+                        PaddingLeft: =0
+                        Size: =9
+                        Text: ="RM-PK Code"
+                        Width: =Parent.Width * 0.105
+                        Wrap: =false
+                  - lblDlgColCOA_PFU:
+                      Control: Label@2.5.1
+                      Properties:
+                        Color: =RGBA(68, 68, 65, 1)
+                        FontWeight: =FontWeight.Semibold
+                        Height: =32
+                        PaddingLeft: =0
+                        Size: =9
+                        Text: ="Link to COA"
+                        Width: =Parent.Width * 0.095
+                        Wrap: =false
+            - lblDlgEmpty_PFU:
+                Control: Label@2.5.1
+                Properties:
+                  Align: =Align.Center
+                  Color: =RGBA(136, 135, 128, 1)
+                  Height: =60
+                  Size: =11
+                  Text: ="No receipt lines were recorded for this round."
+                  Visible: =CountRows(colRoundDetails) = 0
+                  Width: =Parent.Width - 40
+            - galDlgRoundDetails_PFU:
+                Control: Gallery@2.15.0
+                Variant: BrowseLayout_Vertical_TwoTextOneImageVariant_ver5.0
+                Properties:
+                  FillPortions: =1
+                  Items: =colRoundDetails
+                  ShowScrollbar: =true
+                  TemplatePadding: =0
+                  TemplateSize: =44
+                  Visible: =CountRows(colRoundDetails) > 0
+                  Width: =Parent.Width - 40
+                Children:
+                  - rowDlgItem_PFU:
+                      Control: GroupContainer@1.5.0
+                      Variant: AutoLayout
+                      Properties:
+                        DropShadow: =DropShadow.None
+                        Fill: =If(Mod(ThisItem.LineItemID, 2) = 0, RGBA(248, 247, 243, 1), RGBA(255, 255, 255, 1))
+                        Height: =44
+                        LayoutAlignItems: =LayoutAlignItems.Center
+                        LayoutDirection: =LayoutDirection.Horizontal
+                        LayoutGap: =8
+                        PaddingLeft: =12
+                        PaddingRight: =12
+                        RadiusBottomLeft: =0
+                        RadiusBottomRight: =0
+                        RadiusTopLeft: =0
+                        RadiusTopRight: =0
+                        Width: =Parent.Width
+                      Children:
+                        - lblDlgMaterial_PFU:
+                            Control: Label@2.5.1
+                            Properties:
+                              FontWeight: =FontWeight.Semibold
+                              Height: =44
+                              PaddingLeft: =0
+                              Size: =10
+                              Text: =If(IsBlank(ThisItem.MaterialName), "-", ThisItem.MaterialName)
+                              Width: =Parent.Width * 0.18
+                              Wrap: =false
+                        - lblDlgUnit_PFU:
+                            Control: Label@2.5.1
+                            Properties:
+                              Color: =RGBA(68, 68, 65, 1)
+                              Height: =44
+                              PaddingLeft: =0
+                              Size: =10
+                              Text: =If(IsBlank(ThisItem.Unit), "-", ThisItem.Unit)
+                              Width: =Parent.Width * 0.055
+                              Wrap: =false
+                        - lblDlgOrdered_PFU:
+                            Control: Label@2.5.1
+                            Properties:
+                              Color: =RGBA(68, 68, 65, 1)
+                              Height: =44
+                              PaddingLeft: =0
+                              Size: =10
+                              Text: =If(IsBlank(ThisItem.OrderedQty), "-", Text(ThisItem.OrderedQty))
+                              Width: =Parent.Width * 0.07
+                              Wrap: =false
+                        - lblDlgReceived_PFU:
+                            Control: Label@2.5.1
+                            Properties:
+                              Color: =RGBA(15, 110, 86, 1)
+                              FontWeight: =FontWeight.Semibold
+                              Height: =44
+                              PaddingLeft: =0
+                              Size: =10
+                              Text: =Text(ThisItem.ReceivedQty)
+                              Width: =Parent.Width * 0.075
+                              Wrap: =false
+                        - lblDlgBatch_PFU:
+                            Control: Label@2.5.1
+                            Properties:
+                              Color: =RGBA(68, 68, 65, 1)
+                              Height: =44
+                              PaddingLeft: =0
+                              Size: =10
+                              Text: =If(IsBlank(ThisItem.BatchNumber), "-", ThisItem.BatchNumber)
+                              Width: =Parent.Width * 0.12
+                              Wrap: =false
+                        - lblDlgExpiry_PFU:
+                            Control: Label@2.5.1
+                            Properties:
+                              Color: =RGBA(68, 68, 65, 1)
+                              Height: =44
+                              PaddingLeft: =0
+                              Size: =10
+                              Text: =If(IsBlank(ThisItem.ExpiryDate), "-", Text(ThisItem.ExpiryDate, "dd/mm/yyyy"))
+                              Width: =Parent.Width * 0.095
+                              Wrap: =false
+                        - lblDlgQC_PFU:
+                            Control: Label@2.5.1
+                            Properties:
+                              Color: =RGBA(68, 68, 65, 1)
+                              Height: =44
+                              PaddingLeft: =0
+                              Size: =10
+                              Text: =If(IsBlank(ThisItem.QCNumber), "-", ThisItem.QCNumber)
+                              Width: =Parent.Width * 0.105
+                              Wrap: =false
+                        - lblDlgRMPK_PFU:
+                            Control: Label@2.5.1
+                            Properties:
+                              Color: =RGBA(68, 68, 65, 1)
+                              Height: =44
+                              PaddingLeft: =0
+                              Size: =10
+                              Text: =If(IsBlank(ThisItem.RMPKCode), "-", ThisItem.RMPKCode)
+                              Width: =Parent.Width * 0.105
+                              Wrap: =false
+                        - lblDlgCOA_PFU:
+                            Control: Label@2.5.1
+                            Properties:
+                              Color: =If(IsBlank(ThisItem.COALink), RGBA(136, 135, 128, 1), RGBA(56, 96, 178, 1))
+                              Height: =44
+                              OnSelect: =If(Not(IsBlank(ThisItem.COALink)), Launch(ThisItem.COALink, {}, LaunchTarget.New))
+                              PaddingLeft: =0
+                              Size: =10
+                              Text: =If(IsBlank(ThisItem.COALink), "Not linked", "Open COA")
+                              Underline: =Not(IsBlank(ThisItem.COALink))
+                              Width: =Parent.Width * 0.095
                               Wrap: =false

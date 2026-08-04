@@ -134,7 +134,7 @@ Required ⚠: none enforced by schema, but the app always writes `RequestID`, `R
 - `RequestDetailScreen` → `colLineItemsSummary` (`{ID, MaterialID, MaterialName, Unit, Quantity, TotalReceivedQty}`), where `TotalReceivedQty` is the `Sum` across all rounds.
 
 `colLineItemsDetail` does **not** carry `Category`/`Supplier` (those live on `'Raw Materials'`) — the screens re-look them up per row to display them:
-- `RequestDetailScreen` (read-only, less crowded) shows them as full **Category**/**Supplier** columns alongside Trade Name/Unit/Qty, and clicking a row opens a per-round drill-down gallery over `Filter(colReceiptRounds, LineItemID = gSelectedLineItem.ID)`.
+- `RequestDetailScreen` (read-only) shows them as a grey `"<Code> · <Category> · <Supplier>"` subtitle under the trade name in its flat line-items table. Rows are **not** selectable — the per-material drill-down panel was removed; per-round receipt detail is read from the "View receipt details" dialog on each round of the Goods Receipt history instead (`colRoundDetails`, see `CLAUDE.md`).
 - `GoodsReceiptScreen`/`SupplierFollowUpScreen` (data-entry rows already packed with Received Qty/Batch/Expiry/QC Number/RM-PK Code/Link to COA inputs) instead show a small grey `"<Category> · <Supplier>"` subtitle line under the trade name, to avoid squeezing the input columns. Note these two screens project `MaterialID` into `colRoundEntry` as a **plain number** (`li.MaterialID.Id`), so the lookup there is `LookUp('Raw Materials', ID = ThisItem.MaterialID)` — no `.Id`.
 
 `Src/COACompletionScreen.pa.yaml` is `gSelectedRequest`-scoped and reads into its own `colCOAOutstanding` from a single source — `'RM Procurement Receipt Rounds'` rows where `COAMissing` is true — patching back `COALink`/`COAMissing`. The receipt-round row `ID` is the unique key, so the input's `UpdateIf` keys off it directly; the earlier `RowKey`/`Source` disambiguation is gone, because a line item can now appear once per round and each of those is its own row. The screen does **not** touch `Status` or write an execution-log row — see `CLAUDE.md`'s "Link to COA completion" section.
@@ -249,7 +249,7 @@ Created for the unlimited-receipt-rounds change: the old fixed `…1` / `…2` c
 | `COALink` | Text (URL) | optional at submit — see "Link to COA completion" in `CLAUDE.md` |
 | `COAMissing` | Yes/No | `IsBlank(COALink)` at write time; delegation-safe filter for the outstanding-COA views (see the delegation note under `'RM Procurement Line Items'`) |
 
-`colReceiptRounds` mirrors this list per request and is the only source for "what has been received": `PrevReceivedQty` on the entry screens, `TotalReceivedQty` on `RequestDetailScreen`, the per-line-item drill-down gallery, and `ProcurementFollowUpScreen`'s "what was received in Round N" table all read it. This list replaced the deleted `…1`/`…2` line-item columns outright — there is no back-fill or synthetic-row path anywhere.
+`colReceiptRounds` mirrors this list per request and is the only source for "what has been received": `PrevReceivedQty` on the entry screens, `TotalReceivedQty` on `RequestDetailScreen`, the per-round "View receipt details" dialog on all three history screens (`colRoundDetails`), and `ProcurementFollowUpScreen`'s "what was received in Round N" table all read it. This list replaced the deleted `…1`/`…2` line-item columns outright — there is no back-fill or synthetic-row path anywhere.
 
 ---
 
