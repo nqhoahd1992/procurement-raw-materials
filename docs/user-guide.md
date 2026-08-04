@@ -301,7 +301,7 @@ Luôn chuyển trạng thái sang **"Completed"** — đây là màn hình duy n
 Hai nút chuyển đổi:
 - **"I will receive"** — Requester tự nhận, mở checklist bên dưới.
 - **"Assign to someone else"** — hiện **"Assign to *"** (chọn nhân viên) + nút **"Save Assignment"**. Danh sách chọn **chỉ hiện nhân viên đã có trong `RM User`** (đã được cấp quyền dùng app) — vì app hiện giới hạn truy cập theo `RM User`, không thể giao việc cho người chưa có quyền vào app.
-  - Khi lưu: gửi thông báo (email + Teams Adaptive Card) tới người được giao qua flow `Procurement_Notify_Receipt_Assignee` (notificationType = "GoodsReceipt").
+  - Khi lưu: gửi thông báo (email + Teams Adaptive Card) tới người được giao qua flow `Procurement Notify` (notificationType = "GoodsReceipt").
 
 ### Case: Người được giao bị hủy phân công (assignee đang làm mà bị đổi)
 Hệ thống cảnh báo: *"This assignment has been reassigned to someone else. Your submission has been cancelled."* → quay về Home. (Đây là edge case quan trọng cần lưu ý trong guide.)

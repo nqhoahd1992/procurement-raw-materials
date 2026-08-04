@@ -759,6 +759,7 @@ Screens:
                                               Control: Label@2.5.1
                                               Properties:
                                                 Color: =RGBA(68, 68, 65, 1)
+                                                FillPortions: =1
                                                 FontWeight: =FontWeight.Semibold
                                                 Height: =32
                                                 LayoutMinWidth: =100
@@ -2105,7 +2106,7 @@ Screens:
             X: =(Parent.Width - 1200) / 2
             Y: =(Parent.Height - 480) / 2
           Children:
-            - rowDlgHeader_RD:
+            - rowRoundDetailHeader_RD:
                 Control: GroupContainer@1.5.0
                 Variant: AutoLayout
                 Properties:
@@ -2122,7 +2123,7 @@ Screens:
                   RadiusTopRight: =0
                   Width: =Parent.Width - 40
                 Children:
-                  - lblDlgTitle_RD:
+                  - lblRoundDetailTitle_RD:
                       Control: Label@2.5.1
                       Properties:
                         Color: =RGBA(83, 74, 183, 1)
@@ -2134,14 +2135,13 @@ Screens:
                         Text: ="Goods Receipt Details - " & gDetailRoundLabel
                         Width: =Parent.Width - 120
                         Wrap: =false
-                  - btnCloseDlgDetail_RD:
+                  - btnCloseRoundDetail_RD:
                       Control: Button@0.0.45
                       Properties:
-                        Height: =32
                         OnSelect: =Set(gShowRoundDetails, false)
                         Text: ="Close"
                         Width: =100
-            - rectDlgDivider_RD:
+            - rectRoundDetailDivider_RD:
                 Control: Rectangle@2.3.0
                 Properties:
                   BorderColor: =RGBA(0, 0, 0, 0)
@@ -2149,7 +2149,7 @@ Screens:
                   Height: =1
                   LayoutMinHeight: =1
                   Width: =Parent.Width - 40
-            - lblDlgSummary_RD:
+            - lblRoundDetailSummary_RD:
                 Control: Label@2.5.1
                 Properties:
                   Color: =RGBA(136, 135, 128, 1)
@@ -2160,7 +2160,7 @@ Screens:
                     =Text(CountRows(colRoundDetails)) & " material(s) received in this round | Total received quantity: " &
                     Text(Sum(colRoundDetails, ReceivedQty))
                   Width: =Parent.Width - 40
-            - rowDlgCols_RD:
+            - rowRoundDetailCols_RD:
                 Control: GroupContainer@1.5.0
                 Variant: AutoLayout
                 Properties:
@@ -2175,12 +2175,10 @@ Screens:
                   PaddingRight: =12
                   RadiusBottomLeft: =0
                   RadiusBottomRight: =0
-                  RadiusTopLeft: =4
-                  RadiusTopRight: =4
                   Visible: =CountRows(colRoundDetails) > 0
                   Width: =Parent.Width - 40
                 Children:
-                  - lblDlgColMaterial_RD:
+                  - lblRDColMaterial_RD:
                       Control: Label@2.5.1
                       Properties:
                         Color: =RGBA(68, 68, 65, 1)
@@ -2191,7 +2189,7 @@ Screens:
                         Text: ="Trade Name"
                         Width: =Parent.Width * 0.18
                         Wrap: =false
-                  - lblDlgColUnit_RD:
+                  - lblRDColUnit_RD:
                       Control: Label@2.5.1
                       Properties:
                         Color: =RGBA(68, 68, 65, 1)
@@ -2202,7 +2200,7 @@ Screens:
                         Text: ="Unit"
                         Width: =Parent.Width * 0.055
                         Wrap: =false
-                  - lblDlgColOrdered_RD:
+                  - lblRDColOrdered_RD:
                       Control: Label@2.5.1
                       Properties:
                         Color: =RGBA(68, 68, 65, 1)
@@ -2213,7 +2211,7 @@ Screens:
                         Text: ="Ordered"
                         Width: =Parent.Width * 0.07
                         Wrap: =false
-                  - lblDlgColReceived_RD:
+                  - lblRDColReceived_RD:
                       Control: Label@2.5.1
                       Properties:
                         Color: =RGBA(68, 68, 65, 1)
@@ -2224,7 +2222,7 @@ Screens:
                         Text: ="Received"
                         Width: =Parent.Width * 0.075
                         Wrap: =false
-                  - lblDlgColBatch_RD:
+                  - lblRDColBatch_RD:
                       Control: Label@2.5.1
                       Properties:
                         Color: =RGBA(68, 68, 65, 1)
@@ -2235,7 +2233,7 @@ Screens:
                         Text: ="Batch Number"
                         Width: =Parent.Width * 0.12
                         Wrap: =false
-                  - lblDlgColExpiry_RD:
+                  - lblRDColExpiry_RD:
                       Control: Label@2.5.1
                       Properties:
                         Color: =RGBA(68, 68, 65, 1)
@@ -2246,7 +2244,7 @@ Screens:
                         Text: ="Expiry Date"
                         Width: =Parent.Width * 0.095
                         Wrap: =false
-                  - lblDlgColQC_RD:
+                  - lblRDColQC_RD:
                       Control: Label@2.5.1
                       Properties:
                         Color: =RGBA(68, 68, 65, 1)
@@ -2257,7 +2255,7 @@ Screens:
                         Text: ="QC Number"
                         Width: =Parent.Width * 0.105
                         Wrap: =false
-                  - lblDlgColRMPK_RD:
+                  - lblRDColRMPK_RD:
                       Control: Label@2.5.1
                       Properties:
                         Color: =RGBA(68, 68, 65, 1)
@@ -2268,7 +2266,7 @@ Screens:
                         Text: ="RM-PK Code"
                         Width: =Parent.Width * 0.105
                         Wrap: =false
-                  - lblDlgColCOA_RD:
+                  - lblRDColCOA_RD:
                       Control: Label@2.5.1
                       Properties:
                         Color: =RGBA(68, 68, 65, 1)
@@ -2279,7 +2277,7 @@ Screens:
                         Text: ="Link to COA"
                         Width: =Parent.Width * 0.095
                         Wrap: =false
-            - lblDlgEmpty_RD:
+            - lblRoundDetailEmpty_RD:
                 Control: Label@2.5.1
                 Properties:
                   Align: =Align.Center
@@ -2289,19 +2287,16 @@ Screens:
                   Text: ="No receipt lines were recorded for this round."
                   Visible: =CountRows(colRoundDetails) = 0
                   Width: =Parent.Width - 40
-            - galDlgRoundDetails_RD:
+            - galRoundDetails_RD:
                 Control: Gallery@2.15.0
                 Variant: BrowseLayout_Vertical_TwoTextOneImageVariant_ver5.0
                 Properties:
-                  FillPortions: =1
                   Items: =colRoundDetails
-                  ShowScrollbar: =true
-                  TemplatePadding: =0
                   TemplateSize: =44
                   Visible: =CountRows(colRoundDetails) > 0
                   Width: =Parent.Width - 40
                 Children:
-                  - rowDlgItem_RD:
+                  - rowRoundDetailItem_RD:
                       Control: GroupContainer@1.5.0
                       Variant: AutoLayout
                       Properties:
@@ -2319,7 +2314,7 @@ Screens:
                         RadiusTopRight: =0
                         Width: =Parent.Width
                       Children:
-                        - lblDlgMaterial_RD:
+                        - lblRDMaterial_RD:
                             Control: Label@2.5.1
                             Properties:
                               FontWeight: =FontWeight.Semibold
@@ -2329,7 +2324,7 @@ Screens:
                               Text: =If(IsBlank(ThisItem.MaterialName), "-", ThisItem.MaterialName)
                               Width: =Parent.Width * 0.18
                               Wrap: =false
-                        - lblDlgUnit_RD:
+                        - lblRDUnit_RD:
                             Control: Label@2.5.1
                             Properties:
                               Color: =RGBA(68, 68, 65, 1)
@@ -2339,7 +2334,7 @@ Screens:
                               Text: =If(IsBlank(ThisItem.Unit), "-", ThisItem.Unit)
                               Width: =Parent.Width * 0.055
                               Wrap: =false
-                        - lblDlgOrdered_RD:
+                        - lblRDOrdered_RD:
                             Control: Label@2.5.1
                             Properties:
                               Color: =RGBA(68, 68, 65, 1)
@@ -2349,7 +2344,7 @@ Screens:
                               Text: =If(IsBlank(ThisItem.OrderedQty), "-", Text(ThisItem.OrderedQty))
                               Width: =Parent.Width * 0.07
                               Wrap: =false
-                        - lblDlgReceived_RD:
+                        - lblRDReceived_RD:
                             Control: Label@2.5.1
                             Properties:
                               Color: =RGBA(15, 110, 86, 1)
@@ -2360,7 +2355,7 @@ Screens:
                               Text: =Text(ThisItem.ReceivedQty)
                               Width: =Parent.Width * 0.075
                               Wrap: =false
-                        - lblDlgBatch_RD:
+                        - lblRDBatch_RD:
                             Control: Label@2.5.1
                             Properties:
                               Color: =RGBA(68, 68, 65, 1)
@@ -2370,7 +2365,7 @@ Screens:
                               Text: =If(IsBlank(ThisItem.BatchNumber), "-", ThisItem.BatchNumber)
                               Width: =Parent.Width * 0.12
                               Wrap: =false
-                        - lblDlgExpiry_RD:
+                        - lblRDExpiry_RD:
                             Control: Label@2.5.1
                             Properties:
                               Color: =RGBA(68, 68, 65, 1)
@@ -2380,7 +2375,7 @@ Screens:
                               Text: =If(IsBlank(ThisItem.ExpiryDate), "-", Text(ThisItem.ExpiryDate, "dd/mm/yyyy"))
                               Width: =Parent.Width * 0.095
                               Wrap: =false
-                        - lblDlgQC_RD:
+                        - lblRDQC_RD:
                             Control: Label@2.5.1
                             Properties:
                               Color: =RGBA(68, 68, 65, 1)
@@ -2390,7 +2385,7 @@ Screens:
                               Text: =If(IsBlank(ThisItem.QCNumber), "-", ThisItem.QCNumber)
                               Width: =Parent.Width * 0.105
                               Wrap: =false
-                        - lblDlgRMPK_RD:
+                        - lblRDRMPK_RD:
                             Control: Label@2.5.1
                             Properties:
                               Color: =RGBA(68, 68, 65, 1)
@@ -2400,7 +2395,7 @@ Screens:
                               Text: =If(IsBlank(ThisItem.RMPKCode), "-", ThisItem.RMPKCode)
                               Width: =Parent.Width * 0.105
                               Wrap: =false
-                        - lblDlgCOA_RD:
+                        - lblRDCOA_RD:
                             Control: Label@2.5.1
                             Properties:
                               Color: =If(IsBlank(ThisItem.COALink), RGBA(136, 135, 128, 1), RGBA(56, 96, 178, 1))

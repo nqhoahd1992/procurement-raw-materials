@@ -316,13 +316,21 @@ Called from `ProcurementExecutionScreen` (2 call sites — Deferred and Via-Requ
 
 **Returns**: `newinvoicelink` (string).
 
-### `Procurement_Notify_Receipt_Assignee.Run(assigneeEmail, assigneeName, requestTitle, requestId, notificationType, deliveryDate, category)`
+### `ProcurementNotify.Run(assigneeEmail, assigneeName, requestTitle, requestId, notificationType, deliveryDate, category, sourceApp)`
 
-Called from `GoodsReceiptScreen` (3 call sites) and `SupplierFollowUpScreen` (3 call sites) whenever the Goods Receipt / Supplier Follow-up assignee changes.
+SharePoint flow name: **`Procurement Notify`** (renamed from `Procurement_Notify_Receipt_Assignee`). **8 positional args, same order at all 8 call sites** — it is the app's general-purpose notifier, not just an assignment notifier. Trigger param names as referenced inside the flow: `text` (1), `text_1` (2), `text_2` (3), `number` (4), `text_3` (5), `text_4` (6), `text_5` (7), `text_6` (8).
 
-- `notificationType = "GoodsReceipt"` / `"SupplierFollowUp"` — new assignee notification (Outlook email + Teams Adaptive Card).
-- `notificationType = "Unassigned"` — previous assignee no longer needs to act (email only).
-- `category` — **always `""` at every call site in the current code.** This used to be the request-level Category field; Category now lives per raw-material and is no longer plumbed through to this flow.
+| `notificationType` | Call site(s) | Recipient | Channels |
+|---|---|---|---|
+| `"GoodsReceipt"` | `GoodsReceiptScreen.btnSaveAssignment_GR` | new assignee | email + Teams card |
+| `"SupplierFollowUp"` | `SupplierFollowUpScreen.btnSaveAssignment_SFU` | new assignee for the open round (**any round ≥ 2**) | email + Teams card |
+| `"Unassigned"` | `btnSaveAssignment_GR`, `btnSaveAssignment_SFU`, `btnIWillReceive_GR`, `btnIWillReceive_SFU` | previous assignee | email only |
+| `"ExecutivePayment"` | `ExecutiveApprovalScreen` (over-threshold approval) | `gCurrentEmployee.Email` — the Executive notifies themselves | email + Teams card |
+| `"RMProcurementExecution"` | `ExecutivePaymentScreen` (after remittance upload) | hardcoded `"procurement@maxbiocare.com"` — **not** resolved from `'RM User'` | email + Teams card |
+
+- The `GoodsReceipt` and `SupplierFollowUp` branches now render **identical** content (both say "Goods Receipt & Acceptance", no round number), so they can be collapsed into one branch. A Power Automate `Switch` case accepts only one value, so collapse by switching on a normalized Compose rather than by listing two values in one case.
+- `category` (arg 7) is **reserved for the request-level Category** and is `""` at every call site, because request-level Category no longer exists (it moved per raw-material). Keep it `""` — do **not** repurpose the slot (e.g. to smuggle a round number through). If the notification ever needs the round, add a **9th** arg and update all 8 call sites in the same edit; Power Fx requires exact arity.
+- `sourceApp` (arg 8) is always the literal `"Max Biocare · Raw Materials Procurement"`; the flow prints it in the email header/footer and the card header.
 - Connection: `app.admin@maxbiocare.com` pinned in "Run only users" — not invoker-provided.
 
 ### `Procurement_Notify_Invoice_Provided.Run(requestTitle, requestId, invoiceUrl)`
