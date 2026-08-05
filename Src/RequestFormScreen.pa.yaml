@@ -851,7 +851,7 @@ Screens:
                                     Height: =40
                                     InputTextPlaceholder: ="Choose an option"
                                     ItemDisplayText: =ThisItem.Value
-                                    Items: =["AUD", "USD"]
+                                    Items: =["AUD", "USD", "GBP"]
                                     SelectMultiple: =false
                                     Size: =0
                                     Width: =160
