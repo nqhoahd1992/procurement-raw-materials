@@ -351,6 +351,7 @@ Screens:
                             Control: Label@2.5.1
                             Properties:
                               Color: =RGBA(68, 68, 65, 1)
+                              FillPortions: =1
                               FontWeight: =FontWeight.Semibold
                               Height: =32
                               Size: =9
@@ -383,7 +384,7 @@ Screens:
                               Height: =32
                               Size: =9
                               Text: ="Batch No"
-                              Width: =Parent.Width * 0.14
+                              Width: =Parent.Width * 0.1
                         - lblRDColExp_PFU:
                             Control: Label@2.5.1
                             Properties:
@@ -401,7 +402,7 @@ Screens:
                               Height: =32
                               Size: =9
                               Text: ="QC Number"
-                              Width: =Parent.Width * 0.12
+                              Width: =Parent.Width * 0.1
                         - lblRDColRMPK_PFU:
                             Control: Label@2.5.1
                             Properties:
@@ -410,7 +411,7 @@ Screens:
                               Height: =32
                               Size: =9
                               Text: ="RM/PK Code"
-                              Width: =Parent.Width * 0.12
+                              Width: =Parent.Width * 0.1
                         - lblRDColCOA_PFU:
                             Control: Label@2.5.1
                             Properties:
@@ -428,7 +429,6 @@ Screens:
                         Height: =CountRows(Filter(colReceiptRounds, RoundNumber = gRoundsDone)) * 40 + 8
                         Items: =Filter(colReceiptRounds, RoundNumber = gRoundsDone)
                         ShowScrollbar: =false
-                        TemplatePadding: =0
                         TemplateSize: =40
                         Width: =Parent.Width
                       Children:
@@ -453,6 +453,7 @@ Screens:
                               - lblRDName_PFU:
                                   Control: Label@2.5.1
                                   Properties:
+                                    FillPortions: =1
                                     Height: =32
                                     Size: =11
                                     Text: =ThisItem.MaterialName
@@ -482,7 +483,7 @@ Screens:
                                     Height: =32
                                     Size: =10
                                     Text: =If(IsBlank(ThisItem.BatchNumber), "—", ThisItem.BatchNumber)
-                                    Width: =Parent.Width * 0.14
+                                    Width: =Parent.Width * 0.1
                                     Wrap: =false
                               - lblRDExp_PFU:
                                   Control: Label@2.5.1
@@ -499,7 +500,7 @@ Screens:
                                     Height: =32
                                     Size: =10
                                     Text: =If(IsBlank(ThisItem.QCNumber), "—", ThisItem.QCNumber)
-                                    Width: =Parent.Width * 0.12
+                                    Width: =Parent.Width * 0.1
                                     Wrap: =false
                               - lblRDRMPK_PFU:
                                   Control: Label@2.5.1
@@ -508,7 +509,7 @@ Screens:
                                     Height: =32
                                     Size: =10
                                     Text: =If(IsBlank(ThisItem.RMPKCode), "—", ThisItem.RMPKCode)
-                                    Width: =Parent.Width * 0.12
+                                    Width: =Parent.Width * 0.1
                                     Wrap: =false
                               - lblRDCOA_PFU:
                                   Control: Label@2.5.1
@@ -554,11 +555,10 @@ Screens:
                       Variant: BrowseLayout_Vertical_TwoTextOneImageVariant_ver5.0
                       Properties:
                         FillPortions: =0
-                        Height: =CountRows(colRoundHistory) * 84 + 8
+                        Height: =CountRows(colRoundHistory) * 88 + 8
                         Items: =colRoundHistory
                         ShowScrollbar: =false
-                        TemplatePadding: =0
-                        TemplateSize: =84
+                        TemplateSize: =88
                         Width: =Parent.Width
                       Children:
                         - rowHistItem_PFU:
@@ -567,10 +567,10 @@ Screens:
                             Properties:
                               DropShadow: =DropShadow.None
                               Fill: =If(Mod(ThisItem.RoundNumber, 2) = 0, RGBA(248, 247, 243, 1), RGBA(255, 255, 255, 1))
-                              Height: =84
+                              Height: =88
                               LayoutDirection: =LayoutDirection.Vertical
                               LayoutGap: =2
-                              PaddingBottom: =4
+                              PaddingBottom: =8
                               PaddingLeft: =8
                               PaddingRight: =8
                               PaddingTop: =4
@@ -829,7 +829,7 @@ Screens:
                             Variant: ClassicAttachmentsEdit
                             Properties:
                               DataField: ="{Attachments}"
-                              Default: =gSelectedRequest.Attachments
+                              Default: =Blank()
                               DisplayMode: =DisplayMode.Edit
                               DisplayName: =""
                               Height: =100
@@ -917,7 +917,7 @@ Screens:
                                       IsBlank(txtFollowUpNotes_PFU.Value),
                                       Notify("Remarks is required", NotificationType.Error),
                                       If(
-                                          CountRows(attCreditNote_PFU.Attachments) <= CountRows(gSelectedRequest.Attachments),
+                                          CountRows(attCreditNote_PFU.Attachments) = 0,
                                           Notify("Credit Note file is required", NotificationType.Error),
                                           Set(gPendingCreditNoteName_PFU, Last(attCreditNote_PFU.Attachments).Name);
                                           SubmitForm(formCreditNote_PFU)
@@ -991,7 +991,6 @@ Screens:
                   - btnClosePhotoDialog_PFU:
                       Control: Button@0.0.45
                       Properties:
-                        Height: =32
                         OnSelect: =Set(gShowReceiptPhotos, false)
                         Text: ="Close"
                         Width: =100
@@ -1026,7 +1025,6 @@ Screens:
                 Control: Gallery@2.15.0
                 Variant: BrowseLayout_Vertical_TwoTextOneImageVariant_ver5.0
                 Properties:
-                  FillPortions: =1
                   Items: =colReceiptPhotos
                   TemplatePadding: =2
                   TemplateSize: =44
@@ -1045,10 +1043,6 @@ Screens:
                         LayoutGap: =8
                         PaddingLeft: =12
                         PaddingRight: =12
-                        RadiusBottomLeft: =4
-                        RadiusBottomRight: =4
-                        RadiusTopLeft: =4
-                        RadiusTopRight: =4
                         Width: =Parent.Width
                       Children:
                         - lblReceiptPhotoName_PFU:
@@ -1057,7 +1051,6 @@ Screens:
                               Color: =RGBA(56, 96, 178, 1)
                               FillPortions: =1
                               FontWeight: =FontWeight.Semibold
-                              Height: =40
                               OnSelect: =Launch(ThisItem.AbsoluteUri, {}, LaunchTarget.New)
                               PaddingLeft: =0
                               Size: =11
@@ -1070,7 +1063,6 @@ Screens:
                             Properties:
                               Align: =Align.Right
                               Color: =RGBA(136, 135, 128, 1)
-                              Height: =40
                               OnSelect: =Launch(ThisItem.AbsoluteUri, {}, LaunchTarget.New)
                               PaddingRight: =0
                               Size: =10
@@ -1140,7 +1132,6 @@ Screens:
                   - btnCloseDlgDetail_PFU:
                       Control: Button@0.0.45
                       Properties:
-                        Height: =32
                         OnSelect: =Set(gShowRoundDetails, false)
                         Text: ="Close"
                         Width: =100
@@ -1178,8 +1169,6 @@ Screens:
                   PaddingRight: =12
                   RadiusBottomLeft: =0
                   RadiusBottomRight: =0
-                  RadiusTopLeft: =4
-                  RadiusTopRight: =4
                   Visible: =CountRows(colRoundDetails) > 0
                   Width: =Parent.Width - 40
                 Children:
@@ -1296,10 +1285,7 @@ Screens:
                 Control: Gallery@2.15.0
                 Variant: BrowseLayout_Vertical_TwoTextOneImageVariant_ver5.0
                 Properties:
-                  FillPortions: =1
                   Items: =colRoundDetails
-                  ShowScrollbar: =true
-                  TemplatePadding: =0
                   TemplateSize: =44
                   Visible: =CountRows(colRoundDetails) > 0
                   Width: =Parent.Width - 40
