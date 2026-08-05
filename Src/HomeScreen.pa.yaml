@@ -644,7 +644,7 @@ Screens:
                               FontWeight: =FontWeight.Semibold
                               Height: =28
                               Icon: ="Eye"
-                              OnSelect: =Set(gSelectedRequest, ThisItem); If(ThisItem.Status.Value = "Pending Invoice" && (gCurrentUser.Role.Value = "Procurement" || gCurrentUser.Role.Value = "Admin"), Navigate(InvoiceSubmissionScreen), Navigate(RequestDetailScreen))
+                              OnSelect: =Set(gSelectedRequest, ThisItem); If(ThisItem.Status.Value = "Pending Invoice" && (gCurrentUser.Role.Value = "Procurement" || gCurrentUser.Role.Value = "Admin"), Navigate(RequestDetailScreen), Navigate(RequestDetailScreen))
                               PaddingBottom: =5
                               PaddingLeft: =12
                               PaddingRight: =12
