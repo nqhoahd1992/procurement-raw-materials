@@ -54,6 +54,12 @@ App:
       Set(gDetailRoundLabel, "");
       Set(gShowReceiptPhotos, false);
       Set(gPhotoRoundLabel, "");
+      Set(gShowQuickView, false);
+      Set(gQuickViewRequest, Blank());
+      Set(gShowLogDetail, false);
+      Set(gLogDetailTitle, "");
+      ClearCollect(colLogDetail, {FieldLabel: "", FieldValue: ""});
+      Clear(colLogDetail);
       ClearCollect(colReceiptPhotos, First('RM Procurement Execution Log').Attachments);
       Clear(colReceiptPhotos);
       Set(gAppReady, true)
