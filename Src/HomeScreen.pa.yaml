@@ -433,7 +433,8 @@ Screens:
                               FillPortions: =1
                               FontWeight: =FontWeight.Semibold
                               Height: =28
-                              Text: =ThisItem.Title
+                              Text: |-
+                                ="ID: " & ThisItem.ID & " - " & ThisItem.Title
                               Width: =Parent.Width - 300
                               Wrap: =false
                         - lblRequestStatus:
@@ -504,7 +505,7 @@ Screens:
                               Height: =22
                               Size: =11
                               Text: |-
-                                ="ID: " & ThisItem.ID & " | Delivery Date: " & Text(ThisItem.RequiredDeliveryDate, "dd/mm/yyyy") & If(IsBlank(ThisItem.EstimatedCost) || ThisItem.EstimatedCost = 0, "", " | Estimated Cost: " & ThisItem.Currency & " " & Text(ThisItem.EstimatedCost, "[#,###]")) & If(IsBlank(ThisItem.ProjectID), "", " | ProjectID: " & ThisItem.ProjectID)
+                                ="Delivery Date: " & Text(ThisItem.RequiredDeliveryDate, "dd/mm/yyyy") & If(IsBlank(ThisItem.EstimatedCost) || ThisItem.EstimatedCost = 0, "", " | Estimated Cost: " & ThisItem.Currency & " " & Text(ThisItem.EstimatedCost, "[#,###]")) & If(IsBlank(ThisItem.ProjectID), "", " | ProjectID: " & ThisItem.ProjectID)
                               Width: =Parent.Width - 440
                         - lblRequesterName:
                             Control: Label@2.5.1
@@ -514,7 +515,7 @@ Screens:
                               Height: =22
                               Size: =11
                               Text: |-
-                                =ThisItem.RequesterID.Value &
+                                ="Requester: " & ThisItem.RequesterID.Value &
                                 If(
                                   ThisItem.Status.Value = "Goods Receipt & Acceptance" && Not(IsBlank(ThisItem.GRAssignedToID)),
                                   " | Receiver: " & ThisItem.GRAssignedToID.Value,
@@ -524,7 +525,6 @@ Screens:
                                     ""
                                   )
                                 )
-                              Visible: =Not(ThisItem.InvoiceMode.Value = "ViaRequester" && !ThisItem.InvoiceSubmitted)
                               Width: =420
                   - lblRequestDescription:
                       Control: Label@2.5.1

@@ -162,15 +162,14 @@ Screens:
                   LayoutDirection: =LayoutDirection.Vertical
                   LayoutGap: =4
                   LayoutMinHeight: |-
-                    =400 +
+                    =510 +
                         (24 + (36 + CountRows(colLineItemsSummary) * 48 + 12) + 16) +
-                        If(gSelectedRequest.ProcurementType.Value = "Invoice Supplied", 90, 0) +
-                        If(gSelectedRequest.ProcurementType.Value = "To be sourced by Procurement", 70, 0) +
-                        If(Not(IsBlank(gSelectedRequest.ConditionsText)), 88, 0) +
-                        If(Not(IsBlank(gSelectedRequest.AccountingHandlerID)), 68, 0) +
-                        If(CountRows(colRequirementFiles) > 0, 28 + CountRows(colRequirementFiles) * 32 + 8, 0) +
-                        If(Not(IsBlank(gSelectedRequest.RequesterInvoiceURL)), 56, 0) +
-                        If(Not(IsBlank(gSelectedRequest.RemittanceURL)), 56, 0) +
+                        If(CountRows(colRequirementFiles) > 0, 4 + 36 + CountRows(colRequirementFiles) * 32, 0) +
+                        If(Not(IsBlank(gSelectedRequest.RequesterInvoiceURL)), 4 + 60, 0) +
+                        If(Not(IsBlank(gSelectedRequest.RemittanceURL)), 4 + 56, 0) +
+                        If(gSelectedRequest.ProcurementType.Value = "To be sourced by Procurement", 4 + 70, 0) +
+                        If(Not(IsBlank(gSelectedRequest.ConditionsText)), 4 + 80, 0) +
+                        If(Not(IsBlank(gSelectedRequest.AccountingHandlerID)), 4 + 60, 0) +
                         If(
                             gSelectedRequest.Status.Value = "Goods Receipt & Acceptance" ||
                             gSelectedRequest.Status.Value = "Pending Supplier Follow-up" ||
@@ -178,9 +177,9 @@ Screens:
                             gSelectedRequest.Status.Value = "Pending Accounting" ||
                             gSelectedRequest.Status.Value = "Completed" ||
                             (gSelectedRequest.Status.Value = "Rejected" && gRoundsDone > 0),
-                            120 +
+                            4 + 122 +
                             CountRows(colRoundHistory) * 92 +
-                            If(Not(IsBlank(gSelectedRequest.CreditNote)), 100, 0),
+                            If(Not(IsBlank(gSelectedRequest.CreditNote)), 68, 0),
                             0
                         )
                   PaddingBottom: =20
@@ -1216,10 +1215,14 @@ Screens:
                       Variant: AutoLayout
                       Properties:
                         DropShadow: =DropShadow.None
-                        Height: =300
+                        FillPortions: =0
+                        Height: |-
+                          =122 +
+                                                        CountRows(colRoundHistory) * 92 +
+                                                        If(Not(IsBlank(gSelectedRequest.CreditNote)), 68, 0)
                         LayoutDirection: =LayoutDirection.Vertical
                         LayoutGap: =8
-                        LayoutMinHeight: =60
+                        LayoutMinHeight: =122
                         PaddingBottom: =8
                         PaddingTop: =10
                         RadiusBottomLeft: =0

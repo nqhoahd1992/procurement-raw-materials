@@ -566,7 +566,7 @@ Screens:
                         Color: =RGBA(133, 79, 11, 1)
                         PaddingTop: =0
                         Size: =10
-                        Text: ="Enter actual received quantity, batch number, expiry date, QC number, RM/PK code and Link to COA (optional) for each item"
+                        Text: ="Enter actual received quantity, batch number, expiry date, QC number, RM/PK code and Link to COA for each item"
                         Width: =Parent.Width
                   - rowLineItemsColHeaderGR:
                       Control: GroupContainer@1.5.0
@@ -657,7 +657,7 @@ Screens:
                               FontWeight: =FontWeight.Semibold
                               Height: =36
                               Size: =9
-                              Text: ="Link to COA"
+                              Text: ="Link to COA *"
                               Width: =Parent.Width * 0.15
                   - galLineItemsGR:
                       Control: Gallery@2.15.0
@@ -1165,6 +1165,9 @@ Screens:
                                           If(
                                           CountRows(Filter(colRoundEntry, ReceivedQty > 0 && IsBlank(RMPKCode))) > 0,
                                           Notify("Please enter RM/PK code for all received materials", NotificationType.Error),
+                                          If(
+                                          CountRows(Filter(colRoundEntry, ReceivedQty > 0 && IsBlank(COALink))) > 0,
+                                          Notify("Please enter Link to COA for all received materials", NotificationType.Error),
                                           With(
                                               {
                                                   wPatched: Patch(
@@ -1250,6 +1253,7 @@ Screens:
                                                       )
                                                   )
                                               )
+                                          )
                                           )
                                           )
                                           )

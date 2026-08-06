@@ -247,8 +247,8 @@ Created for the unlimited-receipt-rounds change: the old fixed `…1` / `…2` c
 | `ExpiryDate` | Date | required on submit |
 | `QCNumber` | Text | required on submit |
 | `RMPKCode` | Text | required on submit; defaults to the raw material's `Code` |
-| `COALink` | Text (URL) | optional at submit — see "Link to COA completion" in `CLAUDE.md` |
-| `COAMissing` | Yes/No | `IsBlank(COALink)` at write time; delegation-safe filter for the outstanding-COA views (see the delegation note under `'RM Procurement Line Items'`) |
+| `COALink` | Text (URL) | required on submit — see "Link to COA completion" in `CLAUDE.md` |
+| `COAMissing` | Yes/No | `IsBlank(COALink)` at write time, so now always `false` for newly created rows; delegation-safe filter for the outstanding-COA views, which from here on only match rows created while `COALink` was still optional (see the delegation note under `'RM Procurement Line Items'`) |
 
 `colReceiptRounds` mirrors this list per request and is the only source for "what has been received": `PrevReceivedQty` on the entry screens, `TotalReceivedQty` on `RequestDetailScreen`, the per-round "View receipt details" dialog on all three history screens (`colRoundDetails`), and `ProcurementFollowUpScreen`'s "what was received in Round N" table all read it. This list replaced the deleted `…1`/`…2` line-item columns outright — there is no back-fill or synthetic-row path anywhere.
 

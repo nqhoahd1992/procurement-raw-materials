@@ -249,6 +249,8 @@ Screens:
                 Properties:
                   DropShadow: =DropShadow.None
                   Fill: =If(gSelectedRequest.InvoiceSubmitted, RGBA(225, 245, 238, 1), RGBA(219, 234, 254, 1))
+                  FillPortions: =0
+                  Height: =180
                   LayoutDirection: =LayoutDirection.Vertical
                   LayoutGap: =8
                   PaddingBottom: =16

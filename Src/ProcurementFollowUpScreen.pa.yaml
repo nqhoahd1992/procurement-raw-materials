@@ -276,6 +276,8 @@ Screens:
                 Properties:
                   DropShadow: =DropShadow.None
                   Fill: =RGBA(225, 245, 238, 1)
+                  FillPortions: =0
+                  Height: =70
                   LayoutDirection: =LayoutDirection.Vertical
                   LayoutGap: =4
                   LayoutMinHeight: =70
@@ -306,7 +308,7 @@ Screens:
                   DropShadow: =DropShadow.None
                   Fill: =RGBA(241, 239, 232, 1)
                   FillPortions: =0
-                  Height: =40 + 32 + CountRows(Filter(colReceiptRounds, RoundNumber = gRoundsDone)) * 40 + 16
+                  Height: =60 + 32 + CountRows(Filter(colReceiptRounds, RoundNumber = gRoundsDone)) * 40 + 16
                   LayoutDirection: =LayoutDirection.Vertical
                   LayoutGap: =4
                   PaddingBottom: =12
@@ -410,7 +412,7 @@ Screens:
                               FontWeight: =FontWeight.Semibold
                               Height: =32
                               Size: =9
-                              Text: ="RM/PK Code"
+                              Text: ="RM Code"
                               Width: =Parent.Width * 0.1
                         - lblRDColCOA_PFU:
                             Control: Label@2.5.1

@@ -380,7 +380,6 @@ Screens:
                         Height: =CountRows(colRoundHistory) * 88 + 8
                         Items: =colRoundHistory
                         ShowScrollbar: =false
-                        TemplatePadding: =0
                         TemplateSize: =88
                         Width: =Parent.Width
                       Children:
@@ -390,10 +389,10 @@ Screens:
                             Properties:
                               DropShadow: =DropShadow.None
                               Fill: =If(Mod(ThisItem.RoundNumber, 2) = 0, RGBA(248, 247, 243, 1), RGBA(255, 255, 255, 1))
-                              Height: =88
+                              Height: =96
                               LayoutDirection: =LayoutDirection.Vertical
                               LayoutGap: =2
-                              PaddingBottom: =4
+                              PaddingBottom: =12
                               PaddingLeft: =8
                               PaddingRight: =8
                               PaddingTop: =6
@@ -568,6 +567,8 @@ Screens:
                 Properties:
                   DropShadow: =DropShadow.None
                   Fill: =RGBA(250, 238, 218, 1)
+                  FillPortions: =0
+                  Height: =100
                   LayoutDirection: =LayoutDirection.Vertical
                   LayoutGap: =4
                   LayoutMinHeight: =80
@@ -600,7 +601,6 @@ Screens:
                       Control: Label@2.5.1
                       Properties:
                         Color: =RGBA(133, 79, 11, 1)
-                        Height: =40
                         Size: =10
                         Text: |-
                           ="The last receipt round was closed with decision: " & If(IsBlank(gLatestDecision), "—", gLatestDecision) & "."
@@ -1107,7 +1107,7 @@ Screens:
                         Color: =RGBA(133, 79, 11, 1)
                         PaddingTop: =0
                         Size: =10
-                        Text: ="Enter the quantity received in THIS round only, plus batch number, expiry date, QC number, RM/PK code and Link to COA (optional) for each item"
+                        Text: ="Enter the quantity received in THIS round only, plus batch number, expiry date, QC number, RM/PK code and Link to COA for each item"
                         Width: =Parent.Width
                   - rowLineItemsColHeader_SFU:
                       Control: GroupContainer@1.5.0
@@ -1218,7 +1218,7 @@ Screens:
                               FontWeight: =FontWeight.Semibold
                               Height: =36
                               Size: =9
-                              Text: ="Link to COA"
+                              Text: ="Link to COA *"
                               Width: =Parent.Width * 0.15
                   - galLineItems_SFU:
                       Control: Gallery@2.15.0
@@ -1632,6 +1632,9 @@ Screens:
                                               If(
                                               CountRows(Filter(colRoundEntry, ReceivedQty > 0 && IsBlank(RMPKCode))) > 0,
                                               Notify("Please enter RM/PK code for all received materials", NotificationType.Error),
+                                              If(
+                                              CountRows(Filter(colRoundEntry, ReceivedQty > 0 && IsBlank(COALink))) > 0,
+                                              Notify("Please enter Link to COA for all received materials", NotificationType.Error),
                                               With(
                                                   {
                                                       wPatched: Patch(
@@ -1727,6 +1730,7 @@ Screens:
                                               )
                                               )
                                               )
+                                              )
                                           )
                                       )
                                   )
@@ -1816,7 +1820,6 @@ Screens:
                   - btnClosePhotoDialog_SFU:
                       Control: Button@0.0.45
                       Properties:
-                        Height: =32
                         OnSelect: =Set(gShowReceiptPhotos, false)
                         Text: ="Close"
                         Width: =100
@@ -1851,7 +1854,6 @@ Screens:
                 Control: Gallery@2.15.0
                 Variant: BrowseLayout_Vertical_TwoTextOneImageVariant_ver5.0
                 Properties:
-                  FillPortions: =1
                   Items: =colReceiptPhotos
                   TemplatePadding: =2
                   TemplateSize: =44
@@ -1870,10 +1872,6 @@ Screens:
                         LayoutGap: =8
                         PaddingLeft: =12
                         PaddingRight: =12
-                        RadiusBottomLeft: =4
-                        RadiusBottomRight: =4
-                        RadiusTopLeft: =4
-                        RadiusTopRight: =4
                         Width: =Parent.Width
                       Children:
                         - lblReceiptPhotoName_SFU:
@@ -1882,7 +1880,6 @@ Screens:
                               Color: =RGBA(56, 96, 178, 1)
                               FillPortions: =1
                               FontWeight: =FontWeight.Semibold
-                              Height: =40
                               OnSelect: =Launch(ThisItem.AbsoluteUri, {}, LaunchTarget.New)
                               PaddingLeft: =0
                               Size: =11
@@ -1895,7 +1892,6 @@ Screens:
                             Properties:
                               Align: =Align.Right
                               Color: =RGBA(136, 135, 128, 1)
-                              Height: =40
                               OnSelect: =Launch(ThisItem.AbsoluteUri, {}, LaunchTarget.New)
                               PaddingRight: =0
                               Size: =10
@@ -1965,7 +1961,6 @@ Screens:
                   - btnCloseDlgDetail_SFU:
                       Control: Button@0.0.45
                       Properties:
-                        Height: =32
                         OnSelect: =Set(gShowRoundDetails, false)
                         Text: ="Close"
                         Width: =100
@@ -2003,8 +1998,6 @@ Screens:
                   PaddingRight: =12
                   RadiusBottomLeft: =0
                   RadiusBottomRight: =0
-                  RadiusTopLeft: =4
-                  RadiusTopRight: =4
                   Visible: =CountRows(colRoundDetails) > 0
                   Width: =Parent.Width - 40
                 Children:
@@ -2121,10 +2114,7 @@ Screens:
                 Control: Gallery@2.15.0
                 Variant: BrowseLayout_Vertical_TwoTextOneImageVariant_ver5.0
                 Properties:
-                  FillPortions: =1
                   Items: =colRoundDetails
-                  ShowScrollbar: =true
-                  TemplatePadding: =0
                   TemplateSize: =44
                   Visible: =CountRows(colRoundDetails) > 0
                   Width: =Parent.Width - 40
