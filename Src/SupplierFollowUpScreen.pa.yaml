@@ -15,6 +15,7 @@ Screens:
         Reset(ddReceiptStatus2_SFU);
         Reset(ddAcceptanceDecision2_SFU);
         Reset(txtRemarks2_SFU);
+        Reset(ddAssignReceiver_SFU);
         Set(gSelectedRequest, LookUp('RM Procurement Requests', ID = gSelectedRequest.ID));
         Set(gRoundsDone, Coalesce(gSelectedRequest.ReceiptRoundCount, 0));
         Set(gLatestDecision, gSelectedRequest.LatestReceiptDecision);

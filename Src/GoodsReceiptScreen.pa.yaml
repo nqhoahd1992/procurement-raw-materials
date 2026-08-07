@@ -6,6 +6,16 @@ Screens:
         =Set(gGRLogEntry, Blank());
         Set(gGRPendingAttachments, Blank());
         NewForm(frmGRLog_GR);
+        Reset(chkGR1);
+        Reset(chkGR2);
+        Reset(chkGR3);
+        Reset(chkGR4);
+        Reset(chkGR5);
+        Reset(dpReceiptDate_GR);
+        Reset(ddReceiptStatus_GR);
+        Reset(ddAcceptanceDecision_GR);
+        Reset(txtRemarks_GR);
+        Reset(ddAssignReceiver_GR);
         Set(gSelectedRequest, LookUp('RM Procurement Requests', ID = gSelectedRequest.ID));
         ClearCollect(colLineItemsDetail, Filter('RM Procurement Line Items', RequestIDText = Text(gSelectedRequest.ID)));
         ClearCollect(

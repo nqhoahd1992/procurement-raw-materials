@@ -3,7 +3,8 @@ Screens:
     Properties:
       LoadingSpinnerColor: =RGBA(56, 96, 178, 1)
       OnVisible: |-
-        =Set(gPendingNewAttName, "");
+        =ResetForm(formExecutivePayment);
+        Set(gPendingNewAttName, "");
         Set(gSelectedRequest, LookUp('RM Procurement Requests', ID = gSelectedRequest.ID))
     Children:
       - rectHeader_EPS:

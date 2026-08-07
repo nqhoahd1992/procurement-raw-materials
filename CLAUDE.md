@@ -41,7 +41,7 @@ Full column-level schema (types, choice values, join keys): `docs/sharepoint-sch
 
 Invoice flows (called from `ProcurementExecutionScreen` and `InvoiceSubmissionScreen`):
 - `Parse_Invoice.Run(invoiceUrl, requestId)` — AI invoice extraction.
-- `Submit_Invoice.Run(...)` — 18 positional args; writes the official invoice. Param 14 is the invoice **Description** field value, param 17 is the source app name (`"Raw Materials Procurement App"`), param 18 is `gSelectedRequest.ProjectID` (not reserved/empty slots — see `docs/sharepoint-schema.md` for the full param table).
+- `Submit_Invoice.Run(...)` — 17 positional args; writes the official invoice. Param 14 is the invoice **Description** field value and param 17 is the source app name (`"Raw Materials Procurement App"`) — neither is a reserved/empty slot; see `docs/sharepoint-schema.md` for the full param table. The app does **not** pass `ProjectID`: the flow resolves it itself from the request ID (param 2), so don't add an 18th arg back.
 
 General-purpose notification flow — SharePoint flow name **`Procurement Notify`** (renamed from `Procurement_Notify_Receipt_Assignee`), referenced in Power Fx as `ProcurementNotify`:
 - `ProcurementNotify.Run(assigneeEmail, assigneeName, requestTitle, requestId, notificationType, deliveryDate, category, sourceApp)` — **8 args**, identical order at all **8 call sites**. The flow branches on `notificationType`:

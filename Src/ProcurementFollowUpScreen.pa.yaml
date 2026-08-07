@@ -5,6 +5,7 @@ Screens:
       OnVisible: |-
         =Set(gSelectedRequest, LookUp('RM Procurement Requests', ID = gSelectedRequest.ID));
         Reset(txtFollowUpNotes_PFU);
+        ResetForm(formCreditNote_PFU);
         Set(gRoundsDone, Coalesce(gSelectedRequest.ReceiptRoundCount, 0));
         Set(gLatestDecision, gSelectedRequest.LatestReceiptDecision);
         Set(gPFUPending, gSelectedRequest.Status.Value = "Pending Supplier Follow-up" && gLatestDecision = "Accepted with Adjustment");

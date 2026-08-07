@@ -292,7 +292,7 @@ Called from both `ProcurementExecutionScreen` (Deferred and Via-Requester paths)
 
 ### `Submit_Invoice.Run(...)` — writes the official invoice
 
-Called from `ProcurementExecutionScreen` (2 call sites — Deferred and Via-Requester) and `InvoiceSubmissionScreen` (2 call sites, same two paths). 18 positional args, identical order at all 4 call sites:
+Called from `ProcurementExecutionScreen` (2 call sites — Deferred and Via-Requester) and `InvoiceSubmissionScreen` (2 call sites, same two paths). 17 positional args, identical order at all 4 call sites:
 
 | # | Trigger param | App value |
 |---|---|---|
@@ -313,9 +313,12 @@ Called from `ProcurementExecutionScreen` (2 call sites — Deferred and Via-Requ
 | 15 | `text_10` | invoice region |
 | 16 | `text_11` | ABN |
 | 17 | `text_12` | source app name — always the literal `"Raw Materials Procurement App"` |
-| 18 | `text_13` | `gSelectedRequest.ProjectID` |
 
-**Returns**: `newinvoicelink` (string).
+`ProjectID` is **not** passed from the app. The flow resolves it on its own from the request ID (param 2), so the trigger's 18th parameter — if it still exists — is left unfilled by Power Fx. Don't "fix" a call site by adding `gSelectedRequest.ProjectID` back as an 18th arg.
+
+**Returns**: `newinvoicelink` (string) — **never read by the app**, and it doesn't need to be. All 4 call sites do `Set(gSubmitInvoiceResult, Submit_Invoice.Run(...))` and then only `IsError(gSubmitInvoiceResult)`: the variable is purely a "did the flow run" flag, so don't treat it as data or try to display it.
+
+The link handoff works like this instead: the app writes `OfficialInvoiceLink` itself (`wOfficialInvoiceLink` / `locInvoiceURL_ISS`) *before* calling the flow, from the same URL it passes as param 1 — that value is only an interim pointer at the attachment on the request item. **The flow then patches `OfficialInvoiceLink` again** with the final location after it renames/files the invoice. So the app's write is expected to be overwritten, and `newinvoicelink` is deliberately dropped on the Power Fx side. Don't "fix" this by patching the request from the flow's return value.
 
 ### `ProcurementNotify.Run(assigneeEmail, assigneeName, requestTitle, requestId, notificationType, deliveryDate, category, sourceApp)`
 

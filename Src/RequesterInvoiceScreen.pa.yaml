@@ -3,7 +3,8 @@ Screens:
     Properties:
       LoadingSpinnerColor: =RGBA(56, 96, 178, 1)
       OnVisible: |-
-        =Set(gHasInvoiceResult, false);
+        =ResetForm(formRequesterInvoice);
+        Set(gHasInvoiceResult, false);
         Set(gInvoiceResult, Blank());
         Set(gPendingNewAttName, "");
         Set(gSelectedRequest, LookUp('RM Procurement Requests', ID = gSelectedRequest.ID))

@@ -3,7 +3,10 @@ Screens:
     Properties:
       LoadingSpinnerColor: =RGBA(56, 96, 178, 1)
       OnVisible: |-
-        =Set(gShowRateInfo, false);
+        =Reset(rdoExecutiveDecision);
+        Reset(txtApprovalConditions);
+        Reset(txtRejectionReason);
+        Set(gShowRateInfo, false);
         Set(gProjectInfo,
             LookUp(Project_List, ProjectID = gSelectedRequest.ProjectID)
         );

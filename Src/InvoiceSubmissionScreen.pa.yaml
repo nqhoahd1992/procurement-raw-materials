@@ -3,7 +3,18 @@ Screens:
     Properties:
       LoadingSpinnerColor: =RGBA(56, 96, 178, 1)
       OnVisible: |-
-        =Set(gHasInvoiceResult, false);
+        =ResetForm(formOfficialInvoice_ISS);
+        Reset(txtInvDateValue_ISS);
+        Reset(txtSupplierNameValue_ISS);
+        Reset(txtBilledToValue_ISS);
+        Reset(txtInvNumValue_ISS);
+        Reset(txtABNValue_ISS);
+        Reset(txtAttentionValue_ISS);
+        Reset(txtDescriptionValue_ISS);
+        Reset(txtTotalAmountValue_ISS);
+        Reset(txtTaxAmountValue_ISS);
+        Reset(txtCurrencyValue_ISS);
+        Set(gHasInvoiceResult, false);
         Set(gInvoiceResult, Blank());
         Set(gParsingInvoice, false);
         Set(locInvoiceVerified, Blank());
