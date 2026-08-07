@@ -8,6 +8,8 @@ Screens:
         Set(gPendingAttachments, Blank());
         Set(gPendingRequestFiles, Blank());
         Set(gPendingInvoiceName, "");
+        Reset(txtBulkCodes);
+        Set(gShowBulkCodes, false);
         ClearCollect(colRawMaterials, 'Raw Materials');
         Clear(colLineItems)
     Children:
@@ -89,6 +91,7 @@ Screens:
                           Reset(ddManagerApprover_1);
                           Reset(rdoProcurementType_1);
                           Reset(rdoInvoiceType_1);
+                          Reset(txtBulkCodes);
                           Set(gPendingAttachments, Blank());
                           Set(gPendingRequestFiles, Blank());
                           Set(gPendingInvoiceName, "");
@@ -552,6 +555,7 @@ Screens:
                           Reset(ddManagerApprover_1);
                           Reset(rdoProcurementType_1);
                           Reset(rdoInvoiceType_1);
+                          Reset(txtBulkCodes);
                           Notify("Request submitted successfully", NotificationType.Success);
                           Navigate(HomeScreen)
                         SnapToColumns: =false
@@ -940,16 +944,41 @@ Screens:
                               Width: =200
                               X: =40
                               Y: =40
-                        - btnAddLineItem:
-                            Control: Button@0.0.45
+                        - rowLineItemsActions:
+                            Control: GroupContainer@1.5.0
+                            Variant: AutoLayout
                             Properties:
+                              DropShadow: =DropShadow.None
+                              FillPortions: =0
                               Height: =36
-                              OnSelect: |-
-                                =Collect(colLineItems, {RowID: CountRows(colLineItems) + 1, MaterialID: 0, MaterialName: "", Unit: "", Quantity: 1})
-                              Text: ="+ Add Material"
-                              Width: =160
-                              X: =40
-                              Y: =40
+                              LayoutAlignItems: =LayoutAlignItems.Center
+                              LayoutDirection: =LayoutDirection.Horizontal
+                              LayoutGap: =10
+                              LayoutJustifyContent: =LayoutJustifyContent.End
+                              LayoutMinHeight: =36
+                              RadiusBottomLeft: =0
+                              RadiusBottomRight: =0
+                              RadiusTopLeft: =0
+                              RadiusTopRight: =0
+                              Width: =380
+                            Children:
+                              - btnAddFromCodes:
+                                  Control: Button@0.0.45
+                                  Properties:
+                                    Height: =36
+                                    OnSelect: |-
+                                      =Reset(txtBulkCodes);
+                                      Set(gShowBulkCodes, true)
+                                    Text: ="+ Add by Code List"
+                                    Width: =180
+                              - btnAddLineItem:
+                                  Control: Button@0.0.45
+                                  Properties:
+                                    Height: =36
+                                    OnSelect: |-
+                                      =Collect(colLineItems, {RowID: Coalesce(Max(colLineItems, RowID), 0) + 1, MaterialID: 0, MaterialName: "", Unit: "", Quantity: 1})
+                                    Text: ="+ Add Material"
+                                    Width: =160
                   - rowLineItemsColumnHeader:
                       Control: GroupContainer@1.5.0
                       Variant: AutoLayout
@@ -1359,3 +1388,160 @@ Screens:
               )
             Width: =280
             X: =Parent.Width - 300
+      - rectBulkCodeOverlay_1:
+          Control: Rectangle@2.3.0
+          Properties:
+            BorderColor: =RGBA(0, 0, 0, 0)
+            Fill: =RGBA(0, 0, 0, 0.5)
+            Height: =Parent.Height
+            OnSelect: =Set(gShowBulkCodes, false)
+            Visible: =gShowBulkCodes
+            Width: =Parent.Width
+      - conBulkCodeDialog_1:
+          Control: GroupContainer@1.5.0
+          Variant: AutoLayout
+          Properties:
+            DropShadow: =DropShadow.Bold
+            Fill: =RGBA(255, 255, 255, 1)
+            Height: =440
+            LayoutDirection: =LayoutDirection.Vertical
+            LayoutGap: =8
+            PaddingBottom: =16
+            PaddingLeft: =20
+            PaddingRight: =20
+            PaddingTop: =16
+            RadiusBottomLeft: =8
+            RadiusBottomRight: =8
+            RadiusTopLeft: =8
+            RadiusTopRight: =8
+            Visible: =gShowBulkCodes
+            Width: =560
+            X: =(Parent.Width - 560) / 2
+            Y: =(Parent.Height - 440) / 2
+          Children:
+            - lblBulkCodeDialogTitle_1:
+                Control: Label@2.5.1
+                Properties:
+                  Color: =RGBA(83, 74, 183, 1)
+                  FontWeight: =FontWeight.Bold
+                  Height: =32
+                  PaddingLeft: =0
+                  Size: =12
+                  Text: ="Add Raw Materials by Code"
+                  Width: =Parent.Width - 40
+            - rectBulkCodeDivider_1:
+                Control: Rectangle@2.3.0
+                Properties:
+                  BorderColor: =RGBA(0, 0, 0, 0)
+                  Fill: =RGBA(210, 209, 199, 1)
+                  Height: =1
+                  LayoutMinHeight: =1
+                  Width: =Parent.Width - 40
+            - lblBulkCodeDialogHint_1:
+                Control: Label@2.5.1
+                Properties:
+                  Color: =RGBA(136, 135, 128, 1)
+                  PaddingLeft: =0
+                  Size: =9
+                  Text: ="Paste one material code per line. Each code that matches the Raw Materials catalog is added as a new row; codes with no match are skipped."
+                  Width: =Parent.Width - 40
+            - txtBulkCodes:
+                Control: TextInput@0.0.54
+                Properties:
+                  FillPortions: =1
+                  Height: =240
+                  LayoutMinHeight: =240
+                  Mode: ='TextInputCanvas.Mode'.Multiline
+                  Placeholder: ="Code-A" & Char(10) & "Code-B" & Char(10) & "Code-C"
+                  Width: =Parent.Width - 40
+            - rowBulkCodeDialogActions_1:
+                Control: GroupContainer@1.5.0
+                Variant: AutoLayout
+                Properties:
+                  DropShadow: =DropShadow.None
+                  FillPortions: =0
+                  Height: =40
+                  LayoutAlignItems: =LayoutAlignItems.Center
+                  LayoutDirection: =LayoutDirection.Horizontal
+                  LayoutGap: =10
+                  LayoutJustifyContent: =LayoutJustifyContent.End
+                  RadiusBottomLeft: =0
+                  RadiusBottomRight: =0
+                  RadiusTopLeft: =0
+                  RadiusTopRight: =0
+                  Width: =Parent.Width - 40
+                Children:
+                  - btnBulkCodeCancel_1:
+                      Control: Button@0.0.45
+                      Properties:
+                        Height: =36
+                        OnSelect: =Set(gShowBulkCodes, false)
+                        Text: ="Cancel"
+                        Width: =120
+                  - btnBulkCodeAdd_1:
+                      Control: Button@0.0.45
+                      Properties:
+                        Appearance: ='ButtonCanvas.Appearance'.Primary
+                        BasePaletteColor: =RGBA(83, 74, 183, 1)
+                        Height: =36
+                        OnSelect: |-
+                          =ClearCollect(
+                              colBulkCodes,
+                              ForAll(
+                                  Filter(
+                                      ForAll(
+                                          Split(Substitute(txtBulkCodes.Value, Char(13), ""), Char(10)) As ln,
+                                          {Code: Trim(ln.Value)}
+                                      ),
+                                      Not(IsBlank(Code))
+                                  ) As c,
+                                  With(
+                                      {wMat: LookUp(colRawMaterials, Lower(Code) = Lower(c.Code))},
+                                      {
+                                          Code: c.Code,
+                                          MaterialID: Coalesce(wMat.ID, 0),
+                                          MaterialName: Coalesce(wMat.Title, "")
+                                      }
+                                  )
+                              )
+                          );
+                          With(
+                              {
+                                  wMatched: Filter(colBulkCodes, MaterialID > 0),
+                                  wUnknown: Filter(colBulkCodes, MaterialID = 0),
+                                  wBase: Coalesce(Max(colLineItems, RowID), 0)
+                              },
+                              If(
+                                  CountRows(colBulkCodes) = 0,
+                                  Notify("Please paste at least one material code", NotificationType.Error),
+                                  Collect(
+                                      colLineItems,
+                                      ForAll(
+                                          Sequence(CountRows(wMatched)) As s,
+                                          {
+                                              RowID: wBase + s.Value,
+                                              MaterialID: Index(wMatched, s.Value).MaterialID,
+                                              MaterialName: Index(wMatched, s.Value).MaterialName,
+                                              Unit: "",
+                                              Quantity: 1
+                                          }
+                                      )
+                                  );
+                                  If(
+                                      CountRows(wUnknown) > 0,
+                                      Notify(
+                                          Text(CountRows(wUnknown)) & " code(s) skipped — no matching raw material: " & Concat(wUnknown, Code, ", "),
+                                          NotificationType.Warning
+                                      )
+                                  );
+                                  If(
+                                      CountRows(wMatched) = 0,
+                                      Notify("No material was added. Please check the codes and try again.", NotificationType.Error),
+                                      Notify(Text(CountRows(wMatched)) & " material(s) added. Please set unit and quantity for each row.", NotificationType.Success);
+                                      Reset(txtBulkCodes);
+                                      Set(gShowBulkCodes, false)
+                                  )
+                              )
+                          )
+                        Text: ="Add"
+                        Width: =120

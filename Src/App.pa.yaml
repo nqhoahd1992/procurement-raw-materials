@@ -58,6 +58,9 @@ App:
       Set(gQuickViewRequest, Blank());
       Set(gShowLogDetail, false);
       Set(gLogDetailTitle, "");
+      Set(gShowBulkCodes, false);
+      ClearCollect(colBulkCodes, {Code: "", MaterialID: 0, MaterialName: ""});
+      Clear(colBulkCodes);
       ClearCollect(colLogDetail, {FieldLabel: "", FieldValue: ""});
       Clear(colLogDetail);
       ClearCollect(colReceiptPhotos, First('RM Procurement Execution Log').Attachments);
