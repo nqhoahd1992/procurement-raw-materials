@@ -682,6 +682,39 @@ Screens:
                               SelectMultiple: =false
                               Size: =0
                               Width: =Parent.Width
+                  - colDeliveryDate:
+                      Control: GroupContainer@1.5.0
+                      Variant: AutoLayout
+                      Properties:
+                        DropShadow: =DropShadow.None
+                        LayoutDirection: =LayoutDirection.Vertical
+                        LayoutGap: =4
+                        RadiusBottomLeft: =0
+                        RadiusBottomRight: =0
+                        RadiusTopLeft: =0
+                        RadiusTopRight: =0
+                        Width: =200
+                        X: =40
+                        Y: =40
+                      Children:
+                        - lblDeliveryDateLabel_1:
+                            Control: Label@2.5.1
+                            Properties:
+                              FontWeight: =FontWeight.Semibold
+                              Height: =24
+                              Size: =11
+                              Text: ="Required Delivery Date *"
+                              Width: =Parent.Width
+                        - dpDeliveryDate_1:
+                            Control: ModernDatePicker@1.0.1
+                            Properties:
+                              BorderStyle: =""
+                              Font: =""
+                              FontWeight: =""
+                              Height: =40
+                              Placeholder: ="Choose a date"
+                              Size: =0
+                              Width: =Parent.Width
                   - colCostCenter_1:
                       Control: GroupContainer@1.5.0
                       Variant: AutoLayout
@@ -745,39 +778,6 @@ Screens:
                               PaddingLeft: =8
                               Size: =10
                               Text: ="Port Melbourne Warehouse"
-                              Width: =Parent.Width
-                  - colDeliveryDate:
-                      Control: GroupContainer@1.5.0
-                      Variant: AutoLayout
-                      Properties:
-                        DropShadow: =DropShadow.None
-                        LayoutDirection: =LayoutDirection.Vertical
-                        LayoutGap: =4
-                        RadiusBottomLeft: =0
-                        RadiusBottomRight: =0
-                        RadiusTopLeft: =0
-                        RadiusTopRight: =0
-                        Width: =200
-                        X: =40
-                        Y: =40
-                      Children:
-                        - lblDeliveryDateLabel_1:
-                            Control: Label@2.5.1
-                            Properties:
-                              FontWeight: =FontWeight.Semibold
-                              Height: =24
-                              Size: =11
-                              Text: ="Required Delivery Date *"
-                              Width: =Parent.Width
-                        - dpDeliveryDate_1:
-                            Control: ModernDatePicker@1.0.1
-                            Properties:
-                              BorderStyle: =""
-                              Font: =""
-                              FontWeight: =""
-                              Height: =40
-                              Placeholder: ="Choose a date"
-                              Size: =0
                               Width: =Parent.Width
             - rowCostCurrency:
                 Control: GroupContainer@1.5.0
@@ -880,107 +880,6 @@ Screens:
                             Control: TextInput@0.0.54
                             Properties:
                               Height: =40
-                              Width: =Parent.Width
-            - rowDeliverySupplier:
-                Control: GroupContainer@1.5.0
-                Variant: AutoLayout
-                Properties:
-                  DropShadow: =DropShadow.None
-                  LayoutDirection: =LayoutDirection.Horizontal
-                  LayoutGap: =20
-                  LayoutMinHeight: =160
-                  PaddingBottom: =8
-                  PaddingLeft: =20
-                  PaddingRight: =20
-                  PaddingTop: =8
-                  RadiusBottomLeft: =0
-                  RadiusBottomRight: =0
-                  RadiusTopLeft: =0
-                  RadiusTopRight: =0
-                  Width: =Parent.Width
-                Children:
-                  - colDesc:
-                      Control: GroupContainer@1.5.0
-                      Variant: AutoLayout
-                      Properties:
-                        DropShadow: =DropShadow.None
-                        LayoutDirection: =LayoutDirection.Vertical
-                        LayoutGap: =4
-                        RadiusBottomLeft: =0
-                        RadiusBottomRight: =0
-                        RadiusTopLeft: =0
-                        RadiusTopRight: =0
-                        Width: =600
-                        X: =40
-                        Y: =40
-                      Children:
-                        - lblDescriptionLabel_1:
-                            Control: Label@2.5.1
-                            Properties:
-                              FontWeight: =FontWeight.Semibold
-                              Height: =24
-                              Size: =11
-                              Text: ="Procurement Description *"
-                              Width: =600
-                        - txtDescription_1:
-                            Control: TextInput@0.0.54
-                            Properties:
-                              FillPortions: =1
-                              Height: =40
-                              LayoutMinHeight: =80
-                              Mode: ='TextInputCanvas.Mode'.Multiline
-                              Width: =Parent.Width
-            - rowRelatedSKU:
-                Control: GroupContainer@1.5.0
-                Variant: AutoLayout
-                Properties:
-                  DropShadow: =DropShadow.None
-                  LayoutDirection: =LayoutDirection.Horizontal
-                  LayoutGap: =20
-                  LayoutMinHeight: =80
-                  PaddingBottom: =8
-                  PaddingLeft: =20
-                  PaddingRight: =20
-                  PaddingTop: =8
-                  RadiusBottomLeft: =0
-                  RadiusBottomRight: =0
-                  RadiusTopLeft: =0
-                  RadiusTopRight: =0
-                  Width: =Parent.Width
-                Children:
-                  - colSKU:
-                      Control: GroupContainer@1.5.0
-                      Variant: AutoLayout
-                      Properties:
-                        DropShadow: =DropShadow.None
-                        LayoutDirection: =LayoutDirection.Vertical
-                        LayoutGap: =4
-                        RadiusBottomLeft: =0
-                        RadiusBottomRight: =0
-                        RadiusTopLeft: =0
-                        RadiusTopRight: =0
-                        Width: =280
-                        X: =40
-                        Y: =40
-                      Children:
-                        - lblSKULabel:
-                            Control: Label@2.5.1
-                            Properties:
-                              FontWeight: =FontWeight.Semibold
-                              Height: =24
-                              Size: =11
-                              Text: ="Related Product SKU"
-                              Width: =Parent.Width
-                        - cmbSKU:
-                            Control: ModernCombobox@1.1.1
-                            Properties:
-                              AllowExternalSelectedItems: =false
-                              FontWeight: =""
-                              Height: =40
-                              InputTextPlaceholder: ="Choose one or more products"
-                              ItemDisplayText: =ThisItem.Title
-                              Items: =Sort(Product_Database_SKU_Master, Title, SortOrder.Ascending)
-                              Size: =0
                               Width: =Parent.Width
             - rowGalLineItems:
                 Control: GroupContainer@1.5.0
@@ -1224,6 +1123,106 @@ Screens:
                                     OnSelect: =Remove(colLineItems, ThisItem)
                                     Text: ="✕"
                                     Width: =36
+            - rowRelatedSKU:
+                Control: GroupContainer@1.5.0
+                Variant: AutoLayout
+                Properties:
+                  DropShadow: =DropShadow.None
+                  LayoutDirection: =LayoutDirection.Horizontal
+                  LayoutGap: =20
+                  PaddingBottom: =8
+                  PaddingLeft: =20
+                  PaddingRight: =20
+                  PaddingTop: =8
+                  RadiusBottomLeft: =0
+                  RadiusBottomRight: =0
+                  RadiusTopLeft: =0
+                  RadiusTopRight: =0
+                  Width: =Parent.Width
+                Children:
+                  - colSKU:
+                      Control: GroupContainer@1.5.0
+                      Variant: AutoLayout
+                      Properties:
+                        DropShadow: =DropShadow.None
+                        LayoutDirection: =LayoutDirection.Vertical
+                        LayoutGap: =4
+                        RadiusBottomLeft: =0
+                        RadiusBottomRight: =0
+                        RadiusTopLeft: =0
+                        RadiusTopRight: =0
+                        Width: =280
+                        X: =40
+                        Y: =40
+                      Children:
+                        - lblSKULabel:
+                            Control: Label@2.5.1
+                            Properties:
+                              FontWeight: =FontWeight.Semibold
+                              Height: =24
+                              Size: =11
+                              Text: ="Related Product SKU"
+                              Width: =Parent.Width
+                        - cmbSKU:
+                            Control: ModernCombobox@1.1.1
+                            Properties:
+                              AllowExternalSelectedItems: =false
+                              FontWeight: =""
+                              Height: =40
+                              InputTextPlaceholder: ="Choose one or more products"
+                              ItemDisplayText: =ThisItem.Title
+                              Items: =Sort(Product_Database_SKU_Master, Title, SortOrder.Ascending)
+                              Size: =0
+                              Width: =Parent.Width
+            - rowDeliverySupplier:
+                Control: GroupContainer@1.5.0
+                Variant: AutoLayout
+                Properties:
+                  DropShadow: =DropShadow.None
+                  LayoutDirection: =LayoutDirection.Horizontal
+                  LayoutGap: =20
+                  LayoutMinHeight: =160
+                  PaddingBottom: =8
+                  PaddingLeft: =20
+                  PaddingRight: =20
+                  PaddingTop: =8
+                  RadiusBottomLeft: =0
+                  RadiusBottomRight: =0
+                  RadiusTopLeft: =0
+                  RadiusTopRight: =0
+                  Width: =Parent.Width
+                Children:
+                  - colDesc:
+                      Control: GroupContainer@1.5.0
+                      Variant: AutoLayout
+                      Properties:
+                        DropShadow: =DropShadow.None
+                        LayoutDirection: =LayoutDirection.Vertical
+                        LayoutGap: =4
+                        RadiusBottomLeft: =0
+                        RadiusBottomRight: =0
+                        RadiusTopLeft: =0
+                        RadiusTopRight: =0
+                        Width: =600
+                        X: =40
+                        Y: =40
+                      Children:
+                        - lblDescriptionLabel_1:
+                            Control: Label@2.5.1
+                            Properties:
+                              FontWeight: =FontWeight.Semibold
+                              Height: =24
+                              Size: =11
+                              Text: ="Procurement Description *"
+                              Width: =600
+                        - txtDescription_1:
+                            Control: TextInput@0.0.54
+                            Properties:
+                              FillPortions: =1
+                              Height: =40
+                              LayoutMinHeight: =80
+                              Mode: ='TextInputCanvas.Mode'.Multiline
+                              Width: =Parent.Width
             - rowRequestFiles:
                 Control: GroupContainer@1.5.0
                 Variant: AutoLayout
@@ -1246,7 +1245,7 @@ Screens:
                   - lblRequestFilesLabel:
                       Control: Label@2.5.1
                       Properties:
-                        FontWeight: =FontWeight.Bold
+                        FontWeight: =FontWeight.Semibold
                         Height: =24
                         Size: =11
                         Text: ="Requirement Files"
