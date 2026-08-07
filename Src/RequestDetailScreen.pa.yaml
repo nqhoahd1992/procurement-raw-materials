@@ -1093,7 +1093,7 @@ Screens:
                               Height: =48
                               OnSelect: =If(Not(IsBlank(gSelectedRequest.PurchaseRequestLink)), Launch(gSelectedRequest.PurchaseRequestLink, {}, LaunchTarget.New))
                               Size: =11
-                              Text: =If(IsBlank(gSelectedRequest.PurchaseRequestLink), "—", gSelectedRequest.PurchaseRequestLink)
+                              Text: =If(IsBlank(gSelectedRequest.PurchaseRequestLink), "—", "Open purchase request ↗")
                               Underline: =Not(IsBlank(gSelectedRequest.PurchaseRequestLink))
                               Width: =Parent.Width
                               Wrap: =false
@@ -1133,7 +1133,7 @@ Screens:
                               LayoutMinHeight: =28
                               OnSelect: =If(Not(IsBlank(gSelectedRequest.OfficialInvoiceLink)), Launch(gSelectedRequest.OfficialInvoiceLink, {}, LaunchTarget.New))
                               Size: =10
-                              Text: =If(IsBlank(gSelectedRequest.OfficialInvoiceLink), "—", gSelectedRequest.OfficialInvoiceLink)
+                              Text: =If(IsBlank(gSelectedRequest.OfficialInvoiceLink), "—", "Open official invoice ↗")
                               Underline: =Not(IsBlank(gSelectedRequest.OfficialInvoiceLink))
                               VerticalAlign: =VerticalAlign.Top
                               Width: =Parent.Width
@@ -1258,7 +1258,7 @@ Screens:
                               Height: =28
                               OnSelect: =If(Not(IsBlank(gSelectedRequest.CreditNote)), Launch(gSelectedRequest.CreditNote, {}, LaunchTarget.New))
                               Size: =10
-                              Text: =If(IsBlank(gSelectedRequest.CreditNote), "—", gSelectedRequest.CreditNote)
+                              Text: =If(IsBlank(gSelectedRequest.CreditNote), "—", "Open credit note ↗")
                               Underline: =Not(IsBlank(gSelectedRequest.CreditNote))
                               Width: =Parent.Width
                               Wrap: =false

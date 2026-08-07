@@ -115,6 +115,7 @@ Screens:
                   LayoutGap: =16
                   LayoutJustifyContent: =LayoutJustifyContent.SpaceBetween
                   LayoutMinHeight: =24
+                  PaddingRight: =1
                   RadiusBottomLeft: =0
                   RadiusBottomRight: =0
                   RadiusTopLeft: =0
@@ -130,7 +131,8 @@ Screens:
                         PaddingLeft: =0
                         PaddingRight: =0
                         Size: =14
-                        Text: =gSelectedRequest.Title
+                        Text: |-
+                          ="ID: " & gSelectedRequest.ID & " - " & gSelectedRequest.Title
                         Width: =600
                   - lblStatusBadge_SFU:
                       Control: Label@2.5.1
@@ -222,7 +224,7 @@ Screens:
                               Height: =20
                               PaddingLeft: =0
                               Size: =11
-                              Text: =gSelectedRequest.Currency & " " & Text(gSelectedRequest.EstimatedCost, "#,###")
+                              Text: =Text(gSelectedRequest.EstimatedCost, "#,###.00")  & " " & gSelectedRequest.Currency
                               Width: =240
                   - colRoundsSoFar_SFU:
                       Control: GroupContainer@1.5.0
@@ -277,7 +279,7 @@ Screens:
                   DropShadow: =DropShadow.None
                   Fill: =RGBA(241, 239, 232, 1)
                   FillPortions: =0
-                  Height: =40 + 32 + CountRows(colRoundHistory) * 88 + 16
+                  Height: =40 + 32 + CountRows(colRoundHistory) * 96 + 16
                   LayoutDirection: =LayoutDirection.Vertical
                   LayoutGap: =4
                   PaddingBottom: =12
@@ -380,7 +382,7 @@ Screens:
                         Height: =CountRows(colRoundHistory) * 88 + 8
                         Items: =colRoundHistory
                         ShowScrollbar: =false
-                        TemplateSize: =88
+                        TemplateSize: =96
                         Width: =Parent.Width
                       Children:
                         - rowHistItem_SFU:

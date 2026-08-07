@@ -71,7 +71,8 @@ Screens:
                         PaddingLeft: =0
                         PaddingRight: =0
                         Size: =14
-                        Text: =gSelectedRequest.Title
+                        Text: |-
+                          ="ID: " & gSelectedRequest.ID & " - " & gSelectedRequest.Title
                         Width: =Parent.Width - 160
             - rowRequestInfo_1:
                 Control: GroupContainer@1.5.0

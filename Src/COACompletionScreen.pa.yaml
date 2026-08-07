@@ -75,6 +75,7 @@ Screens:
                   LayoutDirection: =LayoutDirection.Horizontal
                   LayoutGap: =16
                   LayoutJustifyContent: =LayoutJustifyContent.SpaceBetween
+                  PaddingRight: =1
                   RadiusBottomLeft: =0
                   RadiusBottomRight: =0
                   RadiusTopLeft: =0
@@ -88,7 +89,8 @@ Screens:
                         FontWeight: =FontWeight.Bold
                         Height: =24
                         Size: =14
-                        Text: =gSelectedRequest.Title
+                        Text: |-
+                          ="ID: " & gSelectedRequest.ID & " - " & gSelectedRequest.Title
                         Width: =600
                   - lblStatusBadge_COA:
                       Control: Label@2.5.1

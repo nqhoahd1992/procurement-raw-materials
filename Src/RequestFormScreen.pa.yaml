@@ -268,7 +268,7 @@ Screens:
                       Control: Label@2.5.1
                       Properties:
                         AlignInContainer: =AlignInContainer.Stretch
-                        FontWeight: =FontWeight.Bold
+                        FontWeight: =FontWeight.Semibold
                         Height: =24
                         Size: =12
                         Text: ="Requester:"
@@ -279,7 +279,6 @@ Screens:
                       Properties:
                         AlignInContainer: =AlignInContainer.Stretch
                         Fill: =RGBA(241, 239, 232, 0)
-                        FontWeight: =FontWeight.Bold
                         Height: =36
                         PaddingBottom: =0
                         PaddingLeft: =0
@@ -1229,6 +1228,7 @@ Screens:
                 Properties:
                   DropShadow: =DropShadow.None
                   FillPortions: =0
+                  Height: =180
                   LayoutDirection: =LayoutDirection.Vertical
                   LayoutGap: =4
                   LayoutMinHeight: =190

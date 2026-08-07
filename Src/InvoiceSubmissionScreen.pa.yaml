@@ -75,6 +75,7 @@ Screens:
                   LayoutGap: =16
                   LayoutJustifyContent: =LayoutJustifyContent.SpaceBetween
                   LayoutMinHeight: =24
+                  PaddingRight: =1
                   RadiusBottomLeft: =0
                   RadiusBottomRight: =0
                   RadiusTopLeft: =0
@@ -90,7 +91,8 @@ Screens:
                         PaddingLeft: =0
                         PaddingRight: =0
                         Size: =14
-                        Text: =gSelectedRequest.Title
+                        Text: |-
+                          ="ID: " & gSelectedRequest.ID & " - " & gSelectedRequest.Title
                         Width: =600
                   - lblStatusBadge_ISS:
                       Control: Label@2.5.1
@@ -212,7 +214,7 @@ Screens:
                               Height: =20
                               PaddingLeft: =0
                               Size: =11
-                              Text: =gSelectedRequest.Currency & " " & Text(gSelectedRequest.EstimatedCost, "#,###")
+                              Text: =Text(gSelectedRequest.EstimatedCost, "#,###.00")  & " " & gSelectedRequest.Currency
                               Width: =240
             - rowInfoLine3_ISS:
                 Control: GroupContainer@1.5.0
@@ -513,7 +515,7 @@ Screens:
                   - lblOfficialInvoiceHeader_ISS:
                       Control: Label@2.5.1
                       Properties:
-                        FontWeight: =FontWeight.Bold
+                        FontWeight: =FontWeight.Semibold
                         Height: =24
                         Size: =12
                         Text: ="Upload Supplier Invoice *"

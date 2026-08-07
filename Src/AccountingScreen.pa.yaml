@@ -51,6 +51,7 @@ Screens:
                   LayoutGap: =16
                   LayoutJustifyContent: =LayoutJustifyContent.SpaceBetween
                   LayoutMinHeight: =24
+                  PaddingRight: =1
                   RadiusBottomLeft: =0
                   RadiusBottomRight: =0
                   RadiusTopLeft: =0
@@ -64,7 +65,8 @@ Screens:
                         Height: =24
                         PaddingLeft: =0
                         Size: =14
-                        Text: =gSelectedRequest.Title
+                        Text: |-
+                          ="ID: " & gSelectedRequest.ID & " - " & gSelectedRequest.Title
                         Width: =600
                   - lblStatusBadge_AC:
                       Control: Label@2.5.1
@@ -144,7 +146,7 @@ Screens:
                   X: =40
                   Y: =40
                 Children:
-                  - colCost_AC:
+                  - colProcurementType_AC:
                       Control: GroupContainer@1.5.0
                       Variant: AutoLayout
                       Properties:
@@ -157,24 +159,31 @@ Screens:
                         RadiusTopRight: =0
                         Width: =300
                       Children:
-                        - lblInfoCostLabel_AC:
+                        - lblInfoProcTypeLabel_EPS_1:
                             Control: Label@2.5.1
                             Properties:
                               Color: =RGBA(136, 135, 128, 1)
                               Height: =18
                               PaddingLeft: =0
                               Size: =9
-                              Text: ="Estimated Cost"
+                              Text: ="Procurement Type"
                               Width: =300
-                        - lblInfoCostValue_AC:
+                        - lblInfoProcTypeValue_EPS_1:
                             Control: Label@2.5.1
                             Properties:
                               FontWeight: =FontWeight.Semibold
                               Height: =20
                               PaddingLeft: =0
                               Size: =11
-                              Text: =gSelectedRequest.Currency & " " & Text(gSelectedRequest.EstimatedCost, "#,###")
+                              Text: |-
+                                =gSelectedRequest.ProcurementType.Value &
+                                    If(
+                                        IsBlank(gSelectedRequest.InvoiceType.Value),
+                                        "",
+                                        " · " & gSelectedRequest.InvoiceType.Value
+                                    )
                               Width: =300
+                              Wrap: =false
                   - colCostCenter_AC:
                       Control: GroupContainer@1.5.0
                       Variant: AutoLayout
@@ -206,6 +215,37 @@ Screens:
                               Size: =11
                               Text: =If(IsBlank(gSelectedRequest.CostCenter.Value), "—", gSelectedRequest.CostCenter.Value)
                               Width: =240
+                  - colCost_AC:
+                      Control: GroupContainer@1.5.0
+                      Variant: AutoLayout
+                      Properties:
+                        DropShadow: =DropShadow.None
+                        LayoutDirection: =LayoutDirection.Vertical
+                        LayoutGap: =2
+                        RadiusBottomLeft: =0
+                        RadiusBottomRight: =0
+                        RadiusTopLeft: =0
+                        RadiusTopRight: =0
+                        Width: =300
+                      Children:
+                        - lblInfoCostLabel_AC:
+                            Control: Label@2.5.1
+                            Properties:
+                              Color: =RGBA(136, 135, 128, 1)
+                              Height: =18
+                              PaddingLeft: =0
+                              Size: =9
+                              Text: ="Estimated Cost"
+                              Width: =300
+                        - lblInfoCostValue_AC:
+                            Control: Label@2.5.1
+                            Properties:
+                              FontWeight: =FontWeight.Semibold
+                              Height: =20
+                              PaddingLeft: =0
+                              Size: =11
+                              Text: =Text(gSelectedRequest.EstimatedCost, "#,###.00")  & " " & gSelectedRequest.Currency
+                              Width: =300
       - conScrollable_AC:
           Control: GroupContainer@1.5.0
           Variant: AutoLayout
@@ -257,7 +297,7 @@ Screens:
                         Height: =50
                         PaddingLeft: =0
                         Size: =11
-                        Text: =If(IsBlank(gSelectedRequest.OfficialInvoiceLink), "—", gSelectedRequest.OfficialInvoiceLink)
+                        Text: =If(IsBlank(gSelectedRequest.OfficialInvoiceLink), "—", "Open official invoice ↗")
                         Underline: =true
                         Width: =Parent.Width - 40
                         Wrap: =false
@@ -296,7 +336,7 @@ Screens:
                   Fill: =RGBA(225, 245, 238, 1)
                   LayoutDirection: =LayoutDirection.Vertical
                   LayoutGap: =4
-                  LayoutMinHeight: =80
+                  LayoutMinHeight: =90
                   PaddingBottom: =12
                   PaddingLeft: =20
                   PaddingRight: =20
@@ -329,7 +369,7 @@ Screens:
                         PaddingLeft: =0
                         PaddingRight: =0
                         Size: =11
-                        Text: =If(IsBlank(gSelectedRequest.CreditNote), "—", gSelectedRequest.CreditNote)
+                        Text: =If(IsBlank(gSelectedRequest.CreditNote), "—", "Open credit note ↗")
                         Underline: =Not(IsBlank(gSelectedRequest.CreditNote))
                         VerticalAlign: =VerticalAlign.Top
                         Width: =Parent.Width - 40
