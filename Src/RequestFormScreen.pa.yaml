@@ -1443,7 +1443,8 @@ Screens:
                   Color: =RGBA(136, 135, 128, 1)
                   PaddingLeft: =0
                   Size: =9
-                  Text: ="Paste one material code per line. Each code that matches the Raw Materials catalog is added as a new row; codes with no match are skipped."
+                  Text: |-
+                    ="Paste one material per line as: Code Unit Qty — separated by a space or a tab. Unit and quantity are optional (unit must be Kg, g, L or ml; quantity defaults to 1). Codes with no match in the Raw Materials catalog are skipped."
                   Width: =Parent.Width - 40
             - txtBulkCodes:
                 Control: TextInput@0.0.54
@@ -1452,7 +1453,7 @@ Screens:
                   Height: =240
                   LayoutMinHeight: =240
                   Mode: ='TextInputCanvas.Mode'.Multiline
-                  Placeholder: ="Code-A" & Char(10) & "Code-B" & Char(10) & "Code-C"
+                  Placeholder: ="Code-A Kg 10" & Char(10) & "Code-B L 1" & Char(10) & "Code-C g 100"
                   Width: =Parent.Width - 40
             - rowBulkCodeDialogActions_1:
                 Control: GroupContainer@1.5.0
@@ -1490,18 +1491,36 @@ Screens:
                               ForAll(
                                   Filter(
                                       ForAll(
-                                          Split(Substitute(txtBulkCodes.Value, Char(13), ""), Char(10)) As ln,
-                                          {Code: Trim(ln.Value)}
+                                          Split(
+                                              Substitute(Substitute(txtBulkCodes.Value, Char(13), ""), Char(9), " "),
+                                              Char(10)
+                                          ) As ln,
+                                          {Line: Trim(ln.Value)}
                                       ),
-                                      Not(IsBlank(Code))
-                                  ) As c,
+                                      Not(IsBlank(Line))
+                                  ) As l,
                                   With(
-                                      {wMat: LookUp(colRawMaterials, Lower(Code) = Lower(c.Code))},
-                                      {
-                                          Code: c.Code,
-                                          MaterialID: Coalesce(wMat.ID, 0),
-                                          MaterialName: Coalesce(wMat.Title, "")
-                                      }
+                                      {wTokens: Filter(Split(l.Line, " ") As tk, Not(IsBlank(Trim(tk.Value))))},
+                                      With(
+                                          {
+                                              wCode: Trim(Index(wTokens, 1).Value),
+                                              wUnitRaw: If(CountRows(wTokens) >= 2, Trim(Index(wTokens, 2).Value), ""),
+                                              wQtyRaw: If(CountRows(wTokens) >= 3, Trim(Index(wTokens, 3).Value), "")
+                                          },
+                                          With(
+                                              {
+                                                  wMat: LookUp(colRawMaterials, Lower(Code) = Lower(wCode)),
+                                                  wUnit: LookUp(["Kg", "g", "L", "ml"] As u, Lower(u.Value) = Lower(wUnitRaw))
+                                              },
+                                              {
+                                                  Code: wCode,
+                                                  MaterialID: Coalesce(wMat.ID, 0),
+                                                  MaterialName: Coalesce(wMat.Title, ""),
+                                                  Unit: Coalesce(wUnit.Value, ""),
+                                                  Quantity: If(IsNumeric(wQtyRaw) && Value(wQtyRaw) > 0, Value(wQtyRaw), 1)
+                                              }
+                                          )
+                                      )
                                   )
                               )
                           );
@@ -1522,8 +1541,8 @@ Screens:
                                               RowID: wBase + s.Value,
                                               MaterialID: Index(wMatched, s.Value).MaterialID,
                                               MaterialName: Index(wMatched, s.Value).MaterialName,
-                                              Unit: "",
-                                              Quantity: 1
+                                              Unit: Index(wMatched, s.Value).Unit,
+                                              Quantity: Index(wMatched, s.Value).Quantity
                                           }
                                       )
                                   );
@@ -1535,9 +1554,16 @@ Screens:
                                       )
                                   );
                                   If(
+                                      CountRows(Filter(wMatched, IsBlank(Unit))) > 0,
+                                      Notify(
+                                          Text(CountRows(Filter(wMatched, IsBlank(Unit)))) & " row(s) had no valid unit — please pick a unit for them before submitting.",
+                                          NotificationType.Warning
+                                      )
+                                  );
+                                  If(
                                       CountRows(wMatched) = 0,
                                       Notify("No material was added. Please check the codes and try again.", NotificationType.Error),
-                                      Notify(Text(CountRows(wMatched)) & " material(s) added. Please set unit and quantity for each row.", NotificationType.Success);
+                                      Notify(Text(CountRows(wMatched)) & " material(s) added.", NotificationType.Success);
                                       Reset(txtBulkCodes);
                                       Set(gShowBulkCodes, false)
                                   )
