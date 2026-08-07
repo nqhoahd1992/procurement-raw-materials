@@ -1013,6 +1013,7 @@ Screens:
                         - dpReceiptDate2_SFU:
                             Control: DatePicker@0.0.46
                             Properties:
+                              Format: ="dd/mm/yyyy"
                               Height: =40
                               Placeholder: ="Choose a date"
                               Width: =Parent.Width
@@ -1334,6 +1335,7 @@ Screens:
                                     DefaultDate: =ThisItem.ExpiryDate
                                     Font: =""
                                     FontWeight: =""
+                                    Format: ="dd/mm/yyyy"
                                     Height: =40
                                     OnChange: |-
                                       =UpdateIf(colRoundEntry, LineItemID = ThisItem.LineItemID, {ExpiryDate: Self.SelectedDate})
