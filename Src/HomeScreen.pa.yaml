@@ -505,7 +505,7 @@ Screens:
                               Height: =22
                               Size: =11
                               Text: |-
-                                ="Delivery Date: " & Text(ThisItem.RequiredDeliveryDate, "dd/mm/yyyy") & If(IsBlank(ThisItem.EstimatedCost) || ThisItem.EstimatedCost = 0, "", " | Estimated Cost: " & ThisItem.Currency & " " & Text(ThisItem.EstimatedCost, "[#,###]")) & If(IsBlank(ThisItem.ProjectID), "", " | ProjectID: " & ThisItem.ProjectID)
+                                ="Delivery Date: " & Text(ThisItem.RequiredDeliveryDate, "dd/mm/yyyy") & If(IsBlank(ThisItem.EstimatedCost) || ThisItem.EstimatedCost = 0, "", " | Estimated Cost: " & Text(ThisItem.EstimatedCost, "#,###")) & " " & ThisItem.Currency & If(IsBlank(ThisItem.ProjectID), "", " | ProjectID: " & ThisItem.ProjectID)
                               Width: =Parent.Width - 440
                         - lblRequesterName:
                             Control: Label@2.5.1

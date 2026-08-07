@@ -43,7 +43,7 @@ Does **not** have a `Category`, `PreferredSupplier`, or `Department` column (all
 | `PurchaseAccordance` ⚠ | Choice | business classification (e.g. `Urgent`, `Unplanned`, `Normal`) — no longer affects routing; every request always goes through both Manager and Executive approval |
 | `EstimatedCost` ⚠ | Number | |
 | `Currency` ⚠ | Text | Confirmed Text (not Choice) via Studio's type-check. Manual dropdown (`ddCurrency_1`): `AUD` or `USD`, default `AUD` — no longer derived from Cost Center |
-| `BudgetReference` | Text | |
+| `BudgetReference` | Number | Optional. `txtBudgetRef_1` is still a plain `TextInput`, so `btnSubmit_1` rejects a non-numeric entry (`Not(IsBlank(…)) && Not(IsNumeric(…))`) and the create `Patch` writes `If(IsBlank(…), Blank(), Value(…))` — a bare `Value("")` on the empty (allowed) case would error against a Number column. `RequestDetailScreen` renders it with the same `"#,###.00"` + `Currency` treatment as `EstimatedCost`, falling back to `"—"` when blank |
 | `RequiredDeliveryDate` ⚠ | Date | |
 | `DeliveryLocation` ⚠ | Choice | Hardcoded to `"Port Melbourne Warehouse"` on submit (read-only label `lblDeliveryLocationValue_1`) — no longer user-selectable |
 | `CostCenter` ⚠ | Choice | Hardcoded to `"Port Melbourne Warehouse"` on submit (read-only label `lblCostCenterValue_1`) — no longer user-selectable, no longer tied to the linked Project |
@@ -155,12 +155,14 @@ Only these columns are currently referenced anywhere in the app's Power Fx (conf
 | Column | Type | Notes |
 |---|---|---|
 | `ID` | Number (system) | used as `MaterialID` |
-| `Title` (Title) | Text | trade name — shown as the picker's display column (`ItemDisplayText: =ThisItem.Title`); copied into `RM Procurement Line Items.MaterialName` on add |
-| `Code` | Text | shown read-only next to the material picker once a material is selected |
+| `Title` (Title) | Text | trade name — the material picker's primary display field; copied into `RM Procurement Line Items.MaterialName` on add |
+| `Code` | Text | the picker's secondary display field, and searchable alongside `Title`; also shown read-only next to the picker once a material is selected |
 | `Category` | Text | shown read-only next to the material picker once a material is selected. **Not a Choice column** — read directly as `ddMaterial_1.Selected.Category`, no `.Value` |
 | `Supplier` | Text | shown read-only next to the material picker once a material is selected — the raw material's own supplier, now the only place supplier information lives (the request-level `PreferredSupplier` field was removed) |
 
 Loaded via `ClearCollect(colRawMaterials, 'Raw Materials')` on `RequestFormScreen.OnVisible`; `App.OnStart` only preloads `FirstN('Raw Materials', 1)` as a lightweight schema-shape seed before the user navigates anywhere.
+
+**`ddMaterial_1` is a `Classic/ComboBox@2.4.0`, not a `ModernCombobox`** — deliberately, and it is the only raw-material picker in the app. Note the control type carefully: `ComboBox@0.0.51` (what `ddUnit_1` and the receipt dropdowns use) is a *different, newer* control that rejects both properties below with `PA2108: Unknown property`. Only the `Classic/ComboBox@2.4.0` type accepts them — `ddProject_1` on the same screen is the other instance. The requester must be able to find a material by **either** trade name or code, and only the classic control has `SearchFields` (`["Title", "Code"]`), which matches each listed field independently. The modern combobox has no equivalent: it exposes `IsSearchable` and a `SearchText` output but filters against `ItemDisplayText` only, so a code-only match can't surface. Cramming both into one display string doesn't fix it either — that changes what the closed control reads back as the selection, and still depends on undocumented matching behavior. `DisplayFields: =["Title", "Code"]` renders the flyout as trade name over code, so the requester sees *why* a row matched. The classic control's "selections aren't maintained when the gallery scrolls" limitation doesn't apply here: `galLineItems` sizes itself to `CountRows(colLineItems)` and never scrolls internally (`conScrollable` scrolls instead), and the selection is re-derived from `colLineItems` via `DefaultSelectedItems` regardless. Don't "modernize" this control back without solving the two-field search.
 
 ---
 

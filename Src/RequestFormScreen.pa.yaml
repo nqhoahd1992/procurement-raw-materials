@@ -122,6 +122,9 @@ Screens:
                                           IsBlank(txtEstimatedCost_1.Value) || Not(IsNumeric(txtEstimatedCost_1.Value)),
                                           Notify("Estimated Cost is required and must be a number", NotificationType.Error),
                                           If(
+                                              Not(IsBlank(txtBudgetRef_1.Value)) && Not(IsNumeric(txtBudgetRef_1.Value)),
+                                              Notify("Budget Reference must be a number", NotificationType.Error),
+                                          If(
                                                   rdoProcurementType_1.Selected.Value = "Invoice Supplied" &&
                                                   IsBlank(rdoInvoiceType_1.Selected),
                                                   Notify("Please select an invoice type", NotificationType.Error),
@@ -156,7 +159,7 @@ Screens:
                                                                                           ProjectID: ddProject_1.Selected.ProjectID,
                                                                                           RelatedSKU: ForAll(cmbSKU.SelectedItems, {Id: ID, Value: Title}),
                                                                                           ProcurementDescription: txtDescription_1.Value,
-                                                                                          BudgetReference: txtBudgetRef_1.Value,
+                                                                                          BudgetReference: If(IsBlank(txtBudgetRef_1.Value), Blank(), Value(txtBudgetRef_1.Value)),
                                                                                           RequirementFiles: Concat(attRequestFiles.Attachments, Name, "|"),
                                                                                           DeliveryLocation: {Value: "Port Melbourne Warehouse"},
                                                                                           PurchaseAccordance: {Value: ddPurchaseAccordance_2.Selected.Value},
@@ -222,6 +225,7 @@ Screens:
                                                       )
                                                   )
                                               )
+                                            )
                                           )
                                       )
                                   )
@@ -880,6 +884,7 @@ Screens:
                             Control: TextInput@0.0.54
                             Properties:
                               Height: =40
+                              Placeholder: ="Please enter an amount"
                               Width: =Parent.Width
             - rowGalLineItems:
                 Control: GroupContainer@1.5.0
@@ -980,7 +985,7 @@ Screens:
                               PaddingRight: =8
                               Size: =10
                               Text: ="Code"
-                              Width: =90
+                              Width: =100
                         - lblColCategory:
                             Control: Label@2.5.1
                             Properties:
@@ -990,7 +995,7 @@ Screens:
                               PaddingRight: =8
                               Size: =10
                               Text: ="Category"
-                              Width: =110
+                              Width: =80
                         - lblColSupplier:
                             Control: Label@2.5.1
                             Properties:
@@ -1051,19 +1056,25 @@ Screens:
                               LayoutAlignItems: =LayoutAlignItems.Center
                               LayoutDirection: =LayoutDirection.Horizontal
                               LayoutGap: =8
+                              PaddingLeft: =1
                               Width: =Parent.Width
                             Children:
                               - ddMaterial_1:
-                                  Control: ModernCombobox@1.1.1
+                                  Control: Classic/ComboBox@2.4.0
                                   Properties:
+                                    BorderThickness: =1
                                     DefaultSelectedItems: =Filter(colRawMaterials, ID = ThisItem.MaterialID)
+                                    DisplayFields: =["Title","Code"]
                                     Height: =36
-                                    InputTextPlaceholder: ="Select an option"
-                                    ItemDisplayText: =ThisItem.Title
+                                    InputTextPlaceholder: ="Search by trade name or code"
                                     Items: =colRawMaterials
                                     OnChange: |-
                                       =UpdateIf(colLineItems, RowID = ThisItem.RowID, {MaterialID: Self.Selected.ID, MaterialName: Self.Selected.Title})
+                                    PaddingLeft: =15
+                                    PaddingRight: =15
+                                    SearchFields: =["Title","Code"]
                                     SelectMultiple: =false
+                                    Size: =11
                                     Width: =Parent.Width - 644
                               - lblLineItemCode_1:
                                   Control: Label@2.5.1
@@ -1073,7 +1084,7 @@ Screens:
                                     PaddingRight: =8
                                     Size: =10
                                     Text: =If(IsBlank(ddMaterial_1.Selected), "—", ddMaterial_1.Selected.Code)
-                                    Width: =90
+                                    Width: =100
                                     Wrap: =false
                               - lblLineItemCategory_1:
                                   Control: Label@2.5.1
@@ -1083,7 +1094,7 @@ Screens:
                                     PaddingRight: =8
                                     Size: =10
                                     Text: =If(IsBlank(ddMaterial_1.Selected), "—", ddMaterial_1.Selected.Category)
-                                    Width: =110
+                                    Width: =80
                                     Wrap: =false
                               - lblLineItemSupplier_1:
                                   Control: Label@2.5.1
