@@ -55,7 +55,7 @@ Screens:
             FontWeight: =FontWeight.Bold
             Height: =60
             Size: =14
-            Text: ="Raw Material Procurement - Procurement Close-out (Round " & gRoundsDone & ")"
+            Text: ="Raw Material Procurement - Procurement Close-out"
             Width: =700
             X: =20
       - lblUserInfo_PFU:
@@ -219,7 +219,7 @@ Screens:
                               Height: =18
                               PaddingLeft: =0
                               Size: =9
-                              Text: ="Following up on Round"
+                              Text: ="Closing receipt round"
                               Width: =200
                         - lblInfoRoundValue_PFU:
                             Control: Label@2.5.1
@@ -764,7 +764,7 @@ Screens:
                         FontWeight: =FontWeight.Semibold
                         Height: =24
                         Size: =12
-                        Text: ="Procurement Close-out — closing Round " & gRoundsDone
+                        Text: ="Procurement Close-out"
                         Width: =Parent.Width - 40
                   - lblFollowUpNotesHint_PFU:
                       Control: Label@2.5.1
@@ -858,7 +858,7 @@ Screens:
                                           'RM Procurement Execution Log',
                                           Defaults('RM Procurement Execution Log'),
                                           {
-                                              Title: "Step 5 - Procurement Close-out (Round " & gRoundsDone & ") - " & gSelectedRequest.Title,
+                                              Title: "Step 5 - Procurement Close-out - " & gSelectedRequest.Title,
                                               RequestID: {Id: gSelectedRequest.ID, Value: gSelectedRequest.Title},
                                               RequestIDText: Text(gSelectedRequest.ID),
                                               StepNumber: 5,
