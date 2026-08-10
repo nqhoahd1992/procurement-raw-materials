@@ -428,7 +428,7 @@ Screens:
                                           FontWeight: =FontWeight.Bold
                                           Height: =24
                                           Size: =10
-                                          Text: ="R" & ThisItem.RoundNumber
+                                          Text: =If(ThisItem.StepNumber = 5, "For R", "R") & ThisItem.RoundNumber
                                           Width: =Parent.Width * 0.07
                                     - lblHistStep_SFU:
                                         Control: Label@2.5.1

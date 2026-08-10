@@ -1553,7 +1553,7 @@ Screens:
                                                       Height: =24
                                                       PaddingLeft: =0
                                                       Size: =10
-                                                      Text: ="Round " & ThisItem.RoundNumber
+                                                      Text: =If(ThisItem.StepNumber = 5, "For Round ", "Round ") & ThisItem.RoundNumber
                                                       Width: =62
                                                       Wrap: =false
                                                 - lblRRStep:
@@ -1695,7 +1695,7 @@ Screens:
                                                             OnSelect: |-
                                                               =ClearCollect(
                                                                   colLogDetail,
-                                                                  {FieldLabel: "Round", FieldValue: "Round " & ThisItem.RoundNumber},
+                                                                  {FieldLabel: If(ThisItem.StepNumber = 5, "Closing receipt round", "Round"), FieldValue: "Round " & ThisItem.RoundNumber},
                                                                   {FieldLabel: "Step", FieldValue: Coalesce(ThisItem.StepLabel, "")},
                                                                   {FieldLabel: "Performed by", FieldValue: Coalesce(ThisItem.ActorName, "")},
                                                                   {FieldLabel: "Date", FieldValue: If(IsBlank(ThisItem.ActionDate), "", Text(ThisItem.ActionDate, "dd/mm/yyyy hh:mm"))},
@@ -1704,7 +1704,13 @@ Screens:
                                                                   {FieldLabel: "Notes", FieldValue: Coalesce(ThisItem.Notes, "")}
                                                               );
                                                               RemoveIf(colLogDetail, IsBlank(FieldValue));
-                                                              Set(gLogDetailTitle, "Round " & ThisItem.RoundNumber & " · " & ThisItem.StepLabel);
+                                                              Set(gLogDetailTitle,
+                                                                  If(
+                                                                      ThisItem.StepNumber = 5,
+                                                                      ThisItem.StepLabel & " · for Round " & ThisItem.RoundNumber,
+                                                                      "Round " & ThisItem.RoundNumber & " · " & ThisItem.StepLabel
+                                                                  )
+                                                              );
                                                               Set(gShowLogDetail, true)
                                                             PaddingBottom: =2
                                                             PaddingLeft: =8

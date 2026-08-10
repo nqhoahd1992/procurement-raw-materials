@@ -596,7 +596,7 @@ Screens:
                                     Height: =24
                                     Size: =10
                                     Text: |-
-                                      ="R" & ThisItem.RoundNumber & " · " & ThisItem.StepLabel &
+                                      =If(ThisItem.StepNumber = 5, "For R", "R") & ThisItem.RoundNumber & " · " & ThisItem.StepLabel &
                                       " · " & If(IsBlank(ThisItem.ActorName), "—", ThisItem.ActorName) &
                                       " · " & If(IsBlank(ThisItem.ActionDate), "—", Text(ThisItem.ActionDate, "dd/mm/yyyy")) &
                                       If(IsBlank(ThisItem.AcceptanceDecision), "", " · " & ThisItem.AcceptanceDecision)
