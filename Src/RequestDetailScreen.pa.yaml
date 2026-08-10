@@ -43,7 +43,7 @@ Screens:
                 {
                     ID: lg.ID,
                     StepNumber: lg.StepNumber,
-                    StepLabel: If(lg.StepNumber = 5, "Procurement follow-up", "Goods receipt"),
+                    StepLabel: If(lg.StepNumber = 5, "Procurement close-out", "Goods receipt"),
                     RoundNumber: lg.RoundNumber,
                     ActorName: Coalesce(lg.ReceivedBy, lg.ExecutedBy.Value),
                     ActionDate: Coalesce(lg.ReceiptDate, lg.ExecutedAt),
@@ -2316,7 +2316,7 @@ Screens:
                                                           2, "Accounting Handover",
                                                           3, "Goods Receipt (Round 1)",
                                                           4, "Goods Receipt (Round " & Coalesce(ThisItem.RoundNumber, 2) & ")",
-                                                          5, "Supplier Follow-up (Procurement)",
+                                                          5, "Procurement Close-out",
                                                           6, "Invoice Submission",
                                                           "—"
                                                         )
@@ -2360,7 +2360,7 @@ Screens:
                                                                 2, "Accounting Handover",
                                                                 3, "Goods Receipt (Round 1)",
                                                                 4, "Goods Receipt (Round " & Coalesce(ThisItem.RoundNumber, 2) & ")",
-                                                                5, "Supplier Follow-up (Procurement)",
+                                                                5, "Procurement Close-out",
                                                                 6, "Invoice Submission",
                                                                 ""
                                                             )},

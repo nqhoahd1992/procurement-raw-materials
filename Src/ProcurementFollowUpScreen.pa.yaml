@@ -27,7 +27,7 @@ Screens:
                 {
                     ID: lg.ID,
                     StepNumber: lg.StepNumber,
-                    StepLabel: If(lg.StepNumber = 5, "Procurement follow-up", "Goods receipt"),
+                    StepLabel: If(lg.StepNumber = 5, "Procurement close-out", "Goods receipt"),
                     RoundNumber: lg.RoundNumber,
                     ActorName: Coalesce(lg.ReceivedBy, lg.ExecutedBy.Value),
                     ActionDate: Coalesce(lg.ReceiptDate, lg.ExecutedAt),
@@ -55,7 +55,7 @@ Screens:
             FontWeight: =FontWeight.Bold
             Height: =60
             Size: =14
-            Text: ="Raw Material Procurement - Supplier Follow-up (Round " & gRoundsDone & ")"
+            Text: ="Raw Material Procurement - Procurement Close-out (Round " & gRoundsDone & ")"
             Width: =700
             X: =20
       - lblUserInfo_PFU:
@@ -764,7 +764,7 @@ Screens:
                         FontWeight: =FontWeight.Semibold
                         Height: =24
                         Size: =12
-                        Text: ="Supplier Follow-up — closing Round " & gRoundsDone
+                        Text: ="Procurement Close-out — closing Round " & gRoundsDone
                         Width: =Parent.Width - 40
                   - lblFollowUpNotesHint_PFU:
                       Control: Label@2.5.1
