@@ -30,6 +30,8 @@ App:
       Set(gSFU1PendingAttachments, Blank());
       Set(gGRDelegationMode, "I will receive");
       Set(gSFU1DelegationMode, "I will receive");
+      Set(gInvoiceFromPFU, false);
+      Set(gPFUInvoiceMissing, false);
       Set(gSharePointAttachmentBase, "https://maxbiocare.sharepoint.com/sites/Powerapps/Lists/Raw_Material_Procurement_Requests/Attachments/");
       ClearCollect(colRawMaterials, FirstN('Raw Materials', 1));
       ClearCollect(colLineItems, {RowID: 0, MaterialID: 0, MaterialName: "", Unit: "", Quantity: 1});

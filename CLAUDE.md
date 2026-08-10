@@ -157,16 +157,22 @@ Pending Supplier Follow-up ── THE RECEIVING LOOP, unbounded ──┐
    │  ┌─ ProcurementFollowUpScreen — Procurement/Admin, ExecutionLog Step 5, RoundNumber = N
    │  │     Runs at most ONCE per request, and only on the "Accepted with Adjustment" branch.
    │  │     shown when Status = "Pending Supplier Follow-up" && LatestReceiptDecision = "Accepted with Adjustment"
+   │  │     BLOCKED until the Official Invoice data exists (InvoiceSubmitted +
+   │  │     OfficialInvoiceLink) — Procurement must submit it first via
+   │  │     InvoiceSubmissionScreen, see below.
    │  │     Requires Remarks + a Credit Note attachment. Writes CreditNote,
    │  │     Fulfillment = "Fulfilled with Adjustment", and ends the receiving process:
-   │  │     → Pending Invoice (if !InvoiceSubmitted) else Pending Accounting
+   │  │     → Pending Accounting
    │  └─
    ▼
 Pending Invoice ──(InvoiceSubmissionScreen [Procurement/Admin] or RequesterInvoiceScreen [Requester])──
    │ InvoiceSubmissionScreen submit (ExecutionLog StepNumber 6) → Pending Accounting
-   │   (it never bounces back to Pending Supplier Follow-up: under the loop above, "Pending Invoice"
-   │    is only ever reached *after* the final Procurement follow-up, so the old `locSFUStep2Pending`
-   │    variable was removed outright.)
+   │   (it never bounces back to Pending Supplier Follow-up, so the old `locSFUStep2Pending`
+   │    variable was removed outright. "Pending Invoice" is only ever reached from an
+   │    "Accepted" receipt decision; the Credit Note branch now requires the invoice first
+   │    and closes straight to Pending Accounting.)
+   │ InvoiceSubmissionScreen is also entered mid-loop from ProcurementFollowUpScreen's invoice
+   │   gate — there Status stays whatever it was and only InvoiceSubmitted/OfficialInvoiceLink are written.
    │ RequesterInvoiceScreen only uploads RequesterInvoiceURL + notifies Procurement — never changes Status
    ▼
 Pending Accounting ──(AccountingScreen)──
@@ -206,6 +212,10 @@ The receipt-round side is self-clearing for a different reason — the decision 
 `ReceiptRoundCount` is read as `Coalesce(ReceiptRoundCount, 0)` on `HomeScreen`, `RequestDetailScreen`, `SupplierFollowUpScreen` and `ProcurementFollowUpScreen` — purely so a request that hasn't reached Goods Receipt yet reads as `0` rather than blank, **not** as a migration fallback. There is no legacy read path anywhere: the columns those fallbacks used were deleted. Keep the four copies in sync.
 
 Both submit buttons re-read the request and abort if it moved under them — `btnSubmitStep1_SFU` checks `ReceiptRoundCount`, `btnSubmit_PFU` checks that `Status`/`LatestReceiptDecision` still say a Credit Note is owed — so two people acting at once can't create a duplicate round or a duplicate close-out.
+
+**The Credit Note step is gated on the Official Invoice.** A Credit Note is an *adjustment to an invoice*, so the invoice has to exist before one can be recorded against it — that, not screen order, is why Procurement must submit the Official Invoice **before** the Credit Note. Arriving here with no invoice on file is a normal state, not a broken one: goods receipt is what decides whether a follow-up round happens at all, and before this gate existed the close-out simply routed such requests onward to `Pending Invoice`. `ProcurementFollowUpScreen.OnVisible` computes `gPFUInvoiceMissing = gPFUPending && (Not(InvoiceSubmitted) || IsBlank(OfficialInvoiceLink))` — both columns are written together everywhere, but only the link proves the data is there. While it's true the screen swaps the Remarks + Credit Note form and `btnSubmit_PFU` for the amber `rowInvoiceRequired_PFU` block, whose "Submit Invoice →" button does `Set(gInvoiceFromPFU, true); Navigate(InvoiceSubmissionScreen)`; `btnSubmit_PFU` re-checks the same pair on `wLatest`. Because the invoice is guaranteed by then, the close-out patches `Status = "Pending Accounting"` unconditionally.
+
+`gInvoiceFromPFU` is the return ticket for that detour: `InvoiceSubmissionScreen`'s `btnBack_ISS` and all three submit-path navigations do `If(gInvoiceFromPFU, Refresh('RM Procurement Requests'); Navigate(ProcurementFollowUpScreen), Navigate(HomeScreen))` — the `Refresh` is what makes `ProcurementFollowUpScreen.OnVisible`'s `LookUp` see the invoice and unlock the form. Reset to `false` in `App.OnStart`, `HomeScreen.OnVisible` and `ProcurementFollowUpScreen.OnVisible`. Same change exists in the sibling `procurement-procedure` app — keep the two in sync.
 
 `SkippedManagerReview` on `'RM Procurement Requests'` and the `ExecutiveApprovalScreen` "Manager Review Skipped" banner (`rowManagerSkipped`, gated on `gSelectedRequest.SkippedManagerReview`) are now **write-only false going forward** — `RequestFormScreen` always writes `false` since every request goes through both approval levels. The field/banner are kept only so older requests submitted before this change (where it may be `true`) still display correctly; don't remove them.
 
