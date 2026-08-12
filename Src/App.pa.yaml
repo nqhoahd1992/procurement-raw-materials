@@ -34,6 +34,7 @@ App:
       Set(gPFUInvoiceMissing, false);
       Set(gSharePointAttachmentBase, "https://maxbiocare.sharepoint.com/sites/Powerapps/Lists/Raw_Material_Procurement_Requests/Attachments/");
       ClearCollect(colRawMaterials, FirstN('Raw Materials', 1));
+      ClearCollect(colProjects, FirstN(Project_List, 1));
       ClearCollect(colLineItems, {RowID: 0, MaterialID: 0, MaterialName: "", Unit: "", Quantity: 1});
       Clear(colLineItems);
       ClearCollect(colLineItemsDetail, {ID: 0, MaterialName: "", Unit: "", Quantity: 0});

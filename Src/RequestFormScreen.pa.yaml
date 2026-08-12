@@ -12,20 +12,35 @@ Screens:
         Set(gShowBulkCodes, false);
         With(
             {wMaxMaterialID: First(Sort('Raw Materials', ID, SortOrder.Descending)).ID},
-            ClearCollect(colRawMaterials, Filter('Raw Materials', ID <= 500));
-            If(wMaxMaterialID > 500, Collect(colRawMaterials, Filter('Raw Materials', ID > 500 && ID <= 1000)));
-            If(wMaxMaterialID > 1000, Collect(colRawMaterials, Filter('Raw Materials', ID > 1000 && ID <= 1500)));
-            If(wMaxMaterialID > 1500, Collect(colRawMaterials, Filter('Raw Materials', ID > 1500 && ID <= 2000)));
-            If(wMaxMaterialID > 2000, Collect(colRawMaterials, Filter('Raw Materials', ID > 2000 && ID <= 2500)));
-            If(wMaxMaterialID > 2500, Collect(colRawMaterials, Filter('Raw Materials', ID > 2500 && ID <= 3000)));
-            If(wMaxMaterialID > 3000, Collect(colRawMaterials, Filter('Raw Materials', ID > 3000 && ID <= 3500)));
-            If(wMaxMaterialID > 3500, Collect(colRawMaterials, Filter('Raw Materials', ID > 3500 && ID <= 4000)));
+            ClearCollect(colRawMaterials, 'Raw Materials');
             If(
-                wMaxMaterialID > 4000,
+                Max(colRawMaterials, ID) < wMaxMaterialID,
                 Notify(
-                    "The Raw Materials catalog has outgrown the range this screen loads. Add another 500-ID chunk to RequestFormScreen.OnVisible — some materials are missing from the picker.",
+                    "The Raw Materials catalog is larger than this app can load, so the material picker is missing entries. Raise Data row limit in App settings, or partition the catalog — see colRawMaterials in CLAUDE.md.",
                     NotificationType.Error
                 )
+            )
+        );
+        With(
+            {wMaxProjectID: First(Sort(Project_List, ID, SortOrder.Descending)).ID},
+            ClearCollect(colProjects, Project_List);
+            If(
+                Max(colProjects, ID) < wMaxProjectID,
+                Notify(
+                    "Project_List is larger than this app can load, so the project picker is missing entries. Raise Data row limit in App settings — see colProjects in CLAUDE.md.",
+                    NotificationType.Error
+                )
+            )
+        );
+        RemoveIf(
+            colProjects,
+            Not(
+                ProjectStatus.Value = "Not Started" ||
+                ProjectStatus.Value = "In Planning" ||
+                ProjectStatus.Value = "In Progress" ||
+                ProjectStatus.Value = "On Hold" ||
+                ProjectStatus.Value = "Completed" ||
+                ProjectStatus.Value = "Cancelled"
             )
         );
         Clear(colLineItems)
@@ -432,17 +447,7 @@ Screens:
                               ChevronBackground: =RGBA(56, 96, 178, 1)
                               DisplayFields: =["ProjectID","Title"]
                               InputTextPlaceholder: ="Choose the project this request is for"
-                              Items: |-
-                                =Sort(
-                                    Filter(Project_List, ProjectStatus.Value = "Not Started" ||
-                                        ProjectStatus.Value = "In Planning" ||
-                                        ProjectStatus.Value = "In Progress" ||
-                                        ProjectStatus.Value = "On Hold" ||
-                                        ProjectStatus.Value = "Completed" ||
-                                        ProjectStatus.Value = "Cancelled"),
-                                    Title,
-                                    SortOrder.Ascending
-                                )
+                              Items: =Sort(colProjects, Title, SortOrder.Ascending)
                               PaddingLeft: =15
                               PaddingRight: =15
                               SearchFields: =["Title","Title"]
