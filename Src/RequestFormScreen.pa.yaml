@@ -10,7 +10,24 @@ Screens:
         Set(gPendingInvoiceName, "");
         Reset(txtBulkCodes);
         Set(gShowBulkCodes, false);
-        ClearCollect(colRawMaterials, 'Raw Materials');
+        With(
+            {wMaxMaterialID: First(Sort('Raw Materials', ID, SortOrder.Descending)).ID},
+            ClearCollect(colRawMaterials, Filter('Raw Materials', ID <= 500));
+            If(wMaxMaterialID > 500, Collect(colRawMaterials, Filter('Raw Materials', ID > 500 && ID <= 1000)));
+            If(wMaxMaterialID > 1000, Collect(colRawMaterials, Filter('Raw Materials', ID > 1000 && ID <= 1500)));
+            If(wMaxMaterialID > 1500, Collect(colRawMaterials, Filter('Raw Materials', ID > 1500 && ID <= 2000)));
+            If(wMaxMaterialID > 2000, Collect(colRawMaterials, Filter('Raw Materials', ID > 2000 && ID <= 2500)));
+            If(wMaxMaterialID > 2500, Collect(colRawMaterials, Filter('Raw Materials', ID > 2500 && ID <= 3000)));
+            If(wMaxMaterialID > 3000, Collect(colRawMaterials, Filter('Raw Materials', ID > 3000 && ID <= 3500)));
+            If(wMaxMaterialID > 3500, Collect(colRawMaterials, Filter('Raw Materials', ID > 3500 && ID <= 4000)));
+            If(
+                wMaxMaterialID > 4000,
+                Notify(
+                    "The Raw Materials catalog has outgrown the range this screen loads. Add another 500-ID chunk to RequestFormScreen.OnVisible — some materials are missing from the picker.",
+                    NotificationType.Error
+                )
+            )
+        );
         Clear(colLineItems)
     Children:
       - rectHeader_2:
