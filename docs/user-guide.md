@@ -95,16 +95,17 @@ Mở **RequestFormScreen** để tạo yêu cầu mới. Chỉ hiển thị cho 
 
 ### Các trường bắt buộc (*)
 1. **Procurement Type*** — radio: "Invoice Supplied" / "To be sourced by Procurement"
-2. **Purchase Accordance*** — ví dụ: "Urgent", "Unplanned", "Standard"… (chỉ mang tính phân loại, không còn ảnh hưởng đến việc duyệt)
-3. **Cost Center** — cố định "Port Melbourne Warehouse", chỉ xem, không chọn được
-4. **Delivery Location** — cố định "Port Melbourne Warehouse", chỉ xem, không chọn được
-5. **Required Delivery Date*** — chọn ngày
-6. **Estimated Cost*** — phải là số
-7. **Currency*** — dropdown chỉ 2 lựa chọn: "AUD" / "USD" (mặc định AUD)
-8. **Procurement Description***
-9. **Budget Reference** — không bắt buộc
-10. **Related Product SKU** — không bắt buộc, cho phép chọn **nhiều** SKU từ danh mục sản phẩm liên quan
-11. **Select Manager Approver*** — bắt buộc chọn người quản lý phê duyệt cho **mọi** yêu cầu (không còn trường hợp bỏ qua)
+2. **Select Project*** — bắt buộc chọn Project liên quan cho **mọi** yêu cầu (không còn tùy chọn "Related to a Project? No/Yes" như trước)
+3. **Purchase Accordance*** — ví dụ: "Urgent", "Unplanned", "Standard"… (chỉ mang tính phân loại, không còn ảnh hưởng đến việc duyệt)
+4. **Cost Center*** — dropdown, chọn từ danh sách Choice trên SharePoint (mặc định "Port Melbourne Warehouse")
+5. **Delivery Location*** — dropdown, chọn từ danh sách Choice trên SharePoint (mặc định "Port Melbourne Warehouse")
+6. **Required Delivery Date*** — chọn ngày
+7. **Estimated Cost*** — phải là số
+8. **Currency*** — dropdown chỉ 2 lựa chọn: "AUD" / "USD" (mặc định AUD)
+9. **Procurement Description***
+10. **Select Manager Approver*** — bắt buộc chọn người quản lý phê duyệt cho **mọi** yêu cầu (không còn trường hợp bỏ qua)
+
+> Đã bỏ hoàn toàn **Budget Reference** và **Related Product SKU** khỏi màn hình tạo yêu cầu — hai trường này không còn được thu thập, và cũng không còn hiển thị ở bất kỳ màn hình nào khác trong app (RequestDetailScreen, ProcurementExecutionScreen, InvoiceSubmissionScreen).
 
 ### Case: Raw Materials (bắt buộc ít nhất 1 dòng)
 Bảng thêm nguyên liệu (**"+ Add Material"**), mỗi dòng gồm:
@@ -203,7 +204,7 @@ Banner cam **"⚡ Manager Review Skipped"** (kèm lý do "Urgent purchase" / "Un
 - "Invoice verified against approved procurement request and delivery status" (tùy theo invoice mode)
 
 ### Các trường khác khi "Proceed"
-- **Supplier Selection / Negotiation Summary*** — bắt buộc
+- **SO/PO/INV*** — bắt buộc, nhập 1 dòng (số Sales Order/Purchase Order/Invoice)
 - **Purchase Order Link** — không bắt buộc
 
 ### Case xử lý invoice — 3 nhánh
@@ -275,7 +276,7 @@ Lưu link file vào RequesterInvoiceURL, gọi flow thông báo Procurement (Pro
 
 ### Thông tin tham chiếu
 - **Official Invoice Reference** — link invoice chính thức
-- **Supplier Selection / Negotiation Summary** — tóm tắt từ bước Procurement
+- **SO/PO/INV** — số SO/PO/INV nhập ở bước Procurement Execution
 - **Credit Note** (nền xanh lá, chỉ hiện nếu có) — nếu request này từng có Supplier Follow-up phát sinh Credit Note.
 
 ### Accounting Checklist * (bắt buộc tick hết 5 mục)
@@ -371,8 +372,7 @@ Nếu log Bước 2 đã tồn tại, hiện banner xanh **"Supplier Follow-up C
 **Ai dùng:** Mọi vai trò, khi bấm vào 1 request từ Home (trừ trường hợp Procurement mở request "Pending Invoice" sẽ vào InvoiceSubmissionScreen thẳng).
 
 Hiển thị toàn bộ dữ liệu của yêu cầu ở dạng chỉ xem:
-- Thông tin cơ bản: Requester, Procurement Type, Purchase Accordance, Cost Center (luôn "Port Melbourne Warehouse"), Delivery Location (luôn "Port Melbourne Warehouse"), Required Delivery Date, Estimated Cost, Budget Reference.
-- **Related Product SKU** — danh sách SKU sản phẩm liên quan (nếu có chọn khi tạo yêu cầu); hiện "—" nếu không chọn SKU nào.
+- Thông tin cơ bản: Requester, Procurement Type, Purchase Accordance, Cost Center, Delivery Location, Required Delivery Date, Estimated Cost.
 - **Raw Materials** — bảng danh sách nguyên liệu của yêu cầu (Trade Name, Category, Supplier, Unit, Qty), chỉ xem.
 - **Escalated to Executive**: "Yes"/"No" — chỉ có ý nghĩa với yêu cầu cũ (trước khi đổi sang luôn 2 cấp duyệt); yêu cầu mới luôn là "No".
 - Invoice Type (màu xanh nếu "Official Invoice", cam nếu "Proforma Invoice").

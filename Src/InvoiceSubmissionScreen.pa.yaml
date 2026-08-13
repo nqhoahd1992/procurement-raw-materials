@@ -89,7 +89,7 @@ Screens:
                   Fill: =RGBA(241, 239, 232, 1)
                   FillPortions: =0
                   Height: |-
-                    =68 + 328 +
+                    =68 + 276 +
                         (92 + CountRows(colLineItemsDetail) * 48) +
                         If(gSelectedRequest.Status.Value <> "Pending Invoice", 32, 0) +
                         If(CountRows(colRequirementFiles) > 0, 28 + CountRows(colRequirementFiles) * 32 + 8, 0) +
@@ -97,7 +97,7 @@ Screens:
                   LayoutDirection: =LayoutDirection.Vertical
                   LayoutGap: =4
                   LayoutMinHeight: |-
-                    =68 + 328 +
+                    =68 + 276 +
                         (92 + CountRows(colLineItemsDetail) * 48) +
                         If(gSelectedRequest.Status.Value <> "Pending Invoice", 32, 0) +
                         If(CountRows(colRequirementFiles) > 0, 28 + CountRows(colRequirementFiles) * 32 + 8, 0) +
@@ -180,7 +180,7 @@ Screens:
                         DropShadow: =DropShadow.None
                         FillPortions: =0
                         Height: |-
-                          =328 +
+                          =276 +
                               (92 + CountRows(colLineItemsDetail) * 48) +
                               If(gSelectedRequest.Status.Value <> "Pending Invoice", 32, 0) +
                               If(CountRows(colRequirementFiles) > 0, 28 + CountRows(colRequirementFiles) * 32 + 8, 0) +
@@ -188,7 +188,7 @@ Screens:
                         LayoutDirection: =LayoutDirection.Vertical
                         LayoutGap: =0
                         LayoutMinHeight: |-
-                          =328 +
+                          =276 +
                               (92 + CountRows(colLineItemsDetail) * 48) +
                               If(gSelectedRequest.Status.Value <> "Pending Invoice", 32, 0) +
                               If(CountRows(colRequirementFiles) > 0, 28 + CountRows(colRequirementFiles) * 32 + 8, 0) +
@@ -404,7 +404,7 @@ Screens:
                                             =If(
                                                 IsBlank(gSelectedRequest.ProjectID),
                                                 "—",
-                                                gSelectedRequest.ProjectID & " - " & Coalesce(LookUp(Project_List, ProjectID = gSelectedRequest.ProjectID).Title, "—")
+                                                Coalesce(LookUp(Project_List, ProjectID = gSelectedRequest.ProjectID).Title, "—")
                                             )
                                           Width: =Parent.Width - 20
                                           Wrap: =false
@@ -438,38 +438,6 @@ Screens:
                                           PaddingLeft: =0
                                           Size: =11
                                           Text: =Text(gSelectedRequest.EstimatedCost, "#,###.00") & " " & gSelectedRequest.Currency
-                                          Width: =Parent.Width - 20
-                                          Wrap: =false
-                              - colReqBudgetRef_ISS:
-                                  Control: GroupContainer@1.5.0
-                                  Variant: AutoLayout
-                                  Properties:
-                                    DropShadow: =DropShadow.None
-                                    LayoutDirection: =LayoutDirection.Vertical
-                                    LayoutGap: =2
-                                    RadiusBottomLeft: =0
-                                    RadiusBottomRight: =0
-                                    RadiusTopLeft: =0
-                                    RadiusTopRight: =0
-                                    Width: =240
-                                  Children:
-                                    - lblReqBudgetRefLabel_ISS:
-                                        Control: Label@2.5.1
-                                        Properties:
-                                          Color: =RGBA(136, 135, 128, 1)
-                                          Height: =20
-                                          PaddingLeft: =0
-                                          Size: =9
-                                          Text: ="Budget Reference"
-                                          Width: =240
-                                    - lblReqBudgetRefValue_ISS:
-                                        Control: Label@2.5.1
-                                        Properties:
-                                          FontWeight: =FontWeight.Semibold
-                                          Height: =24
-                                          PaddingLeft: =0
-                                          Size: =11
-                                          Text: =If(IsBlank(gSelectedRequest.BudgetReference), "—", Text(gSelectedRequest.BudgetReference, "#,###.00"))
                                           Width: =Parent.Width - 20
                                           Wrap: =false
                               - colReqDeliveryDate_ISS:
@@ -648,42 +616,6 @@ Screens:
                                           Text: =Text(gSelectedRequest.Created, "dd/mm/yyyy hh:mm")
                                           Width: =Parent.Width - 20
                                           Wrap: =false
-                        - rowReqSKU_ISS:
-                            Control: GroupContainer@1.5.0
-                            Variant: AutoLayout
-                            Properties:
-                              DropShadow: =DropShadow.None
-                              FillPortions: =0
-                              Height: =52
-                              LayoutDirection: =LayoutDirection.Vertical
-                              LayoutGap: =2
-                              LayoutMinHeight: =52
-                              PaddingBottom: =4
-                              RadiusBottomLeft: =0
-                              RadiusBottomRight: =0
-                              RadiusTopLeft: =0
-                              RadiusTopRight: =0
-                              Width: =Parent.Width
-                            Children:
-                              - lblReqSKULabel_ISS:
-                                  Control: Label@2.5.1
-                                  Properties:
-                                    Color: =RGBA(136, 135, 128, 1)
-                                    Height: =20
-                                    PaddingLeft: =0
-                                    Size: =9
-                                    Text: ="Related Product SKU"
-                                    Width: =Parent.Width
-                              - lblReqSKUValue_ISS:
-                                  Control: Label@2.5.1
-                                  Properties:
-                                    FontWeight: =FontWeight.Semibold
-                                    Height: =24
-                                    PaddingLeft: =0
-                                    Size: =11
-                                    Text: =If(CountRows(gSelectedRequest.RelatedSKU) = 0, "—", Concat(gSelectedRequest.RelatedSKU, Value, ", "))
-                                    Width: =Parent.Width
-                                    Wrap: =false
                         - rowReqDescription_ISS:
                             Control: GroupContainer@1.5.0
                             Variant: AutoLayout

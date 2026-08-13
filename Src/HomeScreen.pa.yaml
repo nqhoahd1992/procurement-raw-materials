@@ -595,7 +595,10 @@ Screens:
                               Height: =22
                               Size: =11
                               Text: |-
-                                ="Delivery Date: " & Text(ThisItem.RequiredDeliveryDate, "dd/mm/yyyy") & If(IsBlank(ThisItem.EstimatedCost) || ThisItem.EstimatedCost = 0, "", " | Estimated Cost: " & Text(ThisItem.EstimatedCost, "#,###")) & " " & ThisItem.Currency & If(IsBlank(ThisItem.ProjectID), "", " | ProjectID: " & ThisItem.ProjectID)
+                                =With(
+                                    {wSOPOINV: LookUp('RM Procurement Execution Log', RequestIDText = Text(ThisItem.ID) && StepNumber = 1).SupplierSummary},
+                                    "Required Date: " & Text(ThisItem.RequiredDeliveryDate, "dd/mm/yyyy") & If(IsBlank(ThisItem.EstimatedCost) || ThisItem.EstimatedCost = 0, "", " | Estimated Cost: " & Text(ThisItem.EstimatedCost, "#,###")) & " " & ThisItem.Currency & If(IsBlank(ThisItem.ProjectID), "", " | Project: " & Coalesce(LookUp(Project_List, ProjectID = ThisItem.ProjectID).Title, "—")) & If(IsBlank(wSOPOINV), "", " | SO/PO/INV: " & wSOPOINV)
+                                )
                               Width: =Parent.Width - 440
                         - lblRequesterName:
                             Control: Label@2.5.1

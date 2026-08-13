@@ -190,7 +190,7 @@ Screens:
                                       =If(
                                           IsBlank(gSelectedRequest.ProjectID),
                                           "—",
-                                          gSelectedRequest.ProjectID & " · " & Coalesce(LookUp(Project_List, ProjectID = gSelectedRequest.ProjectID).Title, "")
+                                          Coalesce(LookUp(Project_List, ProjectID = gSelectedRequest.ProjectID).Title, "—")
                                       )
                                     Width: =Parent.Width
                                     Wrap: =false

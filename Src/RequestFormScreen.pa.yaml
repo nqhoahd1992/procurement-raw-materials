@@ -113,12 +113,12 @@ Screens:
                       Properties:
                         Height: =36
                         OnSelect: |-
-                          =Reset(rdoHasProject);
-                          Reset(ddProject_1);
+                          =Reset(ddProject_1);
                           Reset(txtDescription_1);
                           Reset(ddPurchaseAccordance_2);
                           Reset(txtEstimatedCost_1);
-                          Reset(txtBudgetRef_1);
+                          Reset(ddCostCenter_1);
+                          Reset(ddDeliveryLocation_1);
                           Reset(dpDeliveryDate_1);
                           Reset(ddManagerApprover_1);
                           Reset(rdoProcurementType_1);
@@ -140,126 +140,131 @@ Screens:
                         Height: =36
                         OnSelect: |-
                           =If(
-                              IsBlank(rdoHasProject.Selected),
-                              Notify("Please select whether this request is related to a Project", NotificationType.Error),
+                              IsBlank(ddProject_1.Selected) || IsBlank(ddProject_1.Selected.ProjectID),
+                              Notify("Please select the Project this request is for", NotificationType.Error),
                               If(
-                                  rdoHasProject.Selected.Value = "Yes" && (IsBlank(ddProject_1.Selected) || IsBlank(ddProject_1.Selected.ProjectID)),
-                                  Notify("Please select the Project this request is for", NotificationType.Error),
-                                  If(
-                                  IsBlank(txtDescription_1.Value) ||
-                                  IsBlank(dpDeliveryDate_1.SelectedDate) ||
                                   IsBlank(rdoProcurementType_1.Selected),
-                                  Notify("Please fill in all required fields", NotificationType.Error),
+                                  Notify("Please select a Procurement Type", NotificationType.Error),
                                   If(
                                       IsBlank(ddPurchaseAccordance_2.Selected),
-                                      Notify("Please fill in all required fields", NotificationType.Error),
+                                      Notify("Please select a Purchase Accordance", NotificationType.Error),
                                       If(
-                                          IsBlank(txtEstimatedCost_1.Value) || Not(IsNumeric(txtEstimatedCost_1.Value)),
-                                          Notify("Estimated Cost is required and must be a number", NotificationType.Error),
+                                          IsBlank(ddCostCenter_1.Selected),
+                                          Notify("Please select a Cost Center", NotificationType.Error),
                                           If(
-                                              Not(IsBlank(txtBudgetRef_1.Value)) && Not(IsNumeric(txtBudgetRef_1.Value)),
-                                              Notify("Budget Reference must be a number", NotificationType.Error),
-                                          If(
-                                                  rdoProcurementType_1.Selected.Value = "Invoice Supplied" &&
-                                                  IsBlank(rdoInvoiceType_1.Selected),
-                                                  Notify("Please select an invoice type", NotificationType.Error),
+                                              IsBlank(ddDeliveryLocation_1.Selected),
+                                              Notify("Please select a Delivery Location", NotificationType.Error),
+                                              If(
+                                                  IsBlank(dpDeliveryDate_1.SelectedDate),
+                                                  Notify("Please select a Required Date", NotificationType.Error),
                                                   If(
-                                                      rdoProcurementType_1.Selected.Value = "Invoice Supplied" &&
-                                                      CountRows(DataCardValue15.Attachments) = 0,
-                                                      Notify("Please attach the invoice file before submitting", NotificationType.Error),
+                                                      IsBlank(txtDescription_1.Value),
+                                                      Notify("Please enter a Procurement Description", NotificationType.Error),
                                                       If(
-                                                          IsBlank(ddManagerApprover_1.Selected) || IsBlank(ddManagerApprover_1.Selected.EmployeeID.Id),
-                                                          Notify("Please select a Manager Approver", NotificationType.Error),
+                                                          IsBlank(txtEstimatedCost_1.Value) || Not(IsNumeric(txtEstimatedCost_1.Value)),
+                                                          Notify("Estimated Cost is required and must be a number", NotificationType.Error),
                                                           If(
-                                                              CountRows(colLineItems) = 0,
-                                                              Notify("Please add at least one raw material", NotificationType.Error),
+                                                              rdoProcurementType_1.Selected.Value = "Invoice Supplied" &&
+                                                              IsBlank(rdoInvoiceType_1.Selected),
+                                                              Notify("Please select an invoice type", NotificationType.Error),
                                                               If(
-                                                                  CountRows(Filter(colLineItems, MaterialID = 0)) > 0,
-                                                                  Notify("Please select a material for all rows", NotificationType.Error),
+                                                                  rdoProcurementType_1.Selected.Value = "Invoice Supplied" &&
+                                                                  CountRows(DataCardValue15.Attachments) = 0,
+                                                                  Notify("Please attach the invoice file before submitting", NotificationType.Error),
                                                                   If(
-                                                                      CountRows(Filter(colLineItems, IsBlank(Unit))) > 0,
-                                                                      Notify("Please select a unit for all rows", NotificationType.Error),
+                                                                      IsBlank(ddManagerApprover_1.Selected) || IsBlank(ddManagerApprover_1.Selected.EmployeeID.Id),
+                                                                      Notify("Please select a Manager Approver", NotificationType.Error),
                                                                       If(
-                                                                          CountRows(Filter(colLineItems, IsBlank(Quantity) || Quantity <= 0)) > 0,
-                                                                          Notify("Please enter a valid quantity for all rows", NotificationType.Error),
-                                                                          With(
-                                                                              {
-                                                                                  wNewRequest: Patch(
-                                                                                      'RM Procurement Requests',
-                                                                                      Defaults('RM Procurement Requests'),
-                                                                                      {
-                                                                                          Title: gCurrentEmployee.Title & " - " & Text(Today(), "dd/mm/yyyy"),
-                                                                                          RequesterID: {Id: gCurrentEmployee.ID, Value: gCurrentEmployee.Title},
-                                                                                          RequesterEmail: User().Email,
-                                                                                          ProjectID: ddProject_1.Selected.ProjectID,
-                                                                                          RelatedSKU: ForAll(cmbSKU.SelectedItems, {Id: ID, Value: Title}),
-                                                                                          ProcurementDescription: txtDescription_1.Value,
-                                                                                          BudgetReference: If(IsBlank(txtBudgetRef_1.Value), Blank(), Value(txtBudgetRef_1.Value)),
-                                                                                          RequirementFiles: Concat(attRequestFiles.Attachments, Name, "|"),
-                                                                                          DeliveryLocation: {Value: "Port Melbourne Warehouse"},
-                                                                                          PurchaseAccordance: {Value: ddPurchaseAccordance_2.Selected.Value},
-                                                                                          CostCenter: {Value: "Port Melbourne Warehouse"},
-                                                                                          InvoiceRegion: {Value: "AU"},
-                                                                                          Currency: ddCurrency_1.Selected.Value,
-                                                                                          EstimatedCost: Value(txtEstimatedCost_1.Value),
-                                                                                          RequiredDeliveryDate: dpDeliveryDate_1.SelectedDate,
-                                                                                          ProcurementType: {Value: rdoProcurementType_1.Selected.Value},
-                                                                                          InvoiceType: If(
-                                                                                              rdoProcurementType_1.Selected.Value = "Invoice Supplied",
-                                                                                              {Value: rdoInvoiceType_1.Selected.Value},
-                                                                                              Blank()
-                                                                                          ),
-                                                                                          ManagerApproverID: {Id: ddManagerApprover_1.Selected.EmployeeID.Id, Value: ddManagerApprover_1.Selected.EmployeeID.Value},
-                                                                                          SkippedManagerReview: false,
-                                                                                          RequestType: {Value: "Request"},
-                                                                                          DeliveryNumber: 0,
-                                                                                          DeliveryCount: 0,
-                                                                                          Status: {Value: "Pending Manager"}
-                                                                                      }
-                                                                                  )
-                                                                              },
+                                                                          CountRows(colLineItems) = 0,
+                                                                          Notify("Please add at least one raw material", NotificationType.Error),
+                                                                          If(
+                                                                              CountRows(Filter(colLineItems, MaterialID = 0)) > 0,
+                                                                              Notify("Please select a material for all rows", NotificationType.Error),
                                                                               If(
-                                                                                  IsBlank(wNewRequest.ID),
-                                                                                  Notify("Failed to submit request. Please try again.", NotificationType.Error),
-                                                                                  Set(gPendingAttachments, DataCardValue15.Attachments);
-                                                                                  Set(gPendingInvoiceName,
-                                                                                      If(
-                                                                                          CountRows(DataCardValue15.Attachments) = 0,
-                                                                                          "",
-                                                                                          Last(DataCardValue15.Attachments).Name
-                                                                                      )
-                                                                                  );
-                                                                                  Patch(
-                                                                                      'RM Procurement Requests',
-                                                                                      {ID: wNewRequest.ID},
-                                                                                      {GroupKey: wNewRequest.ID}
-                                                                                  );
-                                                                                  Set(gSelectedRequest, wNewRequest);
-                                                                                  ForAll(
-                                                                                      colLineItems,
-                                                                                      Patch(
-                                                                                          'RM Procurement Line Items',
-                                                                                          Defaults('RM Procurement Line Items'),
-                                                                                          {
-                                                                                              RequestID: {Id: wNewRequest.ID, Value: wNewRequest.Title},
-                                                                                              RequestIDText: Text(wNewRequest.ID),
-                                                                                              ParentLineItemID: 0,
-                                                                                              MaterialID: {Id: MaterialID, Value: MaterialName},
-                                                                                              MaterialName: MaterialName,
-                                                                                              Unit: Unit,
-                                                                                              Quantity: Quantity
-                                                                                          }
-                                                                                      )
-                                                                                  );
+                                                                                  CountRows(Filter(colLineItems, IsBlank(Unit))) > 0,
+                                                                                  Notify("Please select a unit for all rows", NotificationType.Error),
                                                                                   If(
-                                                                                      CountRows(attRequestFiles.Attachments) = 0,
-                                                                                      EditForm(Form1);
-                                                                                      SubmitForm(Form1),
-                                                                                      Set(gPendingRequestFiles, attRequestFiles.Attachments);
-                                                                                      EditForm(formRequestFiles);
-                                                                                      SubmitForm(formRequestFiles)
-                                                                                  );
-                                                                                  Clear(colLineItems);
+                                                                                      CountRows(Filter(colLineItems, IsBlank(Quantity) || Quantity <= 0)) > 0,
+                                                                                      Notify("Please enter a valid quantity for all rows", NotificationType.Error),
+                                                                                      With(
+                                                                                          {
+                                                                                              wNewRequest: Patch(
+                                                                                                  'RM Procurement Requests',
+                                                                                                  Defaults('RM Procurement Requests'),
+                                                                                                  {
+                                                                                                      Title: gCurrentEmployee.Title & " - " & Text(Today(), "dd/mm/yyyy"),
+                                                                                                      RequesterID: {Id: gCurrentEmployee.ID, Value: gCurrentEmployee.Title},
+                                                                                                      RequesterEmail: User().Email,
+                                                                                                      ProjectID: ddProject_1.Selected.ProjectID,
+                                                                                                      ProcurementDescription: txtDescription_1.Value,
+                                                                                                      RequirementFiles: Concat(attRequestFiles.Attachments, Name, "|"),
+                                                                                                      DeliveryLocation: {Value: ddDeliveryLocation_1.Selected.Value},
+                                                                                                      PurchaseAccordance: {Value: ddPurchaseAccordance_2.Selected.Value},
+                                                                                                      CostCenter: {Value: ddCostCenter_1.Selected.Value},
+                                                                                                      InvoiceRegion: {Value: "AU"},
+                                                                                                      Currency: ddCurrency_1.Selected.Value,
+                                                                                                      EstimatedCost: Value(txtEstimatedCost_1.Value),
+                                                                                                      RequiredDeliveryDate: dpDeliveryDate_1.SelectedDate,
+                                                                                                      ProcurementType: {Value: rdoProcurementType_1.Selected.Value},
+                                                                                                      InvoiceType: If(
+                                                                                                          rdoProcurementType_1.Selected.Value = "Invoice Supplied",
+                                                                                                          {Value: rdoInvoiceType_1.Selected.Value},
+                                                                                                          Blank()
+                                                                                                      ),
+                                                                                                      ManagerApproverID: {Id: ddManagerApprover_1.Selected.EmployeeID.Id, Value: ddManagerApprover_1.Selected.EmployeeID.Value},
+                                                                                                      SkippedManagerReview: false,
+                                                                                                      RequestType: {Value: "Request"},
+                                                                                                      DeliveryNumber: 0,
+                                                                                                      DeliveryCount: 0,
+                                                                                                      Status: {Value: "Pending Manager"}
+                                                                                                  }
+                                                                                              )
+                                                                                          },
+                                                                                          If(
+                                                                                              IsBlank(wNewRequest.ID),
+                                                                                              Notify("Failed to submit request. Please try again.", NotificationType.Error),
+                                                                                              Set(gPendingAttachments, DataCardValue15.Attachments);
+                                                                                              Set(gPendingInvoiceName,
+                                                                                                  If(
+                                                                                                      CountRows(DataCardValue15.Attachments) = 0,
+                                                                                                      "",
+                                                                                                      Last(DataCardValue15.Attachments).Name
+                                                                                                  )
+                                                                                              );
+                                                                                              Patch(
+                                                                                                  'RM Procurement Requests',
+                                                                                                  {ID: wNewRequest.ID},
+                                                                                                  {GroupKey: wNewRequest.ID}
+                                                                                              );
+                                                                                              Set(gSelectedRequest, wNewRequest);
+                                                                                              ForAll(
+                                                                                                  colLineItems,
+                                                                                                  Patch(
+                                                                                                      'RM Procurement Line Items',
+                                                                                                      Defaults('RM Procurement Line Items'),
+                                                                                                      {
+                                                                                                          RequestID: {Id: wNewRequest.ID, Value: wNewRequest.Title},
+                                                                                                          RequestIDText: Text(wNewRequest.ID),
+                                                                                                          ParentLineItemID: 0,
+                                                                                                          MaterialID: {Id: MaterialID, Value: MaterialName},
+                                                                                                          MaterialName: MaterialName,
+                                                                                                          Unit: Unit,
+                                                                                                          Quantity: Quantity
+                                                                                                      }
+                                                                                                  )
+                                                                                              );
+                                                                                              If(
+                                                                                                  CountRows(attRequestFiles.Attachments) = 0,
+                                                                                                  EditForm(Form1);
+                                                                                                  SubmitForm(Form1),
+                                                                                                  Set(gPendingRequestFiles, attRequestFiles.Attachments);
+                                                                                                  EditForm(formRequestFiles);
+                                                                                                  SubmitForm(formRequestFiles)
+                                                                                              );
+                                                                                              Clear(colLineItems);
+                                                                                          )
+                                                                                      )
+                                                                                  )
                                                                               )
                                                                           )
                                                                       )
@@ -269,7 +274,6 @@ Screens:
                                                       )
                                                   )
                                               )
-                                            )
                                           )
                                       )
                                   )
@@ -341,7 +345,7 @@ Screens:
                 Properties:
                   DropShadow: =DropShadow.None
                   FillPortions: =0
-                  Height: =If(rdoHasProject.Selected.Value = "Yes", 100, 80)
+                  Height: =100
                   LayoutAlignItems: =LayoutAlignItems.Center
                   LayoutDirection: =LayoutDirection.Horizontal
                   LayoutGap: =20
@@ -358,38 +362,6 @@ Screens:
                   X: =40
                   Y: =40
                 Children:
-                  - colRelatedProject:
-                      Control: GroupContainer@1.5.0
-                      Variant: AutoLayout
-                      Properties:
-                        DropShadow: =DropShadow.None
-                        Height: =100
-                        LayoutDirection: =LayoutDirection.Vertical
-                        LayoutGap: =4
-                        LayoutMinHeight: =16
-                        RadiusBottomLeft: =0
-                        RadiusBottomRight: =0
-                        RadiusTopLeft: =0
-                        RadiusTopRight: =0
-                        Width: =Parent.Width
-                        X: =40
-                        Y: =40
-                      Children:
-                        - lblHasProjectLabel_1:
-                            Control: Label@2.5.1
-                            Properties:
-                              FontWeight: =FontWeight.Semibold
-                              Height: =24
-                              Size: =11
-                              Text: ="Related to a Project? *"
-                              Width: =400
-                        - rdoHasProject:
-                            Control: Radio@0.0.25
-                            Properties:
-                              Height: =40
-                              Items: =["No", "Yes"]
-                              Layout: ='RadioGroupCanvas.Layout'.Horizontal
-                              Width: =300
                   - colSelectProject:
                       Control: GroupContainer@1.5.0
                       Variant: AutoLayout
@@ -429,7 +401,6 @@ Screens:
                                     Height: =24
                                     Size: =11
                                     Text: ="Select Project *"
-                                    Visible: =rdoHasProject.Selected.Value = "Yes"
                                     X: =40
                                     Y: =40
                               - lblViewProjectList:
@@ -445,7 +416,6 @@ Screens:
                                     Text: |-
                                       ="🔗 View Project List (lookup project details)"
                                     Underline: =true
-                                    Visible: =rdoHasProject.Selected.Value = "Yes"
                                     Width: =400
                                     X: =40
                                     Y: =40
@@ -462,7 +432,6 @@ Screens:
                               SearchFields: =["Title","Title"]
                               SelectMultiple: =false
                               Size: =11
-                              Visible: =rdoHasProject.Selected.Value = "Yes"
                               Width: =Parent.Width
                               X: =40
                               Y: =40
@@ -576,12 +545,12 @@ Screens:
                           Set(gPendingAttachments, Blank());
                           Set(gPendingRequestFiles, Blank());
                           Set(gPendingInvoiceName, "");
-                          Reset(rdoHasProject);
                           Reset(ddProject_1);
                           Reset(txtDescription_1);
                           Reset(ddPurchaseAccordance_2);
                           Reset(txtEstimatedCost_1);
-                          Reset(txtBudgetRef_1);
+                          Reset(ddCostCenter_1);
+                          Reset(ddDeliveryLocation_1);
                           Reset(dpDeliveryDate_1);
                           Reset(ddManagerApprover_1);
                           Reset(rdoProcurementType_1);
@@ -741,7 +710,7 @@ Screens:
                               FontWeight: =FontWeight.Semibold
                               Height: =24
                               Size: =11
-                              Text: ="Required Delivery Date *"
+                              Text: ="Required Date *"
                               Width: =Parent.Width
                         - dpDeliveryDate_1:
                             Control: ModernDatePicker@1.0.1
@@ -775,17 +744,23 @@ Screens:
                               FontWeight: =FontWeight.Semibold
                               Height: =24
                               Size: =11
-                              Text: ="Cost Center"
+                              Text: ="Cost Center *"
                               Width: =Parent.Width
                               X: =40
                               Y: =40
-                        - lblCostCenterValue_1:
-                            Control: Label@2.5.1
+                        - ddCostCenter_1:
+                            Control: ModernCombobox@1.1.1
                             Properties:
-                              Fill: =RGBA(214, 221, 224, 1)
-                              PaddingLeft: =8
-                              Size: =10
-                              Text: ="Port Melbourne Warehouse"
+                              AllowExternalSelectedItems: =false
+                              DefaultSelectedItems: |-
+                                =Table({Value: "Port Melbourne Warehouse"})
+                              FontWeight: =""
+                              Height: =40
+                              InputTextPlaceholder: ="Choose an option"
+                              ItemDisplayText: =ThisItem.Value
+                              Items: =Choices('RM Procurement Requests'.CostCenter)
+                              SelectMultiple: =false
+                              Size: =0
                               Width: =Parent.Width
                   - colDeliveryLoc:
                       Control: GroupContainer@1.5.0
@@ -808,15 +783,21 @@ Screens:
                               FontWeight: =FontWeight.Semibold
                               Height: =24
                               Size: =11
-                              Text: ="Delivery Location"
+                              Text: ="Delivery Location *"
                               Width: =Parent.Width
-                        - lblDeliveryLocationValue_1:
-                            Control: Label@2.5.1
+                        - ddDeliveryLocation_1:
+                            Control: ModernCombobox@1.1.1
                             Properties:
-                              Fill: =RGBA(214, 221, 224, 1)
-                              PaddingLeft: =8
-                              Size: =10
-                              Text: ="Port Melbourne Warehouse"
+                              AllowExternalSelectedItems: =false
+                              DefaultSelectedItems: |-
+                                =Table({Value: "Port Melbourne Warehouse"})
+                              FontWeight: =""
+                              Height: =40
+                              InputTextPlaceholder: ="Choose an option"
+                              ItemDisplayText: =ThisItem.Value
+                              Items: =Choices('RM Procurement Requests'.DeliveryLocation)
+                              SelectMultiple: =false
+                              Size: =0
                               Width: =Parent.Width
             - rowCostCurrency:
                 Control: GroupContainer@1.5.0
@@ -894,33 +875,6 @@ Screens:
                                     SelectMultiple: =false
                                     Size: =0
                                     Width: =160
-                  - colBudgetRef:
-                      Control: GroupContainer@1.5.0
-                      Variant: AutoLayout
-                      Properties:
-                        DropShadow: =DropShadow.None
-                        LayoutDirection: =LayoutDirection.Vertical
-                        LayoutGap: =4
-                        RadiusBottomLeft: =0
-                        RadiusBottomRight: =0
-                        RadiusTopLeft: =0
-                        RadiusTopRight: =0
-                        Width: =230
-                      Children:
-                        - lblBudgetRefLabel_1:
-                            Control: Label@2.5.1
-                            Properties:
-                              FontWeight: =FontWeight.Semibold
-                              Height: =24
-                              Size: =11
-                              Text: ="Budget Reference"
-                              Width: =Parent.Width
-                        - txtBudgetRef_1:
-                            Control: TextInput@0.0.54
-                            Properties:
-                              Height: =40
-                              Placeholder: ="Please enter an amount"
-                              Width: =Parent.Width
             - rowGalLineItems:
                 Control: GroupContainer@1.5.0
                 Variant: AutoLayout
@@ -1194,57 +1148,6 @@ Screens:
                                     OnSelect: =Remove(colLineItems, ThisItem)
                                     Text: ="✕"
                                     Width: =36
-            - rowRelatedSKU:
-                Control: GroupContainer@1.5.0
-                Variant: AutoLayout
-                Properties:
-                  DropShadow: =DropShadow.None
-                  LayoutDirection: =LayoutDirection.Horizontal
-                  LayoutGap: =20
-                  PaddingBottom: =8
-                  PaddingLeft: =20
-                  PaddingRight: =20
-                  PaddingTop: =8
-                  RadiusBottomLeft: =0
-                  RadiusBottomRight: =0
-                  RadiusTopLeft: =0
-                  RadiusTopRight: =0
-                  Width: =Parent.Width
-                Children:
-                  - colSKU:
-                      Control: GroupContainer@1.5.0
-                      Variant: AutoLayout
-                      Properties:
-                        DropShadow: =DropShadow.None
-                        LayoutDirection: =LayoutDirection.Vertical
-                        LayoutGap: =4
-                        RadiusBottomLeft: =0
-                        RadiusBottomRight: =0
-                        RadiusTopLeft: =0
-                        RadiusTopRight: =0
-                        Width: =280
-                        X: =40
-                        Y: =40
-                      Children:
-                        - lblSKULabel:
-                            Control: Label@2.5.1
-                            Properties:
-                              FontWeight: =FontWeight.Semibold
-                              Height: =24
-                              Size: =11
-                              Text: ="Related Product SKU"
-                              Width: =Parent.Width
-                        - cmbSKU:
-                            Control: ModernCombobox@1.1.1
-                            Properties:
-                              AllowExternalSelectedItems: =false
-                              FontWeight: =""
-                              Height: =40
-                              InputTextPlaceholder: ="Choose one or more products"
-                              ItemDisplayText: =ThisItem.Title
-                              Items: =Sort(Product_Database_SKU_Master, Title, SortOrder.Ascending)
-                              Size: =0
-                              Width: =Parent.Width
             - rowDeliverySupplier:
                 Control: GroupContainer@1.5.0
                 Variant: AutoLayout

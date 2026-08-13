@@ -369,7 +369,7 @@ Screens:
                                     Color: =RGBA(136, 135, 128, 1)
                                     Height: =20
                                     Size: =9
-                                    Text: ="Project ID"
+                                    Text: ="Related Project"
                                     Width: =260
                               - lblProjectIDValue_MR:
                                   Control: Label@2.5.1
@@ -377,7 +377,7 @@ Screens:
                                     FontWeight: =FontWeight.Semibold
                                     Height: =24
                                     Size: =11
-                                    Text: =Coalesce(gSelectedRequest.ProjectID, "—")
+                                    Text: =If(IsBlank(gSelectedRequest.ProjectID), "—", Coalesce(LookUp(Project_List, ProjectID = gSelectedRequest.ProjectID).Title, "—"))
                                     Width: =260
                         - colProjectBudget_MR:
                             Control: GroupContainer@1.5.0
