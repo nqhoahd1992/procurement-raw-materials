@@ -8,7 +8,8 @@ Screens:
         Reset(chk3_AC);
         Reset(chk4_AC);
         Reset(chk5_AC);
-        Reset(txtNotes_AC)
+        Reset(txtNotes_AC);
+        Set(gSelectedRequest, LookUp('RM Procurement Requests', ID = gSelectedRequest.ID))
     Children:
       - rectHeader_AC:
           Control: Rectangle@2.3.0

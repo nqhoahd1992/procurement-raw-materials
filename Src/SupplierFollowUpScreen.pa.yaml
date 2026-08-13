@@ -50,6 +50,7 @@ Screens:
                 colLineItemsDetail As li,
                 {
                     LineItemID: li.ID,
+                    ParentLineItemID: Coalesce(li.ParentLineItemID, 0),
                     MaterialID: li.MaterialID.Id,
                     MaterialName: li.MaterialName,
                     Unit: li.Unit,
@@ -1701,6 +1702,8 @@ Screens:
                                                                           RequestID: {Id: gSelectedRequest.ID, Value: gSelectedRequest.Title},
                                                                           RequestIDText: Text(gSelectedRequest.ID),
                                                                           LineItemID: re.LineItemID,
+                                                                          ParentRequestID: Coalesce(gSelectedRequest.ParentRequestID, 0),
+                                                                          ParentLineItemID: re.ParentLineItemID,
                                                                           RoundNumber: gCurrentRound,
                                                                           MaterialName: re.MaterialName,
                                                                           Unit: re.Unit,

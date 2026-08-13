@@ -211,6 +211,9 @@ Screens:
                                                                                           ),
                                                                                           ManagerApproverID: {Id: ddManagerApprover_1.Selected.EmployeeID.Id, Value: ddManagerApprover_1.Selected.EmployeeID.Value},
                                                                                           SkippedManagerReview: false,
+                                                                                          RequestType: {Value: "Request"},
+                                                                                          DeliveryNumber: 0,
+                                                                                          DeliveryCount: 0,
                                                                                           Status: {Value: "Pending Manager"}
                                                                                       }
                                                                                   )
@@ -226,6 +229,11 @@ Screens:
                                                                                           Last(DataCardValue15.Attachments).Name
                                                                                       )
                                                                                   );
+                                                                                  Patch(
+                                                                                      'RM Procurement Requests',
+                                                                                      {ID: wNewRequest.ID},
+                                                                                      {GroupKey: wNewRequest.ID}
+                                                                                  );
                                                                                   Set(gSelectedRequest, wNewRequest);
                                                                                   ForAll(
                                                                                       colLineItems,
@@ -235,6 +243,7 @@ Screens:
                                                                                           {
                                                                                               RequestID: {Id: wNewRequest.ID, Value: wNewRequest.Title},
                                                                                               RequestIDText: Text(wNewRequest.ID),
+                                                                                              ParentLineItemID: 0,
                                                                                               MaterialID: {Id: MaterialID, Value: MaterialName},
                                                                                               MaterialName: MaterialName,
                                                                                               Unit: Unit,

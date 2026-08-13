@@ -24,6 +24,7 @@ Screens:
                 colLineItemsDetail As li,
                 {
                     LineItemID: li.ID,
+                    ParentLineItemID: Coalesce(li.ParentLineItemID, 0),
                     MaterialID: li.MaterialID.Id,
                     MaterialName: li.MaterialName,
                     Unit: li.Unit,
@@ -606,7 +607,7 @@ Screens:
                               Height: =36
                               Size: =9
                               Text: ="Trade Name"
-                              Width: =Parent.Width * 0.19
+                              Width: =Parent.Width * 0.13
                         - lblGRColUnit:
                             Control: Label@2.5.1
                             Properties:
@@ -616,6 +617,16 @@ Screens:
                               Size: =9
                               Text: ="Unit"
                               Width: =Parent.Width * 0.05
+                        - lblGRColOrdered:
+                            Control: Label@2.5.1
+                            Properties:
+                              Align: =Align.Center
+                              Color: =RGBA(68, 68, 65, 1)
+                              FontWeight: =FontWeight.Semibold
+                              Height: =36
+                              Size: =9
+                              Text: ="Ordered"
+                              Width: =Parent.Width * 0.06
                         - lblGRColRecQty:
                             Control: Label@2.5.1
                             Properties:
@@ -714,7 +725,7 @@ Screens:
                                     RadiusBottomRight: =0
                                     RadiusTopLeft: =0
                                     RadiusTopRight: =0
-                                    Width: =Parent.Width * 0.19
+                                    Width: =Parent.Width * 0.13
                                   Children:
                                     - lblGRItemName:
                                         Control: Label@2.5.1
@@ -741,6 +752,15 @@ Screens:
                                     Size: =11
                                     Text: =ThisItem.Unit
                                     Width: =Parent.Width * 0.05
+                              - lblGRItemOrdered:
+                                  Control: Label@2.5.1
+                                  Properties:
+                                    Align: =Align.Center
+                                    Color: =RGBA(136, 135, 128, 1)
+                                    Size: =11
+                                    Text: =Text(ThisItem.OrderedQty)
+                                    Width: =Parent.Width * 0.06
+                                    Wrap: =false
                               - txtGRRecQty:
                                   Control: TextInput@0.0.54
                                   Properties:
@@ -1196,7 +1216,8 @@ Screens:
                                                               If(!wLatest.InvoiceSubmitted, "Pending Invoice", "Pending Accounting")
                                                           )},
                                                           ReceiptRoundCount: 1,
-                                                          LatestReceiptDecision: ddAcceptanceDecision_GR.Selected.Value
+                                                          LatestReceiptDecision: ddAcceptanceDecision_GR.Selected.Value,
+                                                          GRAssignedToID: Blank()
                                                       }
                                                   )
                                               },
@@ -1244,6 +1265,8 @@ Screens:
                                                                       RequestID: {Id: gSelectedRequest.ID, Value: gSelectedRequest.Title},
                                                                       RequestIDText: Text(gSelectedRequest.ID),
                                                                       LineItemID: re.LineItemID,
+                                                                      ParentRequestID: Coalesce(gSelectedRequest.ParentRequestID, 0),
+                                                                      ParentLineItemID: re.ParentLineItemID,
                                                                       RoundNumber: 1,
                                                                       MaterialName: re.MaterialName,
                                                                       Unit: re.Unit,

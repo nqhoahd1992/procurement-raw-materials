@@ -195,6 +195,28 @@ Screens:
                   Size: =11
                   Text: ="Pending Procurement"
                   Width: =170
+            - divFilter3b:
+                Control: Rectangle@2.3.0
+                Properties:
+                  BorderColor: =RGBA(0, 0, 0, 0)
+                  Fill: =RGBA(210, 209, 199, 1)
+                  Height: =16
+                  Width: =1
+            - lblFilterInDelivery:
+                Control: Label@2.5.1
+                Properties:
+                  Align: =Align.Center
+                  Color: =If(gStatusFilter = "In Delivery", RGBA(83, 74, 183, 1), RGBA(136, 135, 128, 1))
+                  Fill: =If(gStatusFilter = "In Delivery", RGBA(237, 235, 254, 1), RGBA(0, 0, 0, 0))
+                  FontWeight: =If(gStatusFilter = "In Delivery", FontWeight.Bold, FontWeight.Semibold)
+                  Height: =24
+                  HoverColor: =RGBA(83, 74, 183, 1)
+                  OnSelect: =Set(gStatusFilter, "In Delivery")
+                  PaddingLeft: =8
+                  PaddingRight: =8
+                  Size: =11
+                  Text: ="In Delivery"
+                  Width: =120
             - divFilter4:
                 Control: Rectangle@2.3.0
                 Properties:
@@ -304,6 +326,50 @@ Screens:
                   Size: =11
                   Text: ="Completed"
                   Width: =120
+            - divFilter8b:
+                Control: Rectangle@2.3.0
+                Properties:
+                  BorderColor: =RGBA(0, 0, 0, 0)
+                  Fill: =RGBA(210, 209, 199, 1)
+                  Height: =16
+                  Width: =1
+            - lblFilterClosed:
+                Control: Label@2.5.1
+                Properties:
+                  Align: =Align.Center
+                  Color: =If(gStatusFilter = "Closed", RGBA(83, 74, 183, 1), RGBA(136, 135, 128, 1))
+                  Fill: =If(gStatusFilter = "Closed", RGBA(237, 235, 254, 1), RGBA(0, 0, 0, 0))
+                  FontWeight: =If(gStatusFilter = "Closed", FontWeight.Bold, FontWeight.Semibold)
+                  Height: =24
+                  HoverColor: =RGBA(83, 74, 183, 1)
+                  OnSelect: =Set(gStatusFilter, "Closed")
+                  PaddingLeft: =8
+                  PaddingRight: =8
+                  Size: =11
+                  Text: ="Closed"
+                  Width: =100
+            - divFilter8c:
+                Control: Rectangle@2.3.0
+                Properties:
+                  BorderColor: =RGBA(0, 0, 0, 0)
+                  Fill: =RGBA(210, 209, 199, 1)
+                  Height: =16
+                  Width: =1
+            - lblFilterCancelled:
+                Control: Label@2.5.1
+                Properties:
+                  Align: =Align.Center
+                  Color: =If(gStatusFilter = "Cancelled", RGBA(83, 74, 183, 1), RGBA(136, 135, 128, 1))
+                  Fill: =If(gStatusFilter = "Cancelled", RGBA(237, 235, 254, 1), RGBA(0, 0, 0, 0))
+                  FontWeight: =If(gStatusFilter = "Cancelled", FontWeight.Bold, FontWeight.Semibold)
+                  Height: =24
+                  HoverColor: =RGBA(83, 74, 183, 1)
+                  OnSelect: =Set(gStatusFilter, "Cancelled")
+                  PaddingLeft: =8
+                  PaddingRight: =8
+                  Size: =11
+                  Text: ="Cancelled"
+                  Width: =110
             - divFilter9:
                 Control: Rectangle@2.3.0
                 Properties:
@@ -346,16 +412,19 @@ Screens:
                   Filter(
                       Switch(gCurrentUser.Role.Value,
                           "Manager", Filter('RM Procurement Requests',
-                              ManagerApproverID.Id = gCurrentEmployee.ID ||
+                              (ManagerApproverID.Id = gCurrentEmployee.ID && RequestType.Value = "Request") ||
                               RequesterEmail = User().Email
                           ),
                           "Procurement", Filter('RM Procurement Requests',
                               Status.Value = "Pending Procurement" ||
+                              Status.Value = "In Delivery" ||
+                              Status.Value = "Closed" ||
                               Status.Value = "Pending Invoice" ||
                               Status.Value = "Pending Accounting" ||
                               Status.Value = "Goods Receipt & Acceptance" ||
                               Status.Value = "Pending Supplier Follow-up" ||
                               Status.Value = "Completed" ||
+                              Status.Value = "Cancelled" ||
                               Status.Value = "Rejected" ||
                               RequesterEmail = User().Email
                           ),
@@ -376,7 +445,8 @@ Screens:
                       ),
                       IsBlank(gStatusFilter) || Status.Value = gStatusFilter
                   ),
-                  "ID", SortOrder.Descending
+                  "GroupKey", SortOrder.Descending,
+                  "DeliveryNumber", SortOrder.Ascending
               )
             OnSelect: =Set(gSelectedRequest, ThisItem); If(ThisItem.Status.Value = "Pending Invoice" && (gCurrentUser.Role.Value = "Procurement" || gCurrentUser.Role.Value = "Admin"), Navigate(InvoiceSubmissionScreen), Navigate(RequestDetailScreen))
             TemplateSize: =114
@@ -392,6 +462,16 @@ Screens:
                   HoverFill: =RGBA(245, 245, 250, 1)
                   OnSelect: =Set(gSelectedRequest, ThisItem); If(ThisItem.Status.Value = "Pending Invoice" && (gCurrentUser.Role.Value = "Procurement" || gCurrentUser.Role.Value = "Admin"), Navigate(InvoiceSubmissionScreen), Navigate(RequestDetailScreen))
                   Width: =Parent.Width
+            - rectDeliveryAccent:
+                Control: Rectangle@2.3.0
+                Properties:
+                  BorderColor: =RGBA(0, 0, 0, 0)
+                  Fill: =RGBA(83, 74, 183, 1)
+                  Height: =82
+                  Visible: =ThisItem.RequestType.Value = "Delivery"
+                  Width: =3
+                  X: =28
+                  Y: =12
             - rowRequestContent:
                 Control: GroupContainer@1.5.0
                 Variant: AutoLayout
@@ -401,7 +481,7 @@ Screens:
                   LayoutDirection: =LayoutDirection.Vertical
                   LayoutGap: =4
                   PaddingBottom: =10
-                  PaddingLeft: =16
+                  PaddingLeft: =If(ThisItem.RequestType.Value = "Delivery", 48, 16)
                   PaddingRight: =16
                   PaddingTop: =10
                   RadiusBottomLeft: =0
@@ -434,7 +514,11 @@ Screens:
                               FontWeight: =FontWeight.Semibold
                               Height: =28
                               Text: |-
-                                ="ID: " & ThisItem.ID & " - " & ThisItem.Title
+                                =If(
+                                  ThisItem.RequestType.Value = "Delivery",
+                                  "↳ Delivery #" & ThisItem.DeliveryNumber & "  ·  ID: " & ThisItem.ID & "  ·  of Request #" & ThisItem.ParentRequestID,
+                                  "ID: " & ThisItem.ID & " - " & ThisItem.Title
+                                )
                               Width: =Parent.Width - 300
                               Wrap: =false
                         - lblRequestStatus:
@@ -444,8 +528,11 @@ Screens:
                               Color: |-
                                 =Switch(ThisItem.Status.Value,
                                   "Completed", RGBA(15, 110, 86, 1),
+                                  "Closed", RGBA(15, 110, 86, 1),
                                   "Rejected", RGBA(163, 45, 45, 1),
+                                  "Cancelled", RGBA(163, 45, 45, 1),
                                   "Goods Receipt & Acceptance", RGBA(83, 74, 183, 1),
+                                  "In Delivery", RGBA(83, 74, 183, 1),
                                   "Pending Manager", RGBA(133, 79, 11, 1),
                                   "Pending Executive", RGBA(133, 79, 11, 1),
                                   "Pending Procurement", RGBA(133, 79, 11, 1),
@@ -456,8 +543,11 @@ Screens:
                               Fill: |-
                                 =Switch(ThisItem.Status.Value,
                                   "Completed", RGBA(225, 245, 238, 1),
+                                  "Closed", RGBA(225, 245, 238, 1),
                                   "Rejected", RGBA(252, 235, 235, 1),
+                                  "Cancelled", RGBA(245, 240, 240, 1),
                                   "Goods Receipt & Acceptance", RGBA(225, 220, 252, 1),
+                                  "In Delivery", RGBA(225, 220, 252, 1),
                                   "Pending Manager", RGBA(250, 238, 218, 1),
                                   "Pending Executive", RGBA(250, 238, 218, 1),
                                   "Pending Procurement", RGBA(250, 238, 218, 1),
@@ -569,7 +659,7 @@ Screens:
                               FontWeight: =FontWeight.Semibold
                               Height: =28
                               Icon: ="Eye"
-                              OnSelect: =Set(gSelectedRequest, ThisItem); If(ThisItem.Status.Value = "Pending Invoice" && (gCurrentUser.Role.Value = "Procurement" || gCurrentUser.Role.Value = "Admin"), Navigate(RequestDetailScreen), Navigate(RequestDetailScreen))
+                              OnSelect: =Set(gSelectedRequest, ThisItem); Navigate(RequestDetailScreen)
                               PaddingBottom: =5
                               PaddingLeft: =12
                               PaddingRight: =12
@@ -581,6 +671,29 @@ Screens:
                               Text: ="View"
                               VerticalAlign: =VerticalAlign.Middle
                               Width: =90
+                        - btnAddDelivery:
+                            Control: ModernButton@1.0.0
+                            Properties:
+                              Align: =Align.Center
+                              BasePaletteColor: =RGBA(83, 74, 183, 1)
+                              FontWeight: =FontWeight.Semibold
+                              Height: =28
+                              OnSelect: =Set(gSelectedRequest, ThisItem); Navigate(DeliveryBatchFormScreen)
+                              PaddingBottom: =5
+                              PaddingLeft: =12
+                              PaddingRight: =12
+                              PaddingTop: =5
+                              RadiusBottomLeft: =4
+                              RadiusBottomRight: =4
+                              RadiusTopLeft: =4
+                              RadiusTopRight: =4
+                              Text: ="+ Add Delivery"
+                              VerticalAlign: =VerticalAlign.Middle
+                              Visible: |-
+                                =ThisItem.RequestType.Value = "Request" &&
+                                ThisItem.Status.Value = "In Delivery" &&
+                                (gCurrentUser.Role.Value = "Procurement" || gCurrentUser.Role.Value = "Admin")
+                              Width: =160
                         - btnCOACompletion_Request:
                             Control: ModernButton@1.0.0
                             Properties:

@@ -16,6 +16,7 @@ EditorState:
     - ExecutiveApprovalScreen
     - ExecutivePaymentScreen
     - ProcurementExecutionScreen
+    - DeliveryBatchFormScreen
     - AccountingScreen
     - GoodsReceiptScreen
     - InvoiceSubmissionScreen

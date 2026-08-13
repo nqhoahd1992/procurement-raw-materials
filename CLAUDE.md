@@ -16,6 +16,7 @@ This folder keeps **only the screen logic + UI** (`Src/`). The generated metadat
 - `Src/App.pa.yaml` — `App.OnStart`: resolves the signed-in user and sets global state.
 - `Src/SupplierFollowUpScreen.pa.yaml` — records **one receipt round (round ≥ 2)**, performed by the Requester or the person they assign. Nothing else: the Procurement side of the follow-up moved out to its own screen (below) because the two halves have different actors, and cramming both into one screen made the visibility gating unmanageable once rounds became unbounded.
 - `Src/ProcurementFollowUpScreen.pa.yaml` — the **Procurement close-out** (a document step, not a receipt round — see the receiving-loop section). **Procurement/Admin only**; runs **at most once per request** and only on the `Accepted with Adjustment` branch: remarks + Credit Note upload, which also ends the receiving process. Reached from `RequestDetailScreen`'s "Upload Credit Note →" button. Procurement does **not** sit between ordinary receipt rounds — a `Requires Supplier Follow-up` decision opens the next round immediately.
+- `Src/DeliveryBatchFormScreen.pa.yaml` — **Procurement/Admin only.** Creates a **Type-2 `Delivery` row** from a parent sitting in `In Delivery`, reached from `RequestDetailScreen`'s "+ Add Delivery" or the parent's row on `HomeScreen`. Procurement enters the quantity arriving in *this* delivery per material (a material left at `0` is simply not in this delivery — the app's existing "quantity > 0 means included" idiom, same as `Filter(colRoundEntry, ReceivedQty > 0)`, so there is no separate include checkbox), plus the delivery's own expected date, its `InvoiceMode`, an optional receiver and notes. On submit it writes the child request row, the child's own `'RM Procurement Line Items'` rows (each with `ParentLineItemID`), bumps the parent's `DeliveryCount`, writes ExecutionLog **Step 7 on the parent**, and fires `ProcurementNotify` `"GoodsReceipt"` if a receiver was picked. Guards: quantity must not exceed what is still outstanding, and it re-reads the parent to abort if the status moved or another delivery took the same number.
 - `Src/COACompletionScreen.pa.yaml` — per-request screen (Procurement/Admin only, reached via a "Link to COA" button on that request's row in `HomeScreen`) for filling in `COALink` on `gSelectedRequest`'s `'RM Procurement Receipt Rounds'` rows left blank at Goods Receipt / Supplier Follow-up — any round, any number of them. See "Link to COA completion" below — it is intentionally **not** part of the request Status workflow.
 
 ## Backend & connectors
@@ -65,7 +66,11 @@ Invoice-reminder flows (called from `RequesterInvoiceScreen` and `InvoiceSubmiss
 - `gCurrentEmployee` — row from `Employee List` matched by `User().Email`.
 - `gCurrentUser` / `gUserRole` — row from `'RM User'` matched by `EmployeeID.Id = gCurrentEmployee.ID`. **Blank if the employee has no `'RM User'` row** — there is no more synthetic `"Requester"` fallback; a real `'RM User'` row (with `Role = "Requester"`) is required for ordinary requesters too, same as every other role.
 - `gIsSpecialRole` — true for Manager/Executive/Procurement/Accounting/Admin (drives toolbar/filter visibility).
-- `gSelectedRequest` — the request being viewed/acted on (set before `Navigate`).
+- `gSelectedRequest` — the request being viewed/acted on (set before `Navigate`). **May be either a parent or a delivery** — every downstream screen works on whichever it is, because both are rows of the same list.
+- `gIsDelivery` / `gRootRequestID` / `gParentRequest` — set in `RequestDetailScreen.OnVisible`. `gIsDelivery` is `RequestType.Value = "Delivery"`; `gRootRequestID` is the parent's ID on a delivery and the row's own ID on a parent; `gParentRequest` is the parent row (blank on a parent). They drive the three reads that must be parent-scoped even when viewing a delivery: `colApprovalLog` (a delivery has no approvals of its own — showing none at all was an audit regression), `colRequirementFiles` (the files are attached to the **parent's** item, so both the name list and the URL's ID come from the parent — this is why `RequirementFiles` is *never* copied onto a delivery, it would 404), and the amber `rowParentLink_RD` banner.
+- `gDeliveryNumber` / `gBatchDelegationMode` / `colParentLineItems` / `colParentReceived` / `colSiblingBatches` / `colBatchEntry` — `DeliveryBatchFormScreen`'s state. `colBatchEntry` (`{ParentLineItemID, MaterialID, MaterialName, Unit, OrderedQty, DeliveredQty, RemainingQty, BatchQty}`) is the per-material entry buffer, built with `ForAll(colParentLineItems As li, With({wDelivered: Sum(Filter(colParentReceived, ParentLineItemID = li.ID), ReceivedQty)}, …))` — the `As li` alias is **required**, since `ThisRecord` inside the nested `Filter` would otherwise rebind. `ParentLineItemID` is its unique key, so every input writes back with `UpdateIf(colBatchEntry, ParentLineItemID = ThisItem.ParentLineItemID, …)`. `gDeliveryNumber` comes from the parent's `DeliveryCount + 1`, **not** `Max(DeliveryNumber)` over the siblings — the latter still races when two people create a delivery at once.
+- `colDeliveryBatches` — the parent's deliveries, `SortByColumns(Filter('RM Procurement Requests', ParentRequestID = gSelectedRequest.ID), "DeliveryNumber", Ascending)`. Backs `rowBatchSection` on `RequestDetailScreen` (a white **sibling** of `rowInfoBlock`, deliberately *not* a child of it — putting a variable-height gallery inside that no-flexible-child container would mean fighting its `LayoutMinHeight` arithmetic; as a sibling it needs no change to that sum at all).
+- `gShowCloseRequest` — the Close Request dialog toggle, reset in `RequestDetailScreen.OnVisible`.
 - `gParsingInvoice`, `gHasInvoiceResult`, `gInvoiceResult`, `gShowRejectReason`.
 - `gGRDelegationMode` / `gSFU1DelegationMode` — `"I will receive"` vs `"Assign to someone else"` toggle state for Goods Receipt / Supplier Follow-up.
 - `gGRLogEntry` / `gGRPendingAttachments`, `gSFU1LogEntry` / `gSFU1PendingAttachments` — in-progress execution-log record + pending photo attachments for Goods Receipt / Supplier Follow-up before submit.
@@ -113,30 +118,73 @@ Invoice-reminder flows (called from `RequesterInvoiceScreen` and `InvoiceSubmiss
 
 If `gCurrentEmployee.ID` **or** `gCurrentUser.ID` is blank, the user sees an "account not found" message and no UI (`HomeScreen`'s `lblNoRole` + every other `HomeScreen` container check `Not(IsBlank(gCurrentEmployee.ID)) && Not(IsBlank(gCurrentUser.ID))`). The app is membership-gated by **both** `Employee List` (must exist there) **and** `'RM User'` (must have an explicit role row there) — being in `Employee List` alone (the old behavior, tenant-wide) is no longer sufficient.
 
+## Two request types — read this before the workflow
+
+One purchase request's materials arrive from the supplier across **several separate deliveries**, each with its **own supplier invoice** and its own quantities. `'RM Procurement Requests'` therefore holds **two kinds of row**, told apart by `RequestType`:
+
+| | **`Request`** (parent) | **`Delivery`** (child) |
+|---|---|---|
+| Created by | Requester — `RequestFormScreen` | Procurement — `DeliveryBatchFormScreen` |
+| Line items | every material requested | only the materials in *this* delivery, at that delivery's quantity, each carrying `ParentLineItemID` |
+| Invoice | **none** — the parent carries no invoice at all any more | its own `InvoiceMode`/`InvoiceSubmitted`/`OfficialInvoiceLink`. **This is what lets one request have many invoices** |
+| Receipt rounds | none of its own; rolls its children's up via `ParentRequestID` | its own |
+| Title | `<employee> - <dd/mm/yyyy>` | `<parent Title> - #<DeliveryNumber>` |
+| Lifecycle | `Pending Manager` → `Pending Executive` → `Pending Procurement` → `In Delivery` → `Closed` | `Goods Receipt & Acceptance` → `Pending Supplier Follow-up` → `Pending Invoice` → `Pending Accounting` → `Completed` |
+| Early exit | `Rejected` (Executive Reject or Procurement Reject) | `Cancelled` (created in error, only while `ReceiptRoundCount = 0`) |
+
+**The two `Status` sets are disjoint.** That is the load-bearing property of this design: every pre-existing `Status` gate on the downstream screens is already type-safe, so **none of them needed a `RequestType` check added**. `RequestType` is consulted only by `HomeScreen`'s Manager branch and by presentation logic (indent, banner, the Deliveries section, the new buttons).
+
+**Why a child is a row in this same list rather than a separate list.** Three hard constraints all point here, and it's worth not re-litigating: (1) `Submit_Invoice` takes a request ID and **patches `OfficialInvoiceLink` back onto that row itself** — passing the child's ID keeps the flow working untouched *and* gets a per-delivery invoice link, whereas a separate list would force either a flow edit or the parent's link being overwritten once per delivery; (2) a Canvas gallery cannot delegably union two lists, and `HomeScreen` is the app's only worklist; (3) attachment URLs are `gSharePointAttachmentBase & Text(<request ID>) & …`, so a child in the same list needs no URL change anywhere.
+
+What it costs: the child must fill 13 Required ⚠ columns with copies of parent data, and `RequestDetailScreen` still renders some of them (Estimated Cost, Manager Approver, Purchase Accordance, Budget Reference). That is a **known, accepted** trade-off, mitigated but not removed by the amber banner on a delivery, `EstimatedCost: 0`, a distinct `ProcurementDescription`, and a SharePoint default view filtered to `RequestType = Request`. If someone does misread a delivery as separately approved, the honest fix is `Visible: =Not(gIsDelivery)` on `rowInfo1`–`rowInfo4` plus a delivery-specific field row — see `docs/sharepoint-schema.md`'s "two request types" table for exactly what a child writes into every column and why.
+
+`DeliveryNumber` is **not** called `BatchNumber` on purpose: `'RM Procurement Receipt Rounds'.BatchNumber` already means the material's *lot* number, and sharing the word made every formula ambiguous.
+
+**Round vs delivery — the rule.** A new **delivery** is a shipment with a **new invoice**. A new **round** inside a delivery is the supplier topping that same shipment up **under the same invoice**. Normally one delivery = one round; the receiving loop below is unchanged and simply scoped inside a delivery now.
+
 ## The workflow — this is the core domain model
 
 Requests move through a `Status` choice field. Each screen patches `'RM Procurement Requests'.Status` and writes a log row. The status string is also the value of the `HomeScreen` filter buttons and the gallery color coding.
 
 ```
+=== TYPE 1 — Request (parent) ===
+
 RequestFormScreen (Requester submits, must add ≥1 raw-material line item, must pick a Manager Approver)
    │  Always Status = "Pending Manager", SkippedManagerReview = false (no more auto-skip-to-Executive path)
+   │  Also writes RequestType = "Request", DeliveryNumber = 0, DeliveryCount = 0,
+   │  then a SECOND Patch setting GroupKey = its own ID (ID isn't known until the row exists)
    ▼
 Pending Manager ──(ManagerReviewScreen)──┐
    │ Any decision (Approved (within budget) / Needs clarification / Exceeds budget) → Pending Executive
    ▼
 Pending Executive ──(ExecutiveApprovalScreen)──┐
-   │ Reject → Rejected
+   │ Reject → Rejected  (terminal)
    │ Approve / Approve with conditions (ConditionsText), then:
    │     Currency <> "AUD" OR EstimatedCost > 10000 → stays "Pending Executive" + isExecutivePayment = true
    │                                                   (shown as "Pending Payment From Executive" in UI only —
    │                                                   real Status string is unchanged) → ExecutivePaymentScreen
    │     otherwise                                  → Pending Procurement
    ▼
-Pending Procurement ──(ProcurementExecutionScreen)──┐
-   │ Reject                      → Rejected
-   │ Proceed                     → Goods Receipt & Acceptance
-   │   (sets InvoiceMode: "Direct" | "Deferred" | "ViaRequester";
-   │    InvoiceSubmitted = true only if the invoice was processed inline)
+Pending Procurement ──(ProcurementExecutionScreen, ExecutionLog Step 1)──┐
+   │ Reject   → Rejected  (terminal — such a request never has any delivery, which is why
+   │                       "+ Add Delivery" gates on Status = "In Delivery", not on "passed Step 1")
+   │ Proceed  → In Delivery.  Writes OrderConfirmationURL + SupplierSummary + PurchaseOrderLink.
+   │            Writes NO invoice column — all invoice work now lives on the delivery.
+   ▼
+In Delivery  ◄── THE PARENT'S LIFECYCLE ENDS HERE. It is now an open container.
+   │  Procurement/Admin "+ Add Delivery" → DeliveryBatchFormScreen → spawns Delivery #1, #2, #3…  (unbounded)
+   │     each spawn writes ExecutionLog Step 7 on the PARENT and bumps the parent's DeliveryCount
+   │  Procurement/Admin "Close Request"  → manual only, needs CloseRemarks, blocked while any delivery
+   │     is neither Completed nor Cancelled. Allowed when short-delivered (the supplier may never
+   │     deliver in full) — that is a normal outcome needing a written reason, not an error.
+   ▼
+Closed  (terminal, ExecutionLog Step 8)
+
+
+=== TYPE 2 — Delivery (child), ONE INVOICE EACH ===
+
+DeliveryBatchFormScreen (Procurement picks which materials + qty are in this delivery, its expected
+   │  date, its InvoiceMode, optionally a receiver. Creates the child row + its own line items.)
    ▼
 Goods Receipt & Acceptance ──(GoodsReceiptScreen — receipt ROUND 1, ExecutionLog Step 3)──┐
    │ Always ends this screen. Writes ReceiptRoundCount = 1, LatestReceiptDecision = <decision>.
@@ -186,12 +234,20 @@ Pending Invoice ──(InvoiceSubmissionScreen [Procurement/Admin] or RequesterI
 Pending Accounting ──(AccountingScreen)──
    │ Submit → Completed   (this is the ONLY place Status is ever set to "Completed")
    ▼
-Completed
+Completed  (terminal — for THIS delivery. The parent is closed separately, manually.)
+
+Cancelled  (terminal — a delivery created in error, only while ReceiptRoundCount = 0)
 ```
+
+**`Completed` now means "this delivery is done", not "the request is done".** One request yields N `Completed` rows and N Step-2 log rows, one per delivery. The parent never reaches `Completed` at all — its terminal state is `Closed`.
+
+**`In Delivery` breaks an invariant the reminder flows rest on.** For every other status, being in it means work on *that row* is outstanding. An `In Delivery` parent is waiting on its children, not on anyone acting on itself — which is why `Closed` has to exist to drain it, and why a reminder that nags on `In Delivery` would need to check whether any child is actually open. **Nothing does that today**: no flow notices a parent sitting in `In Delivery` with no delivery ever created. Known gap.
 
 **Executive-payment sub-flow** (`isExecutivePayment` Yes/No field on `'RM Procurement Requests'`): when Executive approves a request that is over-threshold (`Currency <> "AUD" || EstimatedCost > 10000` — `USD` always qualifies since this app only offers `AUD`/`USD`, no FX conversion for the AUD case, just the plain 10,000 cutoff), the request does **not** advance to "Pending Procurement" — it stays `Status = "Pending Executive"` with `isExecutivePayment = true`, and `RequestDetailScreen`/`HomeScreen` display it as **"Pending Payment From Executive"** purely as a computed label (same pattern as the "Supplier Follow-up (Step 1/2)" sub-status — the real `Status` value never changes). The Executive then uses `ExecutivePaymentScreen` (reached via `RequestDetailScreen`'s "Process Payment →" button, shown only when `isExecutivePayment = true`) to upload a remittance advice document; submitting patches `RemittanceURL` and moves `Status` to `"Pending Procurement"` (keeping `isExecutivePayment = true` for history). Unlike the sibling `procurement-procedure` app, there is no Manager fast-track to worry about here — every request always passes through `ExecutiveApprovalScreen` regardless of decision (see `ManagerReviewScreen`'s hardcoded `Status: {Value: "Pending Executive"}`), so the threshold only needs to be checked in one place.
 
-`RemittanceURL` is shared between two independent producers: `ExecutivePaymentScreen` (this sub-flow) and `ProcurementExecutionScreen`'s own "Remittance Advice Document" upload (Path C / `locIsViaRequester`, when Procurement proceeds with a requester-supplied invoice). When `isExecutivePayment = true`, `ProcurementExecutionScreen` hides its own remittance upload requirement entirely (Executive's upload already satisfies it) and reuses the existing `RemittanceURL` instead of asking Procurement to attach a second document — see `rowFormRemittance_PE` / `rowExecutiveRemittanceInfo_PE` and the `wURL` branch in `formRemittance.OnSuccess`.
+`RemittanceURL` now has **one** producer: `ExecutivePaymentScreen`. `ProcurementExecutionScreen`'s own remittance upload was removed together with everything else invoice-related (see below), so `rowFormRemittance_PE` / `rowExecutiveRemittanceInfo_PE` / `formRemittance` no longer exist. `RequestDetailScreen` and the two Procurement work screens still *display* `RemittanceURL` when it is non-blank.
+
+**`ProcurementExecutionScreen` is now parent-only work and carries no invoice handling at all.** It went from ~2790 lines to ~1660. Removed outright: `rdoInvoiceChoice_PE`, `chk5_PE`/`chk6_PE`, the remittance form, `rdoInvoiceCorrect_PE`, the direct official-invoice upload, the whole `rowParseInvoice_PE` block with its 10 parsed fields and `lblSuggestedFilename_PE`, and **both** of its `Submit_Invoice.Run` / `Parse_Invoice.Run` call sites — leaving exactly **one** `Submit_Invoice` call site in the whole app, on `InvoiceSubmissionScreen`. The three-path A/B/C submit collapsed to one Proceed path (checklist 1–4 + Supplier Summary + Order Confirmation), and `locIsViaRequester`, `locOfficialInvoiceURL_PE`, `gPendingInvName_PE`, `gPendingPath` are gone. **`InvoiceMode` is now chosen per delivery** on `DeliveryBatchFormScreen`; `ViaRequester` is only offerable there when the parent actually has a `RequesterInvoiceURL` **and** no sibling delivery has already claimed it — the requester supplies one invoice, so at most one delivery can be covered by it.
 
 Routing relies on these status strings being exact and consistent across `HomeScreen` (filters + gallery `Items` per-role filter), each action screen, and the `Switch`/`If` color maps. **When changing status names or the flow, update every screen that references the string** — there is no shared constant.
 
@@ -230,6 +286,14 @@ Both submit buttons re-read the request and abort if it moved under them — `bt
 `SkippedManagerReview` on `'RM Procurement Requests'` and the `ExecutiveApprovalScreen` "Manager Review Skipped" banner (`rowManagerSkipped`, gated on `gSelectedRequest.SkippedManagerReview`) are now **write-only false going forward** — `RequestFormScreen` always writes `false` since every request goes through both approval levels. The field/banner are kept only so older requests submitted before this change (where it may be `true`) still display correctly; don't remove them.
 
 `CostCenter` and `DeliveryLocation` on `RequestFormScreen` are no longer user-selectable — both are hardcoded to `"Port Melbourne Warehouse"` (read-only labels `lblCostCenterValue_1`/`lblDeliveryLocationValue_1`), and `InvoiceRegion` is hardcoded to `"AU"` accordingly. `Currency` is a manual `ddCurrency_1` dropdown (`AUD`/`USD`, default `AUD`) — no longer derived from Cost Center.
+
+### Closing a parent, cancelling a delivery
+
+Both live on `RequestDetailScreen` and are Procurement/Admin only.
+
+**Close Request** (`btnActionCloseRequest` → `rectCloseOverlay_RD`/`conCloseDialog_RD`, the **last two screen-level children**, after the log-detail pair — z-order is child order). Visible only when `Not(gIsDelivery) && Status = "In Delivery"`. The dialog requires `txtCloseRemarks_RD`, shows an advisory line computed from `colLineItemsSummary` saying whether every material was fully received or how many are short, re-reads the request to abort if it moved, then patches `Status = "Closed"` + `ClosedByID`/`ClosedAt`/`CloseRemarks` and writes ExecutionLog Step 8. **Hard-blocked only** while a delivery is neither `Completed` nor `Cancelled`; a short delivery is *not* blocked — the shortfall advisory is advice, never a gate. There is deliberately no auto-close: an auto-rule could never fire in the common case (the supplier short-ships and the remainder is written off), and computing it per row on `HomeScreen` is exactly the non-delegable pattern the receiving loop already rejected.
+
+**Cancel** (`btnCancelDelivery_RD`, inside each row of the parent's Deliveries table). Visible only while `ReceiptRoundCount = 0` and the delivery is still at `Goods Receipt & Acceptance`; it re-reads the row and refuses if a round has appeared since render. Patches `Status = "Cancelled"` and reloads `colDeliveryBatches` in place. This exists because a delivery passes no approval screen and round 1 has no `Rejected`, so without it a mistakenly-created delivery would be permanent — and would block the parent from ever being closable.
 
 ### Link to COA completion (decoupled from the Status workflow)
 
@@ -276,16 +340,38 @@ Don't reintroduce a picker without also making it load-bearing: gate `Accounting
 
 ## Role-based visibility (HomeScreen)
 
+**One flat list holds both types.** The gallery is sorted `SortByColumns(…, "GroupKey", Descending, "DeliveryNumber", Ascending)`, which puts each parent directly above its own deliveries, newest group first — both columns are Numbers, so it stays delegable. A delivery row is indented (`rowRequestContent.PaddingLeft` 48 vs 16), carries a purple `rectDeliveryAccent` bar, and titles itself `↳ Delivery #n · ID: x · of Request #N`. Known and accepted: if a role's filter matches a delivery but not its parent, the delivery renders "orphaned" with no parent row above it — which is why the row title names its parent.
+
 The gallery `Items` filters `'RM Procurement Requests'` differently per `gUserRole` (always further filtered by `IsBlank(gStatusFilter) || Status.Value = gStatusFilter`):
-- **Manager** → requests where `ManagerApproverID.Id = gCurrentEmployee.ID`, **or** their own requests (`RequesterEmail = User().Email`).
-- **Procurement** → requests in status `"Pending Procurement"`, `"Pending Invoice"`, `"Pending Accounting"`, `"Goods Receipt & Acceptance"`, `"Pending Supplier Follow-up"`, `"Completed"`, `"Rejected"`, or their own requests. Does not include `"Pending Manager"`/`"Pending Executive"`.
-- **Accounting** → a narrower version of Procurement's list: `"Pending Accounting"`, `"Goods Receipt & Acceptance"`, `"Pending Supplier Follow-up"`, `"Completed"`, or their own requests (no `"Pending Procurement"`, `"Pending Invoice"`, or `"Rejected"`).
-- **Executive / Admin** → all requests, unfiltered.
-- **Requester (default, and any unrecognized role)** → own requests (`RequesterEmail = User().Email`), plus requests where they're the current Goods Receipt or receipt-round assignee (`GRAssignedToID.Id = gCurrentEmployee.ID || SFU1AssignedToID.Id = gCurrentEmployee.ID`). Note `SFU1AssignedToID` is cleared at the end of every round, so this only matches while a round is actually open and assigned to them.
+- **Manager** → `(ManagerApproverID.Id = gCurrentEmployee.ID && RequestType.Value = "Request")`, **or** their own requests (`RequesterEmail = User().Email`). **The `RequestType` term is load-bearing**: `ManagerApproverID` is Required ⚠ so every delivery must copy it, and without the term a manager would see every delivery of every request they ever approved and be able to act on none of them.
+- **Procurement** → requests in status `"Pending Procurement"`, **`"In Delivery"`**, **`"Closed"`**, `"Pending Invoice"`, `"Pending Accounting"`, `"Goods Receipt & Acceptance"`, `"Pending Supplier Follow-up"`, `"Completed"`, **`"Cancelled"`**, `"Rejected"`, or their own requests. Does not include `"Pending Manager"`/`"Pending Executive"`. **`"In Delivery"` is not optional** — without it the parent, the one row Procurement must open to create a delivery, vanishes from their HomeScreen entirely.
+- **Accounting** → a narrower version of Procurement's list: `"Pending Accounting"`, `"Goods Receipt & Acceptance"`, `"Pending Supplier Follow-up"`, `"Completed"`, or their own requests. Unchanged by the split — those four statuses now resolve to deliveries only, which is correct: Accounting works per invoice, i.e. per delivery.
+- **Executive / Admin** → all requests, unfiltered — so they see both types.
+- **Requester (default, and any unrecognized role)** → own requests (`RequesterEmail = User().Email`), plus requests where they're the current Goods Receipt or receipt-round assignee (`GRAssignedToID.Id = gCurrentEmployee.ID || SFU1AssignedToID.Id = gCurrentEmployee.ID`). Unchanged: a delivery copies `RequesterEmail`, so requesters see their own deliveries, and the two assignee columns now only ever exist on a delivery. Note `SFU1AssignedToID` is cleared at the end of every round, so this only matches while a round is actually open and assigned to them.
+
+`btnAddDelivery` sits in each row's `rowActions` bar, visible only when `RequestType = "Request" && Status = "In Delivery"` and the user is Procurement/Admin. `btnSubmitInvoice` and `btnProcessInvoice` gate on `InvoiceMode`, and `btnCOACompletion_Request` filters receipt rounds by `RequestIDText = Text(ThisItem.ID)` — all three therefore **self-hide on a parent** with no `RequestType` term needed, since a parent has no `InvoiceMode` and no receipt rounds of its own.
+
+The filter bar gained `In Delivery`, `Closed` and `Cancelled` pills. It did not need shortening to fit: `rowFilterBar` sets `LayoutOverflowX: =LayoutOverflow.Scroll`, so pills just append and the bar scrolls.
 
 The status pill for `"Pending Supplier Follow-up"` is a **computed sub-status**, same pattern as "Pending Payment From Executive" — the real `Status` string never changes inside the loop. It renders `"Procurement Close-out (Credit Note)"` when `LatestReceiptDecision = "Accepted with Adjustment"`, otherwise `"Goods Receipt (Round <n+1>)"`. It reads only `ThisItem.*` fields — no `LookUp` — which is both delegable and faster than the old Step-4 log probe it replaced.
 
 Filter buttons and "+ New Request" are **not** role-gated — every user who passes the membership gate (`Not(IsBlank(gCurrentEmployee.ID)) && Not(IsBlank(gCurrentUser.ID))`) sees the same filter bar and "+ New Request" button; only the underlying gallery `Items` differ per role. Keep the per-role `Items` filter in sync when adding new statuses, but don't assume the buttons themselves need per-role `Visible` logic — they currently don't have any.
+
+## Pending manual SharePoint work for the parent/delivery split
+
+**None of this can be done from `.pa.yaml`, and the app will not run correctly until all of it is applied.**
+
+1. **`'RM Procurement Requests'`** → add `RequestType` (**Choice**: `Request`, `Delivery`, default `Request`), `ParentRequestID` (Number), `DeliveryNumber` (Number), `DeliveryCount` (Number), `GroupKey` (Number), `ClosedByID` (Lookup→Employee List), `ClosedAt` (DateTime), `CloseRemarks` (multiline text).
+2. **`'RM Procurement Requests'.Status`** → add three Choice options: `In Delivery`, `Closed`, `Cancelled`.
+3. **`'RM Procurement Line Items'`** → add `ParentLineItemID` (Number).
+4. **`'RM Procurement Receipt Rounds'`** → add `ParentRequestID` (Number, **index it**) and `ParentLineItemID` (Number).
+5. **`'RM Procurement Execution Log'.StepName`** → add two Choice options: `Delivery Batch Created` (StepNumber 7), `Request Closed` (StepNumber 8).
+6. **⚠ BACK-FILL every existing row of `'RM Procurement Requests'`**: `RequestType = Request`, `DeliveryNumber = 0`, `DeliveryCount = 0`, `GroupKey = <that row's own ID>`. **This is not optional and must be verified before pasting any screen that references `RequestType`.** A SharePoint column default applies only to *new* items, and `RequestType.Value = "Request"` does not match blank — so every historical request would disappear from `HomeScreen` for every role. Verify with a view filtered to `RequestType is empty`: the count must be **0**. `GroupKey` has the same failure mode more quietly — a row missing it sinks to the bottom of the list with no warning.
+7. **Add `DeliveryBatchFormScreen` in Studio** (no new data source needed).
+8. **Set the list's default view to filter `RequestType = Request`**, and add a separate `All including deliveries` view. This is the only measure that addresses the parent/child ambiguity for consumers *outside* the app — SharePoint views, Power BI, anyone browsing the list — which the in-app banner does nothing for.
+9. ~~**Open `Submit_Invoice` and confirm which `'RM Procurement Requests'` columns it reads** off the ID at param 2.~~ **Done — checked against the live flow, and it needs no change.** `ProjectID` is the *only* request column the flow consumes (via a `Get item` named `Get_ProjectID`, referenced once as `item/ProjectID`), and every delivery copies it. Its final `Update item` writing `OfficialInvoiceLink` uses that same fetched ID, so the link lands **per delivery** — which is exactly the behaviour that made same-list the right choice. Full detail, including the two misleadingly-named param mappings and the `RequestIDText`-now-means-delivery consequence, is in `docs/sharepoint-schema.md` under "What `Submit_Invoice` actually reads".
+
+**Still verify the round-trip by opening a `Procurement_InvoiceData` row rather than trusting the flow's Succeeded status** — a blank `ProjectID` there matches no project and silently under-reports the Actual Cost panel on `ManagerReviewScreen`/`ExecutiveApprovalScreen`. And eyeball `Get Attachment Content`: the invoice file is attached to the **delivery's** item (`formOfficialInvoice_ISS` submits with `Item: =gSelectedRequest`, and param 1's URL is built from the delivery's ID), so it should resolve from param 1 or the fetched ID, never from anything parent-scoped.
 
 ## Pending manual SharePoint work for requirement files
 

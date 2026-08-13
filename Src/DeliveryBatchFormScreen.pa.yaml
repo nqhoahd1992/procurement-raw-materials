@@ -1,0 +1,884 @@
+# ************************************************************************************************
+# Warning: YAML source code for Canvas Apps should only be used to review changes made within Power Apps Studio and for minor edits (Preview).
+# Use the maker portal to create and edit your Power Apps.
+#
+# The schema file for Canvas Apps is available at https://go.microsoft.com/fwlink/?linkid=2304907
+#
+# For more information, visit https://go.microsoft.com/fwlink/?linkid=2292623
+# ************************************************************************************************
+Screens:
+  DeliveryBatchFormScreen:
+    Properties:
+      LoadingSpinnerColor: =RGBA(56, 96, 178, 1)
+      OnVisible: |-
+        =Set(gSelectedRequest, LookUp('RM Procurement Requests', ID = gSelectedRequest.ID));
+        Set(gDeliveryNumber, Coalesce(gSelectedRequest.DeliveryCount, 0) + 1);
+        Set(gBatchDelegationMode, "Assign later");
+        Reset(dpBatchDeliveryDate);
+        Reset(rdoBatchInvoiceMode);
+        Reset(rdoBatchDelegation_DBF);
+        Reset(txtBatchNotes);
+        Reset(ddBatchReceiver);
+        ClearCollect(colParentLineItems, Filter('RM Procurement Line Items', RequestIDText = Text(gSelectedRequest.ID)));
+        ClearCollect(colParentReceived, Filter('RM Procurement Receipt Rounds', ParentRequestID = gSelectedRequest.ID));
+        ClearCollect(colSiblingBatches, Filter('RM Procurement Requests', ParentRequestID = gSelectedRequest.ID));
+        ClearCollect(
+            colBatchEntry,
+            ForAll(
+                colParentLineItems As li,
+                With(
+                    {wDelivered: Sum(Filter(colParentReceived, ParentLineItemID = li.ID), ReceivedQty)},
+                    {
+                        ParentLineItemID: li.ID,
+                        MaterialID: li.MaterialID.Id,
+                        MaterialName: li.MaterialName,
+                        Unit: li.Unit,
+                        OrderedQty: li.Quantity,
+                        DeliveredQty: wDelivered,
+                        RemainingQty: li.Quantity - wDelivered,
+                        BatchQty: Max(li.Quantity - wDelivered, 0)
+                    }
+                )
+            )
+        )
+    Children:
+      - rectHeader_DBF:
+          Control: Rectangle@2.3.0
+          Properties:
+            Fill: =RGBA(83, 74, 183, 1)
+            Height: =60
+            Width: =Parent.Width
+      - lblUserInfo_DBF:
+          Control: Label@2.5.1
+          Properties:
+            Align: =Align.Right
+            Color: =RGBA(255, 255, 255, 1)
+            FontWeight: =FontWeight.Semibold
+            Height: =60
+            Size: =12
+            Text: |-
+              =If(
+                  IsBlank(gCurrentUser.Role.Value),
+                  gCurrentEmployee.Title,
+                  gCurrentEmployee.Title & " | " & gCurrentUser.Role.Value
+              )
+            Width: =280
+            X: =Parent.Width - 300
+      - lblScreenTitle_DBF:
+          Control: Label@2.5.1
+          Properties:
+            Color: =RGBA(255, 255, 255, 1)
+            FontWeight: =FontWeight.Bold
+            Height: =60
+            Size: =14
+            Text: |-
+              ="New Delivery #" & gDeliveryNumber & " - Request ID: " & gSelectedRequest.ID & " - " & gSelectedRequest.Title
+            Width: =900
+            X: =20
+      - conScrollable_DBF:
+          Control: GroupContainer@1.5.0
+          Variant: AutoLayout
+          Properties:
+            DropShadow: =DropShadow.None
+            Height: =Parent.Height - 120
+            LayoutDirection: =LayoutDirection.Vertical
+            LayoutOverflowY: =LayoutOverflow.Scroll
+            RadiusBottomLeft: =0
+            RadiusBottomRight: =0
+            RadiusTopLeft: =0
+            RadiusTopRight: =0
+            Width: =Parent.Width
+            Y: =60
+          Children:
+            - rowParentInfo_DBF:
+                Control: GroupContainer@1.5.0
+                Variant: AutoLayout
+                Properties:
+                  DropShadow: =DropShadow.None
+                  Fill: =RGBA(241, 239, 232, 1)
+                  FillPortions: =0
+                  Height: =128
+                  LayoutDirection: =LayoutDirection.Vertical
+                  LayoutGap: =4
+                  LayoutMinHeight: =128
+                  PaddingBottom: =20
+                  PaddingLeft: =20
+                  PaddingRight: =20
+                  PaddingTop: =20
+                  RadiusBottomLeft: =0
+                  RadiusBottomRight: =0
+                  RadiusTopLeft: =0
+                  RadiusTopRight: =0
+                  Width: =Parent.Width
+                Children:
+                  - lblParentInfoTitle_DBF:
+                      Control: Label@2.5.1
+                      Properties:
+                        FillPortions: =0
+                        FontWeight: =FontWeight.Bold
+                        Height: =28
+                        Size: =11
+                        Text: ="Parent Request"
+                        Width: =Parent.Width - 40
+                  - rowParentInfoFields_DBF:
+                      Control: GroupContainer@1.5.0
+                      Variant: AutoLayout
+                      Properties:
+                        DropShadow: =DropShadow.None
+                        FillPortions: =0
+                        Height: =56
+                        LayoutDirection: =LayoutDirection.Horizontal
+                        LayoutGap: =20
+                        RadiusBottomLeft: =0
+                        RadiusBottomRight: =0
+                        RadiusTopLeft: =0
+                        RadiusTopRight: =0
+                        Width: =Parent.Width - 40
+                      Children:
+                        - colParentRequester_DBF:
+                            Control: GroupContainer@1.5.0
+                            Variant: AutoLayout
+                            Properties:
+                              DropShadow: =DropShadow.None
+                              FillPortions: =1
+                              LayoutDirection: =LayoutDirection.Vertical
+                              LayoutGap: =2
+                              LayoutMinHeight: =56
+                              RadiusBottomLeft: =0
+                              RadiusBottomRight: =0
+                              RadiusTopLeft: =0
+                              RadiusTopRight: =0
+                            Children:
+                              - lblParentRequesterLbl_DBF:
+                                  Control: Label@2.5.1
+                                  Properties:
+                                    Color: =RGBA(107, 105, 98, 1)
+                                    FontWeight: =FontWeight.Semibold
+                                    Height: =20
+                                    Size: =9
+                                    Text: ="Requester"
+                                    Width: =Parent.Width
+                              - lblParentRequesterVal_DBF:
+                                  Control: Label@2.5.1
+                                  Properties:
+                                    Height: =24
+                                    Size: =11
+                                    Text: =gSelectedRequest.RequesterID.Value
+                                    Width: =Parent.Width
+                                    Wrap: =false
+                        - colParentProject_DBF:
+                            Control: GroupContainer@1.5.0
+                            Variant: AutoLayout
+                            Properties:
+                              DropShadow: =DropShadow.None
+                              FillPortions: =1
+                              LayoutDirection: =LayoutDirection.Vertical
+                              LayoutGap: =2
+                              LayoutMinHeight: =56
+                              RadiusBottomLeft: =0
+                              RadiusBottomRight: =0
+                              RadiusTopLeft: =0
+                              RadiusTopRight: =0
+                            Children:
+                              - lblParentProjectLbl_DBF:
+                                  Control: Label@2.5.1
+                                  Properties:
+                                    Color: =RGBA(107, 105, 98, 1)
+                                    FontWeight: =FontWeight.Semibold
+                                    Height: =20
+                                    Size: =9
+                                    Text: ="Related Project"
+                                    Width: =Parent.Width
+                              - lblParentProjectVal_DBF:
+                                  Control: Label@2.5.1
+                                  Properties:
+                                    Height: =24
+                                    Size: =11
+                                    Text: |-
+                                      =If(
+                                          IsBlank(gSelectedRequest.ProjectID),
+                                          "—",
+                                          gSelectedRequest.ProjectID & " · " & Coalesce(LookUp(Project_List, ProjectID = gSelectedRequest.ProjectID).Title, "")
+                                      )
+                                    Width: =Parent.Width
+                                    Wrap: =false
+                        - colParentDeliveries_DBF:
+                            Control: GroupContainer@1.5.0
+                            Variant: AutoLayout
+                            Properties:
+                              DropShadow: =DropShadow.None
+                              FillPortions: =1
+                              LayoutDirection: =LayoutDirection.Vertical
+                              LayoutGap: =2
+                              LayoutMinHeight: =56
+                              RadiusBottomLeft: =0
+                              RadiusBottomRight: =0
+                              RadiusTopLeft: =0
+                              RadiusTopRight: =0
+                            Children:
+                              - lblParentDeliveriesLbl_DBF:
+                                  Control: Label@2.5.1
+                                  Properties:
+                                    Color: =RGBA(107, 105, 98, 1)
+                                    FontWeight: =FontWeight.Semibold
+                                    Height: =20
+                                    Size: =9
+                                    Text: ="Deliveries Created So Far"
+                                    Width: =Parent.Width
+                              - lblParentDeliveriesVal_DBF:
+                                  Control: Label@2.5.1
+                                  Properties:
+                                    Height: =24
+                                    Size: =11
+                                    Text: =Text(CountRows(colSiblingBatches))
+                                    Width: =Parent.Width
+                                    Wrap: =false
+                        - colParentCurrency_DBF:
+                            Control: GroupContainer@1.5.0
+                            Variant: AutoLayout
+                            Properties:
+                              DropShadow: =DropShadow.None
+                              FillPortions: =1
+                              LayoutDirection: =LayoutDirection.Vertical
+                              LayoutGap: =2
+                              LayoutMinHeight: =56
+                              RadiusBottomLeft: =0
+                              RadiusBottomRight: =0
+                              RadiusTopLeft: =0
+                              RadiusTopRight: =0
+                            Children:
+                              - lblParentCurrencyLbl_DBF:
+                                  Control: Label@2.5.1
+                                  Properties:
+                                    Color: =RGBA(107, 105, 98, 1)
+                                    FontWeight: =FontWeight.Semibold
+                                    Height: =20
+                                    Size: =9
+                                    Text: ="Request Estimate (all deliveries)"
+                                    Width: =Parent.Width
+                              - lblParentCurrencyVal_DBF:
+                                  Control: Label@2.5.1
+                                  Properties:
+                                    Height: =24
+                                    Size: =11
+                                    Text: |-
+                                      =Text(gSelectedRequest.EstimatedCost, "#,###.00") & " " & gSelectedRequest.Currency
+                                    Width: =Parent.Width
+                                    Wrap: =false
+            - rowLineItems_DBF:
+                Control: GroupContainer@1.5.0
+                Variant: AutoLayout
+                Properties:
+                  DropShadow: =DropShadow.None
+                  Fill: =RGBA(255, 255, 255, 1)
+                  FillPortions: =0
+                  Height: =148 + CountRows(colBatchEntry) * 56
+                  LayoutDirection: =LayoutDirection.Vertical
+                  LayoutGap: =4
+                  LayoutMinHeight: =148 + CountRows(colBatchEntry) * 56
+                  PaddingLeft: =20
+                  PaddingRight: =20
+                  PaddingTop: =12
+                  RadiusBottomLeft: =0
+                  RadiusBottomRight: =0
+                  RadiusTopLeft: =0
+                  RadiusTopRight: =0
+                  Width: =Parent.Width
+                Children:
+                  - lblLineItemsTitle_DBF:
+                      Control: Label@2.5.1
+                      Properties:
+                        FillPortions: =0
+                        FontWeight: =FontWeight.Bold
+                        Height: =40
+                        Size: =12
+                        Text: ="Raw Materials In This Delivery *"
+                        Width: =Parent.Width - 40
+                  - lblLineItemsHint_DBF:
+                      Control: Label@2.5.1
+                      Properties:
+                        Color: =RGBA(136, 135, 128, 1)
+                        FillPortions: =0
+                        Height: =36
+                        Size: =10
+                        Text: ="Enter the quantity expected in THIS delivery for each material. Leave a quantity at 0 to leave that material out — it stays outstanding on the request and can go in a later delivery. Defaults to whatever is still outstanding."
+                        Width: =Parent.Width - 40
+                        Wrap: =true
+                  - rowColHeader_DBF:
+                      Control: GroupContainer@1.5.0
+                      Variant: AutoLayout
+                      Properties:
+                        DropShadow: =DropShadow.None
+                        Fill: =RGBA(232, 230, 221, 1)
+                        FillPortions: =0
+                        Height: =36
+                        LayoutAlignItems: =LayoutAlignItems.Center
+                        LayoutDirection: =LayoutDirection.Horizontal
+                        LayoutGap: =8
+                        PaddingLeft: =8
+                        PaddingRight: =8
+                        RadiusBottomLeft: =0
+                        RadiusBottomRight: =0
+                        Width: =Parent.Width - 40
+                      Children:
+                        - lblColName_DBF:
+                            Control: Label@2.5.1
+                            Properties:
+                              Color: =RGBA(107, 105, 98, 1)
+                              FillPortions: =1
+                              FontWeight: =FontWeight.Semibold
+                              Height: =36
+                              Size: =9
+                              Text: ="Trade Name"
+                              Width: =Parent.Width * 0.3
+                        - lblColUnit_DBF:
+                            Control: Label@2.5.1
+                            Properties:
+                              Color: =RGBA(107, 105, 98, 1)
+                              FontWeight: =FontWeight.Semibold
+                              Height: =36
+                              Size: =9
+                              Text: ="Unit"
+                              Width: =Parent.Width * 0.07
+                        - lblColOrdered_DBF:
+                            Control: Label@2.5.1
+                            Properties:
+                              Align: =Align.Center
+                              Color: =RGBA(107, 105, 98, 1)
+                              FontWeight: =FontWeight.Semibold
+                              Height: =36
+                              Size: =9
+                              Text: ="Ordered"
+                              Width: =Parent.Width * 0.1
+                        - lblColDelivered_DBF:
+                            Control: Label@2.5.1
+                            Properties:
+                              Align: =Align.Center
+                              Color: =RGBA(107, 105, 98, 1)
+                              FontWeight: =FontWeight.Semibold
+                              Height: =36
+                              Size: =9
+                              Text: ="Received So Far"
+                              Width: =Parent.Width * 0.12
+                        - lblColRemaining_DBF:
+                            Control: Label@2.5.1
+                            Properties:
+                              Align: =Align.Center
+                              Color: =RGBA(107, 105, 98, 1)
+                              FontWeight: =FontWeight.Semibold
+                              Height: =36
+                              Size: =9
+                              Text: ="Remaining"
+                              Width: =Parent.Width * 0.1
+                        - lblColBatchQty_DBF:
+                            Control: Label@2.5.1
+                            Properties:
+                              Align: =Align.Center
+                              Color: =RGBA(107, 105, 98, 1)
+                              FontWeight: =FontWeight.Semibold
+                              Height: =36
+                              Size: =9
+                              Text: ="Qty This Delivery *"
+                              Width: =Parent.Width * 0.14
+                  - galBatchEntry_DBF:
+                      Control: Gallery@2.15.0
+                      Variant: BrowseLayout_Vertical_TwoTextOneImageVariant_ver5.0
+                      Properties:
+                        BorderColor: =RGBA(232, 230, 221, 1)
+                        FillPortions: =0
+                        Height: =CountRows(colBatchEntry) * 56 + 12
+                        Items: =colBatchEntry
+                        ShowScrollbar: =false
+                        TemplatePadding: =0
+                        TemplateSize: =56
+                        Width: =Parent.Width - 40
+                      Children:
+                        - rowBatchItem_DBF:
+                            Control: GroupContainer@1.5.0
+                            Variant: AutoLayout
+                            Properties:
+                              DropShadow: =DropShadow.None
+                              Fill: =RGBA(255, 255, 255, 1)
+                              Height: =55
+                              LayoutAlignItems: =LayoutAlignItems.Center
+                              LayoutDirection: =LayoutDirection.Horizontal
+                              LayoutGap: =8
+                              PaddingLeft: =8
+                              PaddingRight: =8
+                              RadiusBottomLeft: =0
+                              RadiusBottomRight: =0
+                              RadiusTopLeft: =0
+                              RadiusTopRight: =0
+                              Width: =Parent.Width
+                            Children:
+                              - colItemName_DBF:
+                                  Control: GroupContainer@1.5.0
+                                  Variant: AutoLayout
+                                  Properties:
+                                    DropShadow: =DropShadow.None
+                                    FillPortions: =1
+                                    LayoutDirection: =LayoutDirection.Vertical
+                                    LayoutGap: =2
+                                    LayoutJustifyContent: =LayoutJustifyContent.Center
+                                    LayoutMinHeight: =55
+                                    RadiusBottomLeft: =0
+                                    RadiusBottomRight: =0
+                                    RadiusTopLeft: =0
+                                    RadiusTopRight: =0
+                                    Width: =Parent.Width * 0.3
+                                  Children:
+                                    - lblItemName_DBF:
+                                        Control: Label@2.5.1
+                                        Properties:
+                                          Height: =20
+                                          Size: =11
+                                          Text: =ThisItem.MaterialName
+                                          Width: =Parent.Width
+                                          Wrap: =false
+                                    - lblItemSubtitle_DBF:
+                                        Control: Label@2.5.1
+                                        Properties:
+                                          Color: =RGBA(136, 135, 128, 1)
+                                          Height: =16
+                                          Size: =8
+                                          Text: |-
+                                            =With({wMat: LookUp('Raw Materials', ID = ThisItem.MaterialID)}, If(IsBlank(wMat), "", wMat.Code & " · " & wMat.Category & " · " & wMat.Supplier))
+                                          Width: =Parent.Width
+                                          Wrap: =false
+                              - lblItemUnit_DBF:
+                                  Control: Label@2.5.1
+                                  Properties:
+                                    Color: =RGBA(136, 135, 128, 1)
+                                    Size: =11
+                                    Text: =ThisItem.Unit
+                                    Width: =Parent.Width * 0.07
+                                    Wrap: =false
+                              - lblItemOrdered_DBF:
+                                  Control: Label@2.5.1
+                                  Properties:
+                                    Align: =Align.Center
+                                    Size: =11
+                                    Text: =Text(ThisItem.OrderedQty)
+                                    Width: =Parent.Width * 0.1
+                                    Wrap: =false
+                              - lblItemDelivered_DBF:
+                                  Control: Label@2.5.1
+                                  Properties:
+                                    Align: =Align.Center
+                                    Color: =RGBA(136, 135, 128, 1)
+                                    Size: =11
+                                    Text: =Text(ThisItem.DeliveredQty)
+                                    Width: =Parent.Width * 0.12
+                                    Wrap: =false
+                              - lblItemRemaining_DBF:
+                                  Control: Label@2.5.1
+                                  Properties:
+                                    Align: =Align.Center
+                                    Color: |-
+                                      =If(ThisItem.RemainingQty <= 0, RGBA(15, 110, 86, 1), RGBA(133, 79, 11, 1))
+                                    FontWeight: =FontWeight.Semibold
+                                    Size: =11
+                                    Text: =Text(ThisItem.RemainingQty)
+                                    Width: =Parent.Width * 0.1
+                                    Wrap: =false
+                              - txtBatchQty_DBF:
+                                  Control: TextInput@0.0.54
+                                  Properties:
+                                    Align: =Align.Center
+                                    Height: =40
+                                    OnChange: |-
+                                      =UpdateIf(colBatchEntry, ParentLineItemID = ThisItem.ParentLineItemID, {BatchQty: Value(Self.Value)})
+                                    Placeholder: ="0"
+                                    Value: =If(IsBlank(ThisItem.BatchQty) || ThisItem.BatchQty = 0, "", Text(ThisItem.BatchQty))
+                                    Width: =Parent.Width * 0.14
+            - rowDeliveryDate_DBF:
+                Control: GroupContainer@1.5.0
+                Variant: AutoLayout
+                Properties:
+                  DropShadow: =DropShadow.None
+                  FillPortions: =0
+                  Height: =110
+                  LayoutDirection: =LayoutDirection.Horizontal
+                  LayoutGap: =20
+                  LayoutMinHeight: =110
+                  PaddingLeft: =20
+                  PaddingRight: =20
+                  PaddingTop: =12
+                  RadiusBottomLeft: =0
+                  RadiusBottomRight: =0
+                  RadiusTopLeft: =0
+                  RadiusTopRight: =0
+                  Width: =Parent.Width
+                Children:
+                  - colDeliveryDate_DBF:
+                      Control: GroupContainer@1.5.0
+                      Variant: AutoLayout
+                      Properties:
+                        DropShadow: =DropShadow.None
+                        FillPortions: =1
+                        LayoutDirection: =LayoutDirection.Vertical
+                        LayoutGap: =4
+                        LayoutMinHeight: =92
+                        RadiusBottomLeft: =0
+                        RadiusBottomRight: =0
+                        RadiusTopLeft: =0
+                        RadiusTopRight: =0
+                      Children:
+                        - lblDeliveryDateLbl_DBF:
+                            Control: Label@2.5.1
+                            Properties:
+                              FontWeight: =FontWeight.Semibold
+                              Height: =24
+                              Size: =11
+                              Text: ="Expected Delivery Date *"
+                              Width: =Parent.Width
+                        - dpBatchDeliveryDate:
+                            Control: ModernDatePicker@1.0.1
+                            Properties:
+                              DefaultDate: =gSelectedRequest.RequiredDeliveryDate
+                              Format: ="dd/mm/yyyy"
+                              Height: =40
+                              Placeholder: ="Choose a date"
+                              Width: =Parent.Width
+                        - lblDeliveryDateHint_DBF:
+                            Control: Label@2.5.1
+                            Properties:
+                              Color: =RGBA(136, 135, 128, 1)
+                              Height: =20
+                              Size: =9
+                              Text: ="This delivery's own date — it is what the receiver's notification email shows."
+                              Width: =Parent.Width
+                              Wrap: =false
+                  - colInvoiceMode_DBF:
+                      Control: GroupContainer@1.5.0
+                      Variant: AutoLayout
+                      Properties:
+                        DropShadow: =DropShadow.None
+                        FillPortions: =1
+                        LayoutDirection: =LayoutDirection.Vertical
+                        LayoutGap: =4
+                        LayoutMinHeight: =92
+                        RadiusBottomLeft: =0
+                        RadiusBottomRight: =0
+                        RadiusTopLeft: =0
+                        RadiusTopRight: =0
+                      Children:
+                        - lblInvoiceModeLbl_DBF:
+                            Control: Label@2.5.1
+                            Properties:
+                              FontWeight: =FontWeight.Semibold
+                              Height: =24
+                              Size: =11
+                              Text: ="Invoice Handling For This Delivery *"
+                              Width: =Parent.Width
+                        - rdoBatchInvoiceMode:
+                            Control: Radio@0.0.25
+                            Properties:
+                              Height: =40
+                              Items: |-
+                                =If(
+                                    Not(IsBlank(gSelectedRequest.RequesterInvoiceURL)) && IsEmpty(Filter(colSiblingBatches, InvoiceMode.Value = "ViaRequester")),
+                                    ["Direct", "Deferred", "ViaRequester"],
+                                    ["Direct", "Deferred"]
+                                )
+                              Layout: ='RadioGroupCanvas.Layout'.Horizontal
+                              Width: =Parent.Width
+                        - lblInvoiceModeHint_DBF:
+                            Control: Label@2.5.1
+                            Properties:
+                              Color: =RGBA(136, 135, 128, 1)
+                              Height: =20
+                              Size: =9
+                              Text: |-
+                                =If(
+                                    Not(IsBlank(gSelectedRequest.RequesterInvoiceURL)) && IsEmpty(Filter(colSiblingBatches, InvoiceMode.Value = "ViaRequester")),
+                                    "Direct = invoice on hand · Deferred = invoice arrives later · ViaRequester = use the invoice the Requester already uploaded",
+                                    "Direct = invoice on hand · Deferred = invoice arrives later. The Requester's invoice is either absent or already claimed by another delivery."
+                                )
+                              Width: =Parent.Width
+                              Wrap: =false
+            - rowDelegation_DBF:
+                Control: GroupContainer@1.5.0
+                Variant: AutoLayout
+                Properties:
+                  DropShadow: =DropShadow.None
+                  FillPortions: =0
+                  Height: =160
+                  LayoutDirection: =LayoutDirection.Vertical
+                  LayoutGap: =4
+                  LayoutMinHeight: =160
+                  PaddingLeft: =20
+                  PaddingRight: =20
+                  PaddingTop: =12
+                  RadiusBottomLeft: =0
+                  RadiusBottomRight: =0
+                  RadiusTopLeft: =0
+                  RadiusTopRight: =0
+                  Width: =Parent.Width
+                Children:
+                  - lblDelegationTitle_DBF:
+                      Control: Label@2.5.1
+                      Properties:
+                        FillPortions: =0
+                        FontWeight: =FontWeight.Semibold
+                        Height: =28
+                        Size: =11
+                        Text: ="Who Will Receive This Delivery?"
+                        Width: =Parent.Width - 40
+                  - rdoBatchDelegation_DBF:
+                      Control: Radio@0.0.25
+                      Properties:
+                        DefaultSelectedItems: =["Assign later"]
+                        FillPortions: =0
+                        Height: =40
+                        Items: =["Assign later", "Assign to someone else"]
+                        Layout: ='RadioGroupCanvas.Layout'.Horizontal
+                        OnChange: =Set(gBatchDelegationMode, Self.Selected.Value)
+                        Width: =Parent.Width - 40
+                  - ddBatchReceiver:
+                      Control: ModernCombobox@1.1.1
+                      Properties:
+                        AllowExternalSelectedItems: =false
+                        FillPortions: =0
+                        FontWeight: =""
+                        Height: =40
+                        InputTextPlaceholder: ="Select an employee"
+                        ItemDisplayText: =ThisItem.Title
+                        Items: =Sort(Filter('Employee List', ID in ForAll(Filter('RM User', IsActive), EmployeeID.Id)), Title, SortOrder.Ascending)
+                        SelectMultiple: =false
+                        Size: =0
+                        Visible: =gBatchDelegationMode = "Assign to someone else"
+                        Width: =Parent.Width - 40
+                  - lblDelegationHint_DBF:
+                      Control: Label@2.5.1
+                      Properties:
+                        Color: =RGBA(136, 135, 128, 1)
+                        FillPortions: =0
+                        Height: =28
+                        Size: =9
+                        Text: ="Leave as 'Assign later' to let the Requester receive it themselves. Only employees who can sign in to this app are listed."
+                        Width: =Parent.Width - 40
+                        Wrap: =false
+            - rowBatchNotes_DBF:
+                Control: GroupContainer@1.5.0
+                Variant: AutoLayout
+                Properties:
+                  DropShadow: =DropShadow.None
+                  FillPortions: =0
+                  Height: =130
+                  LayoutDirection: =LayoutDirection.Vertical
+                  LayoutGap: =4
+                  LayoutMinHeight: =130
+                  PaddingBottom: =20
+                  PaddingLeft: =20
+                  PaddingRight: =20
+                  PaddingTop: =12
+                  RadiusBottomLeft: =0
+                  RadiusBottomRight: =0
+                  RadiusTopLeft: =0
+                  RadiusTopRight: =0
+                  Width: =Parent.Width
+                Children:
+                  - lblBatchNotesLbl_DBF:
+                      Control: Label@2.5.1
+                      Properties:
+                        FillPortions: =0
+                        FontWeight: =FontWeight.Semibold
+                        Height: =24
+                        Size: =11
+                        Text: ="Notes (optional)"
+                        Width: =Parent.Width - 40
+                  - txtBatchNotes:
+                      Control: TextInput@0.0.54
+                      Properties:
+                        FillPortions: =0
+                        Height: =64
+                        Mode: =TextMode.MultiLine
+                        Placeholder: ="Anything the receiver or Accounting should know about this delivery"
+                        Width: =Parent.Width - 40
+      - conActionBar_DBF:
+          Control: GroupContainer@1.5.0
+          Variant: AutoLayout
+          Properties:
+            DropShadow: =DropShadow.None
+            Fill: =RGBA(255, 255, 255, 1)
+            Height: =60
+            LayoutAlignItems: =LayoutAlignItems.Center
+            LayoutDirection: =LayoutDirection.Horizontal
+            LayoutGap: =12
+            LayoutJustifyContent: =LayoutJustifyContent.SpaceBetween
+            PaddingBottom: =8
+            PaddingLeft: =20
+            PaddingRight: =20
+            PaddingTop: =8
+            RadiusBottomLeft: =0
+            RadiusBottomRight: =0
+            RadiusTopLeft: =0
+            RadiusTopRight: =0
+            Width: =Parent.Width
+            Y: =Parent.Height - 60
+          Children:
+            - btnBack_DBF:
+                Control: Button@0.0.45
+                Properties:
+                  Height: =36
+                  OnSelect: =Navigate(RequestDetailScreen)
+                  Text: ="← Back"
+                  Width: =100
+            - conActionBarBtn_DBF:
+                Control: GroupContainer@1.5.0
+                Variant: AutoLayout
+                Properties:
+                  AlignInContainer: =AlignInContainer.SetByContainer
+                  DropShadow: =DropShadow.None
+                  Height: =44
+                  LayoutAlignItems: =LayoutAlignItems.Center
+                  LayoutDirection: =LayoutDirection.Horizontal
+                  LayoutGap: =10
+                  LayoutJustifyContent: =LayoutJustifyContent.End
+                  RadiusBottomLeft: =0
+                  RadiusBottomRight: =0
+                  RadiusTopLeft: =0
+                  RadiusTopRight: =0
+                  Width: =400
+                Children:
+                  - lblBatchSummary_DBF:
+                      Control: Label@2.5.1
+                      Properties:
+                        Align: =Align.Right
+                        Color: =RGBA(136, 135, 128, 1)
+                        Height: =36
+                        Size: =10
+                        Text: |-
+                          =CountRows(Filter(colBatchEntry, BatchQty > 0)) & " of " & CountRows(colBatchEntry) & " materials selected"
+                        Width: =220
+                        Wrap: =false
+                  - btnCreateBatch_DBF:
+                      Control: Button@0.0.45
+                      Properties:
+                        Height: =36
+                        OnSelect: |-
+                          =If(
+                              IsEmpty(Filter(colBatchEntry, BatchQty > 0)),
+                              Notify("Please enter a quantity for at least one material in this delivery", NotificationType.Error),
+                              If(
+                                  Not(IsEmpty(Filter(colBatchEntry, BatchQty > RemainingQty))),
+                                  Notify("A quantity exceeds what is still outstanding on the request. Reduce it, or set it to 0 to leave that material out.", NotificationType.Error),
+                                  If(
+                                      IsBlank(dpBatchDeliveryDate.SelectedDate),
+                                      Notify("Please pick the expected delivery date", NotificationType.Error),
+                                      If(
+                                          IsBlank(rdoBatchInvoiceMode.Selected.Value),
+                                          Notify("Please choose how the invoice for this delivery is handled", NotificationType.Error),
+                                          If(
+                                              gBatchDelegationMode = "Assign to someone else" && IsBlank(ddBatchReceiver.Selected),
+                                              Notify("Please select the employee who will receive this delivery", NotificationType.Error),
+                                                  With(
+                                                      {wLatest: LookUp('RM Procurement Requests', ID = gSelectedRequest.ID)},
+                                                      If(
+                                                          wLatest.Status.Value <> "In Delivery",
+                                                          Notify("This request is no longer open for new deliveries. Your entry has been cancelled.", NotificationType.Warning);
+                                                          Navigate(HomeScreen),
+                                                          If(
+                                                              Coalesce(wLatest.DeliveryCount, 0) + 1 <> gDeliveryNumber,
+                                                              Notify("Another delivery has just been created for this request. Please reopen this screen and try again.", NotificationType.Warning);
+                                                              Navigate(RequestDetailScreen),
+                                                              With(
+                                                                  {wBatch: Patch(
+                                                                      'RM Procurement Requests',
+                                                                      Defaults('RM Procurement Requests'),
+                                                                      {
+                                                                          Title: gSelectedRequest.Title & " - #" & gDeliveryNumber,
+                                                                          RequestType: {Value: "Delivery"},
+                                                                          ParentRequestID: gSelectedRequest.ID,
+                                                                          GroupKey: gSelectedRequest.ID,
+                                                                          DeliveryNumber: gDeliveryNumber,
+                                                                          DeliveryCount: 0,
+                                                                          Status: {Value: "Goods Receipt & Acceptance"},
+                                                                          RequesterID: {Id: gSelectedRequest.RequesterID.Id, Value: gSelectedRequest.RequesterID.Value},
+                                                                          RequesterEmail: gSelectedRequest.RequesterEmail,
+                                                                          ManagerApproverID: {Id: gSelectedRequest.ManagerApproverID.Id, Value: gSelectedRequest.ManagerApproverID.Value},
+                                                                          ProjectID: gSelectedRequest.ProjectID,
+                                                                          ProcurementType: {Value: gSelectedRequest.ProcurementType.Value},
+                                                                          InvoiceType: If(IsBlank(gSelectedRequest.InvoiceType.Value), Blank(), {Value: gSelectedRequest.InvoiceType.Value}),
+                                                                          ProcurementDescription: "Delivery batch #" & gDeliveryNumber & " of request #" & gSelectedRequest.ID & If(IsBlank(txtBatchNotes.Value), "", Char(10) & txtBatchNotes.Value),
+                                                                          PurchaseAccordance: {Value: gSelectedRequest.PurchaseAccordance.Value},
+                                                                          EstimatedCost: 0,
+                                                                          Currency: gSelectedRequest.Currency,
+                                                                          RequiredDeliveryDate: dpBatchDeliveryDate.SelectedDate,
+                                                                          DeliveryLocation: {Value: "Port Melbourne Warehouse"},
+                                                                          CostCenter: {Value: "Port Melbourne Warehouse"},
+                                                                          InvoiceRegion: {Value: gSelectedRequest.InvoiceRegion.Value},
+                                                                          InvoiceMode: {Value: rdoBatchInvoiceMode.Selected.Value},
+                                                                          InvoiceSubmitted: false,
+                                                                          RequesterInvoiceURL: If(rdoBatchInvoiceMode.Selected.Value = "ViaRequester", gSelectedRequest.RequesterInvoiceURL, ""),
+                                                                          ReceiptRoundCount: 0,
+                                                                          SkippedManagerReview: false,
+                                                                          GRAssignedToID: If(gBatchDelegationMode = "Assign to someone else", {Id: ddBatchReceiver.Selected.ID, Value: ddBatchReceiver.Selected.Title}, Blank()),
+                                                                          ProcurementExecutedBy: {Id: gCurrentEmployee.ID, Value: gCurrentEmployee.Title},
+                                                                          ProcurementExecutedAt: Now()
+                                                                      }
+                                                                  )},
+                                                                  If(
+                                                                      IsBlank(wBatch.ID),
+                                                                      Notify("Failed to create the delivery. Please try again.", NotificationType.Error),
+                                                                      ForAll(
+                                                                          Filter(colBatchEntry, BatchQty > 0) As be,
+                                                                          Patch(
+                                                                              'RM Procurement Line Items',
+                                                                              Defaults('RM Procurement Line Items'),
+                                                                              {
+                                                                                  RequestID: {Id: wBatch.ID, Value: wBatch.Title},
+                                                                                  RequestIDText: Text(wBatch.ID),
+                                                                                  ParentLineItemID: be.ParentLineItemID,
+                                                                                  MaterialID: {Id: be.MaterialID, Value: be.MaterialName},
+                                                                                  MaterialName: be.MaterialName,
+                                                                                  Unit: be.Unit,
+                                                                                  Quantity: be.BatchQty
+                                                                              }
+                                                                          )
+                                                                      );
+                                                                      Patch('RM Procurement Requests', {ID: gSelectedRequest.ID}, {DeliveryCount: gDeliveryNumber});
+                                                                      Patch(
+                                                                          'RM Procurement Execution Log',
+                                                                          Defaults('RM Procurement Execution Log'),
+                                                                          {
+                                                                              Title: "Step 7 - Delivery Batch #" & gDeliveryNumber & " Created - " & gSelectedRequest.Title,
+                                                                              RequestID: {Id: gSelectedRequest.ID, Value: gSelectedRequest.Title},
+                                                                              RequestIDText: Text(gSelectedRequest.ID),
+                                                                              StepNumber: 7,
+                                                                              StepName: {Value: "Delivery Batch Created"},
+                                                                              RoundNumber: gDeliveryNumber,
+                                                                              ExecutedBy: {Id: gCurrentEmployee.ID, Value: gCurrentEmployee.Title},
+                                                                              ExecutedAt: Now(),
+                                                                              Notes: txtBatchNotes.Value
+                                                                          }
+                                                                      );
+                                                                      If(
+                                                                          gBatchDelegationMode = "Assign to someone else",
+                                                                          ProcurementNotify.Run(
+                                                                              ddBatchReceiver.Selected.email,
+                                                                              ddBatchReceiver.Selected.Title,
+                                                                              wBatch.Title,
+                                                                              wBatch.ID,
+                                                                              "GoodsReceipt",
+                                                                              Text(dpBatchDeliveryDate.SelectedDate, "dd/mm/yyyy"),
+                                                                              "",
+                                                                              "Max Biocare · Raw Materials Procurement"
+                                                                          )
+                                                                      );
+                                                                      Set(gSelectedRequest, LookUp('RM Procurement Requests', ID = gSelectedRequest.ID));
+                                                                      Notify("Delivery #" & gDeliveryNumber & " created with " & CountRows(Filter(colBatchEntry, BatchQty > 0)) & " material(s).", NotificationType.Success);
+                                                                      Navigate(RequestDetailScreen)
+                                                                  )
+                                                              )
+                                                          )
+                                                      )
+                                                  )
+                                              )
+                                          )
+                                      )
+                                  )
+                              )
+                        Text: ="Create Delivery →"
+                        Width: =180

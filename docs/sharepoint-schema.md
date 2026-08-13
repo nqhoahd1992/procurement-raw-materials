@@ -30,10 +30,20 @@ Does **not** have a `Category`, `PreferredSupplier`, or `Department` column (all
 
 `RelatedSKU` is optional and **multi-value**: `cmbSKU` (`ModernCombobox`, `SelectMultiple: =true`, sits in its own row above the Raw Materials section) lets the requester link the request to one or more product SKUs, sourced from `Product_Database_SKU_Master` — a data source not otherwise used anywhere else in this app. Written on submit as `ForAll(cmbSKU.SelectedItems, {Id: ID, Value: Title})` (a table of `{Id,Value}`, matching a multi-value SharePoint Lookup column) — **not** `cmbSKU.Selected` (single-select shape). Empty table if nothing is selected.
 
+**This list now holds TWO kinds of row** — the Requester's request (parent) and the per-delivery batch Procurement creates from it (child). See "The two request types" below for what a child writes into every column. `RequestType` is the discriminator.
+
 | Column | Type | Notes |
 |---|---|---|
-| `Title` (Title) | Text | Auto-built: `<employee> - <dd/mm/yyyy>` (no longer includes Category — see removal note above) |
-| `Status` ⚠ | Choice | **Drives the workflow** — value list below |
+| `Title` (Title) | Text | Parent: `<employee> - <dd/mm/yyyy>`. Child: `<parent Title> - #<DeliveryNumber>`. **Not unique and not a key** — nothing prevents two children with the same number except the `DeliveryCount` allocation guard below |
+| `RequestType` ⬅ **new** | Choice | `Request` (parent) · `Delivery` (child). **Existing rows must be back-filled to `Request`** — a SharePoint column default applies only to new items, and `RequestType.Value = "Request"` does not match blank, so an un-backfilled row disappears from `HomeScreen` for every role. Do **not** use `IsBlank(ParentRequestID)` as a substitute discriminator: `IsBlank()` on a Number is not delegable (same reason `COAMissing` exists) |
+| `ParentRequestID` ⬅ **new** | Number | Blank/0 on a parent; the parent's `ID` on a child. Plain **Number**, not a Lookup, so `=` delegates |
+| `DeliveryNumber` ⬅ **new** | Number | `0` on a parent, `1..n` on a child. **Named `DeliveryNumber`, not `BatchNumber`** — `'RM Procurement Receipt Rounds'.BatchNumber` already means the *material's lot number*, and reusing the word across the two lists made every formula ambiguous |
+| `DeliveryCount` ⬅ **new** | Number | On the **parent** — how many deliveries have been created. `DeliveryBatchFormScreen` allocates the next number as `DeliveryCount + 1` and re-reads the parent to abort if it changed; `Max(DeliveryNumber)` over the siblings would still race |
+| `GroupKey` ⬅ **new** | Number | = own `ID` on a parent, = parent's `ID` on a child. **Sort key only.** `HomeScreen` sorts `GroupKey` desc then `DeliveryNumber` asc, which is what puts each parent directly above its own deliveries in one flat delegable gallery. Written by a **second** `Patch` on create, because `ID` isn't known until the row exists — a parent missing `GroupKey` sinks silently to the bottom of the list |
+| `ClosedByID` ⬅ **new** | Lookup→Employee List | who closed the parent |
+| `ClosedAt` ⬅ **new** | DateTime | when the parent was closed |
+| `CloseRemarks` ⬅ **new** | Text (multiline) | required when closing — the written reason, which matters most when the supplier under-delivered and the shortfall is being written off |
+| `Status` ⚠ | Choice | **Drives the workflow** — value list below. The parent's and the child's status sets are **disjoint** |
 | `RequesterEmail` ⚠ | Text | `User().Email`; "my requests" filter key |
 | `ProjectID` | Text | The related `project-list` project's business key (`Project_List.ProjectID`), set from `ddProject_1` when `rdoHasProject = "Yes"`; blank when the request isn't tied to a project |
 | `RelatedSKU` | Lookup→Product_Database_SKU_Master (multi) | Optional, multi-value; set from `cmbSKU` — see note above. Empty if nothing selected |
@@ -100,9 +110,52 @@ Trade-off of inlining: changing an option list is now a `.pa.yaml` edit pasted b
 | `SupplierFollowUpNotes` | `…Notes` (Step 5, one row per round) |
 | `FollowUpCompletedAt` | `…ExecutedAt` on the **final** Step-5 row. Deleted for a different reason from the rest: it was never per-round, just write-only — the app wrote it and no screen ever read it |
 
+### The two request types
+
+Both live in `'RM Procurement Requests'`; `RequestType` tells them apart.
+
+| | `Request` (parent) | `Delivery` (child) |
+|---|---|---|
+| Created by | Requester, `RequestFormScreen` | Procurement, `DeliveryBatchFormScreen` |
+| Line items | all materials requested | only the materials in this delivery, with that delivery's quantity, each carrying `ParentLineItemID` |
+| Invoice columns | **unused** — the parent never carries an invoice any more | its own `InvoiceMode` / `InvoiceSubmitted` / `OfficialInvoiceLink`. **This is what makes one request able to have many invoices** |
+| Receipt rounds | none of its own; rolls up its children's via `ParentRequestID` | its own, `RequestIDText` = the child's ID |
+| Legal `Status` | `Pending Manager`, `Pending Executive`, `Pending Procurement`, `In Delivery`, `Closed`, `Rejected` | `Goods Receipt & Acceptance`, `Pending Supplier Follow-up`, `Pending Invoice`, `Pending Accounting`, `Completed`, `Cancelled` |
+
+Because the two sets are disjoint, every existing `Status` gate on the downstream screens is **already type-safe** and needed no `RequestType` check added. `RequestType` is only consulted by `HomeScreen`'s Manager branch and by presentation logic.
+
+**What a child writes into each Required ⚠ column** (a `Patch` omitting any of them fails, surfacing only as a generic "Failed to create the delivery"):
+
+| Column | Child's value | Why it matters |
+|---|---|---|
+| `RequesterEmail` ⚠ | copy of parent | **Load-bearing** — `HomeScreen`'s default branch, `btnActionGoodsReceipt.Visible` and `btnSubmit_GR`'s guard all key on it |
+| `ManagerApproverID` ⚠ | copy of parent | Required, so unavoidable. It is why `HomeScreen`'s Manager branch adds `&& RequestType.Value = "Request"` — otherwise every manager sees every delivery of every request they ever approved |
+| `EstimatedCost` ⚠ | **`0`** | Copying the parent's figure would multiply any `Sum(EstimatedCost)` by (1 + deliveries). Nothing sums it today, so `0` costs nothing and keeps the table additive-safe. `HomeScreen`'s meta line already hides a `0` cost |
+| `RequiredDeliveryDate` ⚠ | **this delivery's own date**, from the form | It is what `ProcurementNotify` arg 6 prints in the receiver's email and what the goods-receipt reminder flow prints. Copying the parent's date is a silently wrong email |
+| `ProcurementDescription` ⚠ | `"Delivery batch #n of request #N"` + optional notes | **Never a verbatim copy** — that would make parent and child indistinguishable in Quick View and in every SharePoint list view |
+| `InvoiceRegion` ⚠ | copy of parent | `Submit_Invoice` param 15 is read off the row being invoiced; blank here files the invoice into the wrong folder |
+| `RequesterID` ⚠, `ProcurementType` ⚠, `PurchaseAccordance` ⚠, `Currency` ⚠ | copy of parent | display + valid-choice requirements |
+| `DeliveryLocation` ⚠, `CostCenter` ⚠ | `"Port Melbourne Warehouse"` | hardcoded everywhere |
+
+Non-required but deliberate on a child:
+
+| Column | Child's value | Why |
+|---|---|---|
+| `ProjectID` | **copy of parent — mandatory in practice** | `Submit_Invoice` resolves the project itself from the request ID at param 2, which is now the *child's* ID. Blank here ⇒ `Procurement_InvoiceData.ProjectID` blank ⇒ the Manager/Executive Actual-Cost panel silently under-reports, with the flow run still Succeeded. **Verified against the live flow — see "What `Submit_Invoice` actually reads" below: `ProjectID` is the only request column it touches** |
+| `RequirementFiles` | **never copied** | `colRequirementFiles` composes URLs as `gSharePointAttachmentBase & Text(<request ID>) & …` and the files are attached to the **parent's** item. A copied name-list would 404 on three screens. `RequestDetailScreen` instead reads the parent's list and builds the URLs from `ParentRequestID` |
+| `isExecutivePayment` | **never copied** | copying `true` would put a "Process Payment →" button on a delivery |
+| `RelatedSKU` | skipped | avoids a second multi-value Lookup write that nothing reads |
+
 ### `Status` choice values and routing (exact strings — used as literals across all screens)
 
-`Pending Manager`, `Pending Executive`, `Pending Procurement`, `Goods Receipt & Acceptance`, `Pending Supplier Follow-up`, `Pending Invoice`, `Pending Accounting`, `Completed`, `Rejected`.
+`Pending Manager`, `Pending Executive`, `Pending Procurement`, **`In Delivery`**, **`Closed`**, `Goods Receipt & Acceptance`, `Pending Supplier Follow-up`, `Pending Invoice`, `Pending Accounting`, `Completed`, **`Cancelled`**, `Rejected`.
+
+The three new values:
+- **`In Delivery`** (parent) — set by `ProcurementExecutionScreen` on Proceed. The parent's lifecycle ends here; it is now an open container that Procurement adds deliveries to. **This breaks the invariant both reminder flows rest on** ("being in a status means the work on *this row* is incomplete") — an `In Delivery` parent is waiting on its children, not on anyone acting on itself. `Closed` is what drains it.
+- **`Closed`** (parent, terminal) — set manually by Procurement/Admin via `RequestDetailScreen`'s Close Request dialog. Requires `CloseRemarks`, and is blocked while any child is neither `Completed` nor `Cancelled`. **Deliberately allowed when the delivered quantity is short of ordered** — the supplier may never deliver in full, so a short close is a normal outcome that just needs a written reason. There is no auto-close.
+- **`Cancelled`** (child, terminal) — a delivery created in error. Blocked once `ReceiptRoundCount > 0`. Without it a mistaken delivery would be immortal (round 1 deliberately has no `Rejected`, and a child passes no approval screen), and it would block the parent from ever being closable.
+
+`Rejected` on a parent is reachable from exactly two places, both terminal: Executive Reject (`ExecutiveApprovalScreen`) and Procurement Reject (`ProcurementExecutionScreen`). A request rejected at Procurement never has any delivery — which is why the "+ Add Delivery" button gates on `Status = "In Delivery"` rather than on "has passed Procurement Execution".
 
 Routing is **not** a straight line — see `CLAUDE.md`'s "The workflow" section for the full branching diagram. The two most important corrections vs. older assumptions:
 - `"Completed"` is set in **exactly one place in the whole app**: `AccountingScreen`'s submit (`Patch(..., {Status: {Value: "Completed"}, ...})`). Neither `GoodsReceiptScreen` nor `SupplierFollowUpScreen` ever sets `Status` to `"Completed"` directly — both route to `"Pending Invoice"` or `"Pending Accounting"` depending on `InvoiceSubmitted`.
@@ -120,11 +173,14 @@ Required ⚠: none enforced by schema, but the app always writes `RequestID`, `R
 |---|---|---|
 | `Title` (Title) | Text | Not set by the app's `Patch` — left blank/default |
 | `RequestID` | Lookup→'RM Procurement Requests' | `{Id: wNewRequest.ID, Value: wNewRequest.Title}`, written once per line item via `ForAll` on `RequestFormScreen` submit |
-| `RequestIDText` | Text | join key — `Filter('RM Procurement Line Items', RequestIDText = Text(gSelectedRequest.ID))` on every downstream screen |
+| `RequestIDText` | Text | join key — `Filter('RM Procurement Line Items', RequestIDText = Text(gSelectedRequest.ID))` on every downstream screen. **May point at either a parent or a delivery** (see below) |
+| `ParentLineItemID` ⬅ **new** | Number | `0` on a parent's rows; on a delivery's rows, the `ID` of the parent line item it draws down. This is what lets the parent roll up "delivered so far per material" across all its deliveries |
 | `MaterialID` | Lookup→'Raw Materials' | `{Id: MaterialID, Value: MaterialName}` |
 | `MaterialName` | Text | copy of the raw material's `Title` at the time the line item was added |
 | `Unit` | Text | one of `pcs`, `kg`, `box`, `set`, `liter`, `meter` (hardcoded list on `RequestFormScreen`, not a Choice column) |
 | `Quantity` | Number | |
+
+**This list now holds rows for both request types.** A parent's rows are what the Requester asked for (`ParentLineItemID = 0`); a delivery's rows are the subset Procurement says is arriving in that delivery, with that delivery's quantity. **This is the fix for the original complaint** — `GoodsReceiptScreen` still does the same unchanged `Filter(…, RequestIDText = Text(gSelectedRequest.ID))`, but because it now runs against a delivery it naturally lists only that delivery's materials instead of every material on the request. `Quantity` on a delivery row therefore means *expected in this delivery*, not *ordered*, and `colRoundEntry.OrderedQty` (and the "Ordered" column on both receipt screens) inherits that meaning.
 
 **Nothing about receiving lives on this list.** The 14 `…1` / `…2` columns it used to carry (`ReceivedQty1` `BatchNumber1` `ExpiryDate1` `QCNumber1` `RMPKCode1` `COALink1` `COA1Missing` and the matching `…2` set) were **deleted** when receipt rounds became unbounded — two fixed column sets can only ever hold two rounds. Per-round receipt data is now one row per (line item × round) in `'RM Procurement Receipt Rounds'`. No formula anywhere in the app reads the deleted columns.
 
@@ -213,9 +269,9 @@ Required ⚠: none.
 | `Title` (Title) | Text | `Step <n> - <name> - <request title>` |
 | `RequestID` | Lookup (→ID) | `{Id,Value}` |
 | `RequestIDText` | Text | join key |
-| `StepNumber` | Number | `1` Procurement Execution · `2` Accounting Handover (written by `AccountingScreen`'s submit, i.e. at completion — despite the "handover" name it records the accounting step being *done*, not assigned) · `3` Goods Receipt **round 1** · `4` Goods Receipt **round N ≥ 2** · `5` Supplier Follow-up (Procurement, the `Accepted with Adjustment` close-out) · `6` Invoice Submission |
-| `StepName` | Choice | matches the step |
-| `RoundNumber` ⬅ **new** | Number | which receipt round this row belongs to. Step 3 always `1`; step 4 = `N`; step 5 = the round it follows up on. **Blank on rows written before the unlimited-rounds change** — every reader coalesces to `If(StepNumber = 3, 1, 2)` |
+| `StepNumber` | Number | `1` Procurement Execution · `2` Accounting Handover (written by `AccountingScreen`'s submit, i.e. at completion — despite the "handover" name it records the accounting step being *done*, not assigned) · `3` Goods Receipt **round 1** · `4` Goods Receipt **round N ≥ 2** · `5` Supplier Follow-up (Procurement, the `Accepted with Adjustment` close-out) · `6` Invoice Submission · **`7` Delivery Batch Created** · **`8` Request Closed** |
+| `StepName` | Choice | matches the step. **Two new options must be added on SharePoint**: `Delivery Batch Created`, `Request Closed` |
+| `RoundNumber` ⬅ **new** | Number | which receipt round this row belongs to. Step 3 always `1`; step 4 = `N`; step 5 = the round it follows up on. **On a step-7 row it carries the `DeliveryNumber` instead** — the column is reused rather than adding a ninth. **Blank on rows written before the unlimited-rounds change** — every reader coalesces to `If(StepNumber = 3, 1, 2)` |
 | `ReceivedBy` ⬅ **new** | Text | steps 3/4 — display name of whoever physically received the goods |
 | `ReceiptDate` ⬅ **new** | Date | steps 3/4 |
 | `ReceiptStatus` ⬅ **new** | Text | steps 3/4 — copy of the chosen `GoodsReceiptStatus` / `FollowUpReceiptStatus` choice value. Plain Text so both choice sets fit |
@@ -229,6 +285,10 @@ Required ⚠: none.
 | `Notes` | Text (multiline) | **shared column, meaning depends on `StepNumber`**: step 1 (reject reason) / 2 · steps 3 & 4 = that receipt round's Remarks · step 5 = that round's Procurement follow-up notes |
 | `Attachments` | Attachments | receipt photos for the round — step 3 via `frmGRLog_GR`, step 4 via `frmSFU1Log_SFU`; `Patch` alone can't write attachments. One row per round ⇒ photos are naturally kept per round |
 
+**Steps 1, 7 and 8 are written against the parent; steps 2–6 against a delivery.** That split is deliberate: Procurement Execution, "delivery created" and "request closed" are all things that happen *to the request*, so the parent's own history reads as a complete story of the sourcing decision and every delivery spun off it, while each delivery's history holds only its own receiving and invoicing. There can be **many step-7 rows per parent** — one per delivery — so, like step 4, never `LookUp` one expecting uniqueness.
+
+Consequence to know about: a delivery's `colExecutionLog` therefore contains **no step-1 row**, so its detail screen shows no Supplier Summary or PO link — those live on the parent, one click away via the delivery's banner. Its `colApprovalLog`, by contrast, *is* back-filled from the parent (`RequestIDText = Text(gRootRequestID)`), because a delivery heading into Accounting with no visible approval trail at all was an audit regression.
+
 There can be **many step-4 rows per request** (one per receipt round from round 2 on) — never `LookUp` one expecting it to be unique. A step-5 row is written at most once, on the `Accepted with Adjustment` branch. Routing state lives on the request in `ReceiptRoundCount` / `LatestReceiptDecision`, not in the log. The presence of a step-6 row still distinguishes whether `InvoiceSubmissionScreen` has already run for a request.
 
 ---
@@ -241,8 +301,10 @@ Created for the unlimited-receipt-rounds change: the old fixed `…1` / `…2` c
 |---|---|---|
 | `Title` (Title) | Text | `R<n> - <material name>` |
 | `RequestID` | Lookup→'RM Procurement Requests' | `{Id, Value}` |
-| `RequestIDText` | Text | join key — every screen filters on this |
-| `LineItemID` | Number | plain number copy of `'RM Procurement Line Items'.ID` (not a Lookup — kept delegable for equality filters and simple to `Sum`/`Filter` locally) |
+| `RequestIDText` | Text | join key — every screen filters on this. Always the **delivery's** ID, since receiving only ever happens on a delivery |
+| `LineItemID` | Number | plain number copy of `'RM Procurement Line Items'.ID` (not a Lookup — kept delegable for equality filters and simple to `Sum`/`Filter` locally). The **delivery's** line item |
+| `ParentRequestID` ⬅ **new** | Number | copy of the delivery's `ParentRequestID`. Lets the parent gather everything received across all its deliveries in **one** delegable query: `Filter('RM Procurement Receipt Rounds', ParentRequestID = <parent id>)`. Without it you would need `RequestIDText in <list of child ids>`, which does not delegate. Worth indexing |
+| `ParentLineItemID` ⬅ **new** | Number | copy of the delivery line item's `ParentLineItemID`. `RequestDetailScreen` sums on this to fill the parent's "Received" column |
 | `RoundNumber` | Number | 1 = Goods Receipt, ≥2 = Supplier Follow-up rounds |
 | `MaterialName` | Text | denormalized copy so COA/history screens don't have to re-join |
 | `Unit` | Text | denormalized copy |
@@ -319,6 +381,16 @@ Called from `ProcurementExecutionScreen` (2 call sites — Deferred and Via-Requ
 | 17 | `text_12` | source app name — always the literal `"Raw Materials Procurement App"` |
 
 `ProjectID` is **not** passed from the app. The flow resolves it on its own from the request ID (param 2), so the trigger's 18th parameter — if it still exists — is left unfilled by Power Fx. Don't "fix" a call site by adding `gSelectedRequest.ProjectID` back as an 18th arg.
+
+#### What `Submit_Invoice` actually reads off `'RM Procurement Requests'` — verified 2026-08-13
+
+Checked against the live published flow when the parent/delivery split shipped, because param 2 is now a **delivery's** ID rather than the original request's. **Result: `ProjectID` is the only request column the flow consumes**, so no extra columns had to be copied onto a delivery beyond what it already copies.
+
+- **`Get_ProjectID`** — `GetItem` on `'RM Procurement Requests'` (list GUID `e1bda0b4-8e8e-4fd1-ac5e-752be9df6f3d`), `id = triggerBody()?['number']`. Its output is referenced exactly once, as `item/ProjectID: @body('Get_ProjectID')?['ProjectID']`.
+- **`Procurement InvoiceData Attachment`** — `PostItem` into `Procurement_InvoiceData` (GUID `3a7218e7-e10f-406a-9a8a-d4cbbb2ea82c`). Every other field comes straight from `triggerBody()` (i.e. from the app's 17 args), **not** from the fetched request row. Two mappings are worth knowing because the names don't line up: `item/CostCenter` ← `text_10`, which is arg 15, the app's **`InvoiceRegion`**; and `item/Origin` ← `text_12`, arg 17, the source-app literal.
+- **`item/RequestID/Id`** and **`item/RequestIDText`** ← `triggerBody()?['number']`, so from now on they hold the **delivery's** ID, not the original request's. The join still resolves (a delivery is a row in the same list) and the delivery's Title names its parent, but anything grouping invoices by original request must hop through `ParentRequestID`. The Actual-Cost panel is unaffected — it groups by `ProjectID`, and now correctly counts N invoices per request instead of 1.
+- **`Update RM OfficialInvoiceLink Attachment`** — `Update item` on `'RM Procurement Requests'`, `Id` taken from the Get item, i.e. the **delivery**. So the flow's final `OfficialInvoiceLink` write lands per delivery. **This is the single behaviour that decided same-list over a separate deliveries list**: passing a delivery ID keeps this contract working untouched, while a separate list would have forced either a flow edit or one shared parent link overwritten once per delivery.
+- The `Switch` on `text_12` still has the `Raw Materials Procurement App` case that this app's arg 17 matches.
 
 **Returns**: `newinvoicelink` (string) — **never read by the app**, and it doesn't need to be. All 4 call sites do `Set(gSubmitInvoiceResult, Submit_Invoice.Run(...))` and then only `IsError(gSubmitInvoiceResult)`: the variable is purely a "did the flow run" flag, so don't treat it as data or try to display it.
 
