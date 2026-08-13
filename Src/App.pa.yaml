@@ -70,7 +70,6 @@ App:
       Clear(colReceiptPhotos);
       Set(gIsDelivery, false);
       Set(gDeliveryNumber, 1);
-      Set(gBatchDelegationMode, "Assign later");
       Set(gShowCloseRequest, false);
       ClearCollect(colDeliveryBatches, FirstN('RM Procurement Requests', 1));
       Clear(colDeliveryBatches);
@@ -82,5 +81,6 @@ App:
       Clear(colParentReceived);
       ClearCollect(colBatchEntry, {ParentLineItemID: 0, MaterialID: 0, MaterialName: "", Unit: "", OrderedQty: 0, DeliveredQty: 0, RemainingQty: 0, BatchQty: 0});
       Clear(colBatchEntry);
+      Set(gPendingDeliveryBatch, Blank());
       Set(gAppReady, true)
     Theme: =PowerAppsTheme
