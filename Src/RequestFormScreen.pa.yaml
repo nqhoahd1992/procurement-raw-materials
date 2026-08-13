@@ -192,7 +192,7 @@ Screens:
                                                                                                   'RM Procurement Requests',
                                                                                                   Defaults('RM Procurement Requests'),
                                                                                                   {
-                                                                                                      Title: gCurrentEmployee.Title & " - " & Text(Today(), "dd/mm/yyyy"),
+                                                                                                      Title: gCurrentEmployee.Title & " - " & Text(Today(), "dd/mm/yyyy") & " - " & ddProject_1.Selected.Title,
                                                                                                       RequesterID: {Id: gCurrentEmployee.ID, Value: gCurrentEmployee.Title},
                                                                                                       RequesterEmail: User().Email,
                                                                                                       ProjectID: ddProject_1.Selected.ProjectID,
@@ -231,19 +231,24 @@ Screens:
                                                                                                       Last(DataCardValue15.Attachments).Name
                                                                                                   )
                                                                                               );
-                                                                                              Patch(
-                                                                                                  'RM Procurement Requests',
-                                                                                                  {ID: wNewRequest.ID},
-                                                                                                  {GroupKey: wNewRequest.ID}
+                                                                                              Set(
+                                                                                                  gSelectedRequest,
+                                                                                                  Patch(
+                                                                                                      'RM Procurement Requests',
+                                                                                                      {ID: wNewRequest.ID},
+                                                                                                      {
+                                                                                                          GroupKey: wNewRequest.ID,
+                                                                                                          Title: "ID: " & Text(wNewRequest.ID) & " - " & gCurrentEmployee.Title & " - " & Text(Today(), "dd/mm/yyyy") & " - " & ddProject_1.Selected.Title
+                                                                                                      }
+                                                                                                  )
                                                                                               );
-                                                                                              Set(gSelectedRequest, wNewRequest);
                                                                                               ForAll(
                                                                                                   colLineItems,
                                                                                                   Patch(
                                                                                                       'RM Procurement Line Items',
                                                                                                       Defaults('RM Procurement Line Items'),
                                                                                                       {
-                                                                                                          RequestID: {Id: wNewRequest.ID, Value: wNewRequest.Title},
+                                                                                                          RequestID: {Id: wNewRequest.ID, Value: gSelectedRequest.Title},
                                                                                                           RequestIDText: Text(wNewRequest.ID),
                                                                                                           ParentLineItemID: 0,
                                                                                                           MaterialID: {Id: MaterialID, Value: MaterialName},

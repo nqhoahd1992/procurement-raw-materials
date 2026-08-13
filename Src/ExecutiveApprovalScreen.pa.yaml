@@ -5,7 +5,6 @@ Screens:
       OnVisible: |-
         =Reset(rdoExecutiveDecision);
         Reset(txtApprovalConditions);
-        Reset(txtRejectionReason);
         Set(gShowRateInfo, false);
         Set(gProjectInfo,
             LookUp(Project_List, ProjectID = gSelectedRequest.ProjectID)
@@ -75,7 +74,7 @@ Screens:
                         PaddingRight: =0
                         Size: =14
                         Text: |-
-                          ="ID: " & gSelectedRequest.ID & " - " & gSelectedRequest.Title
+                          =gSelectedRequest.Title
                         Width: =Parent.Width - 160
             - rowRequestInfo_1:
                 Control: GroupContainer@1.5.0
@@ -654,7 +653,7 @@ Screens:
                   DropShadow: =DropShadow.None
                   Fill: =RGBA(241, 239, 232, 1)
                   FillPortions: =0
-                  Height: =280
+                  Height: =226
                   LayoutDirection: =LayoutDirection.Vertical
                   LayoutGap: =4
                   PaddingBottom: =12
@@ -668,79 +667,6 @@ Screens:
                   Visible: =Not(gSelectedRequest.SkippedManagerReview)
                   Width: =Parent.Width
                 Children:
-                  - rowChkReadonly:
-                      Control: GroupContainer@1.5.0
-                      Variant: AutoLayout
-                      Properties:
-                        DropShadow: =DropShadow.None
-                        LayoutDirection: =LayoutDirection.Horizontal
-                        LayoutMinHeight: =50
-                        RadiusBottomLeft: =0
-                        RadiusBottomRight: =0
-                        RadiusTopLeft: =0
-                        RadiusTopRight: =0
-                        Width: =Parent.Width
-                      Children:
-                        - colChkLeft:
-                            Control: GroupContainer@1.5.0
-                            Variant: AutoLayout
-                            Properties:
-                              DropShadow: =DropShadow.None
-                              LayoutDirection: =LayoutDirection.Vertical
-                              LayoutGap: =2
-                              LayoutMinHeight: =60
-                              RadiusBottomLeft: =0
-                              RadiusBottomRight: =0
-                              RadiusTopLeft: =0
-                              RadiusTopRight: =0
-                              Width: =Parent.Width / 2
-                            Children:
-                              - lblChk1Readonly:
-                                  Control: Label@2.5.1
-                                  Properties:
-                                    Color: =RGBA(15, 110, 86, 1)
-                                    Height: =24
-                                    Size: =10
-                                    Text: ="✓ Business justification is valid and necessary"
-                                    Width: =Parent.Width
-                              - lblChk2Readonly:
-                                  Control: Label@2.5.1
-                                  Properties:
-                                    Color: =RGBA(15, 110, 86, 1)
-                                    Height: =24
-                                    Size: =10
-                                    Text: ="✓ Cost is reasonable and aligned with department objectives"
-                                    Width: =Parent.Width
-                        - colChkRight:
-                            Control: GroupContainer@1.5.0
-                            Variant: AutoLayout
-                            Properties:
-                              DropShadow: =DropShadow.None
-                              LayoutDirection: =LayoutDirection.Vertical
-                              LayoutGap: =2
-                              LayoutMinHeight: =60
-                              RadiusBottomLeft: =0
-                              RadiusBottomRight: =0
-                              RadiusTopLeft: =0
-                              RadiusTopRight: =0
-                              Width: =Parent.Width / 2
-                            Children:
-                              - lblChk3Readonly:
-                                  Control: Label@2.5.1
-                                  Properties:
-                                    Color: =RGBA(15, 110, 86, 1)
-                                    Height: =24
-                                    Size: =10
-                                    Text: ="✓ Within approved departmental budget"
-                                    Width: =Parent.Width
-                              - lblChk4Readonly:
-                                  Control: Label@2.5.1
-                                  Properties:
-                                    Color: =RGBA(15, 110, 86, 1)
-                                    Height: =24
-                                    Size: =10
-                                    Text: ="✓ Timing and urgency are appropriate"
-                                    Width: =Parent.Width
                   - colManagerRemarks:
                       Control: GroupContainer@1.5.0
                       Variant: AutoLayout
@@ -839,7 +765,7 @@ Screens:
                   - rdoExecutiveDecision:
                       Control: Radio@0.0.25
                       Properties:
-                        Items: =["Approve", "Approve with conditions", "Reject"]
+                        Items: =["Approve", "Reject"]
                         Width: =600
             - rowApprovalConditions:
                 Control: GroupContainer@1.5.0
@@ -858,7 +784,6 @@ Screens:
                   RadiusBottomRight: =0
                   RadiusTopLeft: =0
                   RadiusTopRight: =0
-                  Visible: =rdoExecutiveDecision.Selected.Value = "Approve with conditions"
                   Width: =Parent.Width
                 Children:
                   - lblApprovalConditionsLabel:
@@ -867,44 +792,9 @@ Screens:
                         FontWeight: =FontWeight.Semibold
                         Height: =28
                         Size: =12
-                        Text: ="Approval Conditions *"
+                        Text: ="Remark *"
                         Width: =300
                   - txtApprovalConditions:
-                      Control: TextInput@0.0.54
-                      Properties:
-                        Height: =80
-                        Mode: ='TextInputCanvas.Mode'.Multiline
-                        Width: =Parent.Width
-            - rowRejectionReason:
-                Control: GroupContainer@1.5.0
-                Variant: AutoLayout
-                Properties:
-                  DropShadow: =DropShadow.None
-                  Height: =120
-                  LayoutDirection: =LayoutDirection.Vertical
-                  LayoutGap: =4
-                  LayoutMinHeight: =140
-                  PaddingBottom: =8
-                  PaddingLeft: =20
-                  PaddingRight: =20
-                  PaddingTop: =8
-                  RadiusBottomLeft: =0
-                  RadiusBottomRight: =0
-                  RadiusTopLeft: =0
-                  RadiusTopRight: =0
-                  Visible: =rdoExecutiveDecision.Selected.Value = "Reject"
-                  Width: =Parent.Width
-                Children:
-                  - lblRejectionReasonLabel:
-                      Control: Label@2.5.1
-                      Properties:
-                        Color: =RGBA(163, 45, 45, 1)
-                        FontWeight: =FontWeight.Semibold
-                        Height: =28
-                        Size: =12
-                        Text: ="Rejection Reason *"
-                        Width: =300
-                  - txtRejectionReason:
                       Control: TextInput@0.0.54
                       Properties:
                         Height: =80
@@ -979,82 +869,64 @@ Screens:
                               IsBlank(rdoExecutiveDecision.Selected.Value),
                               Notify("Please select a decision", NotificationType.Error),
                               If(
-                                  rdoExecutiveDecision.Selected.Value = "Approve with conditions" && IsBlank(txtApprovalConditions.Value),
-                                  Notify("Approval Conditions is required", NotificationType.Error),
-                                  If(
-                                      rdoExecutiveDecision.Selected.Value = "Reject" && IsBlank(txtRejectionReason.Value),
-                                      Notify("Rejection Reason is required", NotificationType.Error),
-                                      With(
-                                          {wLog: Patch(
-                                              'RM Procurement Approval Log',
-                                              Defaults('RM Procurement Approval Log'),
-                                              {
-                                                  Title: "Step 3 - " & rdoExecutiveDecision.Selected.Value & " - " & gSelectedRequest.Title,
-                                                  RequestID: {Id: gSelectedRequest.ID, Value: gSelectedRequest.Title},
-                                                  RequestIDText: Text(gSelectedRequest.ID),
-                                                  StepNumber: 3,
-                                                  ApproverID: {Id: gCurrentEmployee.ID, Value: gCurrentEmployee.Title},
-                                                  Decision: {Value: rdoExecutiveDecision.Selected.Value},
-                                                  ApprovalConditions: If(
-                                                      rdoExecutiveDecision.Selected.Value = "Approve with conditions",
-                                                      txtApprovalConditions.Value,
-                                                      ""
-                                                  ),
-                                                  RejectionReason: If(
-                                                      rdoExecutiveDecision.Selected.Value = "Reject",
-                                                      txtRejectionReason.Value,
-                                                      ""
-                                                  )
-                                              }
-                                          )},
-                                          If(
-                                              IsBlank(wLog.ID),
-                                              Notify("Failed to save approval log. Please try again.", NotificationType.Error),
-                                              With(
-                                                  {wReq: Patch(
-                                                      'RM Procurement Requests',
-                                                      gSelectedRequest,
-                                                      {
-                                                          Status: {Value: If(
-                                                              rdoExecutiveDecision.Selected.Value = "Reject",
-                                                              "Rejected",
-                                                              If(
-                                                                  gSelectedRequest.ProcurementType.Value = "Invoice Supplied" &&
-                                                                      (gSelectedRequest.Currency <> "AUD" || gSelectedRequest.EstimatedCost > 10000),
-                                                                  "Pending Executive",
-                                                                  "Pending Procurement"
-                                                              )
-                                                          )},
-                                                          isExecutivePayment: Not(rdoExecutiveDecision.Selected.Value = "Reject") &&
+                                  IsBlank(txtApprovalConditions.Value),
+                                  Notify("Remark is required", NotificationType.Error),
+                                  With(
+                                      {wLog: Patch(
+                                          'RM Procurement Approval Log',
+                                          Defaults('RM Procurement Approval Log'),
+                                          {
+                                              Title: "Step 3 - " & rdoExecutiveDecision.Selected.Value & " - " & gSelectedRequest.Title,
+                                              RequestID: {Id: gSelectedRequest.ID, Value: gSelectedRequest.Title},
+                                              RequestIDText: Text(gSelectedRequest.ID),
+                                              StepNumber: 3,
+                                              ApproverID: {Id: gCurrentEmployee.ID, Value: gCurrentEmployee.Title},
+                                              Decision: {Value: rdoExecutiveDecision.Selected.Value},
+                                              ApprovalConditions: txtApprovalConditions.Value
+                                          }
+                                      )},
+                                      If(
+                                          IsBlank(wLog.ID),
+                                          Notify("Failed to save approval log. Please try again.", NotificationType.Error),
+                                          With(
+                                              {wReq: Patch(
+                                                  'RM Procurement Requests',
+                                                  gSelectedRequest,
+                                                  {
+                                                      Status: {Value: If(
+                                                          rdoExecutiveDecision.Selected.Value = "Reject",
+                                                          "Rejected",
+                                                          If(
                                                               gSelectedRequest.ProcurementType.Value = "Invoice Supplied" &&
-                                                              (gSelectedRequest.Currency <> "AUD" || gSelectedRequest.EstimatedCost > 10000),
-                                                          ConditionsText: If(
-                                                              rdoExecutiveDecision.Selected.Value = "Approve with conditions",
-                                                              txtApprovalConditions.Value,
-                                                              ""
-                                                          ),
-                                                          ExecutiveApproverID: {Id: gCurrentEmployee.ID, Value: gCurrentEmployee.Title}
-                                                      }
-                                                  )},
+                                                                  (gSelectedRequest.Currency <> "AUD" || gSelectedRequest.EstimatedCost > 10000),
+                                                              "Pending Executive",
+                                                              "Pending Procurement"
+                                                          )
+                                                      )},
+                                                      isExecutivePayment: Not(rdoExecutiveDecision.Selected.Value = "Reject") &&
+                                                          gSelectedRequest.ProcurementType.Value = "Invoice Supplied" &&
+                                                          (gSelectedRequest.Currency <> "AUD" || gSelectedRequest.EstimatedCost > 10000),
+                                                      ExecutiveApproverID: {Id: gCurrentEmployee.ID, Value: gCurrentEmployee.Title}
+                                                  }
+                                              )},
+                                              If(
+                                                  IsBlank(wReq.ID),
+                                                  Notify("Failed to update status. Please try again.", NotificationType.Error),
+                                                  Notify("Decision submitted successfully", NotificationType.Success);
                                                   If(
-                                                      IsBlank(wReq.ID),
-                                                      Notify("Failed to update status. Please try again.", NotificationType.Error),
-                                                      Notify("Decision submitted successfully", NotificationType.Success);
-                                                      If(
-                                                          wReq.isExecutivePayment,
-                                                          ProcurementNotify.Run(
-                                                              gCurrentEmployee.Email,
-                                                              gCurrentEmployee.Title,
-                                                              wReq.Title,
-                                                              wReq.ID,
-                                                              "ExecutivePayment",
-                                                              Text(wReq.RequiredDeliveryDate, "dd/mm/yyyy"),
-                                                              "",
-                                                              "Max Biocare · Raw Materials Procurement"
-                                                          );
-                                                          Navigate(ExecutivePaymentScreen),
-                                                          Navigate(HomeScreen)
-                                                      )
+                                                      wReq.isExecutivePayment,
+                                                      ProcurementNotify.Run(
+                                                          gCurrentEmployee.Email,
+                                                          gCurrentEmployee.Title,
+                                                          wReq.Title,
+                                                          wReq.ID,
+                                                          "ExecutivePayment",
+                                                          Text(wReq.RequiredDeliveryDate, "dd/mm/yyyy"),
+                                                          "",
+                                                          "Max Biocare · Raw Materials Procurement"
+                                                      );
+                                                      Navigate(ExecutivePaymentScreen),
+                                                      Navigate(HomeScreen)
                                                   )
                                               )
                                           )

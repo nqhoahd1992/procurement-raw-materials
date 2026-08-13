@@ -34,7 +34,7 @@ Does **not** have a `Category`, `PreferredSupplier`, or `Department` column (all
 
 | Column | Type | Notes |
 |---|---|---|
-| `Title` (Title) | Text | Parent: `<employee> - <dd/mm/yyyy>`. Child: `<parent Title> - #<DeliveryNumber>`. **Not unique and not a key** — nothing prevents two children with the same number except the `DeliveryCount` allocation guard below |
+| `Title` (Title) | Text | Parent: `ID: <own ID> - <employee> - <dd/mm/yyyy> - <project Title>`, written by the **same second `Patch`** as `GroupKey` below, since the `ID` prefix isn't knowable until the row exists (the create `Patch` writes the same string minus that prefix). Child: `<parent Title> - #<DeliveryNumber>`, so a child inherits the parent's `ID:` prefix. **Not unique and not a key** — nothing prevents two children with the same number except the `DeliveryCount` allocation guard below |
 | `RequestType` ⬅ **new** | Choice | `Request` (parent) · `Delivery` (child). **Existing rows must be back-filled to `Request`** — a SharePoint column default applies only to new items, and `RequestType.Value = "Request"` does not match blank, so an un-backfilled row disappears from `HomeScreen` for every role. Do **not** use `IsBlank(ParentRequestID)` as a substitute discriminator: `IsBlank()` on a Number is not delegable (same reason `COAMissing` exists) |
 | `ParentRequestID` ⬅ **new** | Number | Blank/0 on a parent; the parent's `ID` on a child. Plain **Number**, not a Lookup, so `=` delegates |
 | `DeliveryNumber` ⬅ **new** | Number | `0` on a parent, `1..n` on a child. **Named `DeliveryNumber`, not `BatchNumber`** — `'RM Procurement Receipt Rounds'.BatchNumber` already means the *material's lot number*, and reusing the word across the two lists made every formula ambiguous |
@@ -71,7 +71,6 @@ Does **not** have a `Category`, `PreferredSupplier`, or `Department` column (all
 | `ProcurementExecutedAt` | DateTime | |
 | `AccountingHandlerID` | Lookup→Employee List | **who actually completed the accounting step.** Written in exactly one place — `AccountingScreen`'s submit, as `gCurrentEmployee` — so it is blank until the request reaches `Completed`. It is *not* an assignment: there used to be an "Assign to Accounting Staff" picker on `ProcurementExecutionScreen` and `InvoiceSubmissionScreen` writing this field ahead of time, but the value was overwritten downstream anyway and never gated anything, so both pickers were removed. Read-only display on `RequestDetailScreen` ("Accounting Completed By") |
 | `AccountingCompletedAt` | DateTime | set by `AccountingScreen` submit, alongside `Status = "Completed"` |
-| `ConditionsText` | Text (multiline) | set on "Approve with conditions" |
 | `PurchaseRequestLink` | Text (URL) | read-only in `RequestDetailScreen`; no `Patch` site found anywhere in the app — appears unwritten by current app code |
 | `GRAssignedToID` | Lookup→Employee List | delegate for Goods Receipt round 1; blank = Requester performs it |
 | `SFU1AssignedToID` | Lookup→Employee List | delegate for the **currently open** receipt round (round ≥ 2); blank = Requester performs it. **Cleared after every round** so the next round's receiver is picked again |
@@ -252,9 +251,9 @@ Required ⚠: `RequestID`, `StepNumber`.
 | `RequestID` ⚠ | Lookup (→Title) | `{Id,Value}` |
 | `StepNumber` ⚠ | Number | **`2` = Manager, `3` = Executive** (documented in the column itself) |
 | `ApproverID` | Lookup→Employee List | |
-| `Decision` | Choice | Manager: `Approved (within budget)`, `Needs clarification`, `Exceeds budget / unplanned` · Executive: `Reject`, `Approve with conditions`, `Approve` |
-| `ApprovalConditions` | Text (multiline) | step 3, "Approve with conditions" |
-| `RejectionReason` | Text (multiline) | step 3, "Reject" |
+| `Decision` | Choice | Manager: `Approve`, `Reject` · Executive: `Approve`, `Reject`. **Both roles now write the same two-value vocabulary, so this column needs no new option** — `ManagerReviewScreen` was cut from three options to two and deliberately reuses the Executive's existing `Approve`/`Reject` values rather than introducing `Approved`. The three old Manager values (`Approved (within budget)`, `Needs clarification`, `Exceeds budget / unplanned`) are no longer written by anything; and `Approve with conditions` was likewise dropped from `ExecutiveApprovalScreen`. No app code renders any of the four any more — `RequestDetailScreen`'s decision colour map now only knows `Approve` and `Reject` — so all four can be removed from the Choice column once the old rows are migrated by hand. Note `StepNumber` is what tells a Manager `Approve` from an Executive `Approve` |
+| `ApprovalConditions` | Text (multiline) | step 3 — the Executive's **Remark**, required on **both** `Approve` and `Reject` (one box serves both; there is no separate rejection-reason input any more). **The single home for this value** — the duplicate `'RM Procurement Requests'.ConditionsText` was removed, and all three readers (`RequestDetailScreen` via `gExecutiveRemark`, `ProcurementExecutionScreen`, `ExecutivePaymentScreen`) now resolve it off this row. Column name unchanged |
+| `RejectionReason` | Text (multiline) | **dead — the string doesn't appear anywhere in `Src/` any more.** Both approval screens have one always-required remark box, so a rejection reason lives in that step's own remark column (`ManagerRemarks` for step 2, `ApprovalConditions` for step 3). Writing it here *as well* would make `RequestDetailScreen`'s approval note line print the same text twice. Old rows are being migrated by hand; the column can be dropped once that's done |
 | `ManagerRemarks` | Text (multiline) | step 2 |
 | `RequestIDText` | Text | join key |
 

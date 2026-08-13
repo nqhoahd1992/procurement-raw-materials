@@ -56,7 +56,7 @@ Screens:
             Height: =60
             Size: =14
             Text: |-
-              ="Procurement Execution - ID: " & gSelectedRequest.ID & " - " & gSelectedRequest.Title
+              ="Procurement Execution - " & gSelectedRequest.Title
             Width: =654
             X: =20
       - conScrollable_PE:
@@ -1040,7 +1040,7 @@ Screens:
                 Variant: AutoLayout
                 Properties:
                   DropShadow: =DropShadow.None
-                  Fill: =RGBA(250, 238, 218, 1)
+                  Fill: =RGBA(241, 239, 232, 1)
                   LayoutDirection: =LayoutDirection.Vertical
                   LayoutGap: =4
                   PaddingBottom: =12
@@ -1059,16 +1059,16 @@ Screens:
                   - lblConditionsTitle_PE:
                       Control: Label@2.5.1
                       Properties:
-                        Color: =RGBA(133, 79, 11, 1)
-                        FontWeight: =FontWeight.Bold
+                        Color: =RGBA(136, 135, 128, 1)
+                        FontWeight: =FontWeight.Semibold
                         Height: =24
                         Size: =11
-                        Text: ="⚠ Executive Approval Conditions"
+                        Text: ="Executive Remark"
                         Width: =Parent.Width - 40
                   - lblConditionsText_PE:
                       Control: Label@2.5.1
                       Properties:
-                        Color: =RGBA(133, 79, 11, 1)
+                        Color: =RGBA(68, 68, 65, 1)
                         Height: =50
                         Overflow: =Overflow.Scroll
                         Size: =11

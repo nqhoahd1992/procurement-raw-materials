@@ -61,6 +61,7 @@ App:
       Set(gQuickViewRequest, Blank());
       Set(gShowLogDetail, false);
       Set(gLogDetailTitle, "");
+      Set(gExecutiveRemark, "");
       Set(gShowBulkCodes, false);
       ClearCollect(colBulkCodes, {Code: "", MaterialID: 0, MaterialName: "", Unit: "", Quantity: 0});
       Clear(colBulkCodes);

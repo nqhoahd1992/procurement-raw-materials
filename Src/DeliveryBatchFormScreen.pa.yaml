@@ -67,7 +67,7 @@ Screens:
             Height: =60
             Size: =14
             Text: |-
-              ="New Delivery #" & gDeliveryNumber & " - Request ID: " & gSelectedRequest.ID & " - " & gSelectedRequest.Title
+              ="New Delivery #" & gDeliveryNumber & " - " & gSelectedRequest.Title
             Width: =900
             X: =20
       - conScrollable_DBF:

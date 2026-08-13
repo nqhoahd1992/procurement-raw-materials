@@ -47,7 +47,7 @@ Screens:
             Height: =60
             Size: =14
             Text: |-
-              ="Invoice Submission - ID: " & gSelectedRequest.ID & " - " & gSelectedRequest.Title
+              ="Invoice Submission - " & gSelectedRequest.Title
             Width: =654
             X: =20
       - lblUserInfo_ISS:

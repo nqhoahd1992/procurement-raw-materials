@@ -88,7 +88,7 @@ Screens:
                         PaddingRight: =0
                         Size: =14
                         Text: |-
-                          ="ID: " & gSelectedRequest.ID & " - " & gSelectedRequest.Title
+                          =gSelectedRequest.Title
                         Width: =600
                   - lblStatusBadge_EPS:
                       Control: Label@2.5.1
@@ -217,7 +217,7 @@ Screens:
                               Height: =18
                               PaddingLeft: =0
                               Size: =9
-                              Text: ="Approval Conditions"
+                              Text: ="Executive Remark"
                               Width: =600
                         - lblInfoConditionsValue_EPS:
                             Control: Label@2.5.1
@@ -226,7 +226,11 @@ Screens:
                               Height: =20
                               PaddingLeft: =0
                               Size: =11
-                              Text: =If(IsBlank(gSelectedRequest.ConditionsText), "—", gSelectedRequest.ConditionsText)
+                              Text: |-
+                                =With(
+                                    {wRemark: LookUp('RM Procurement Approval Log', RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 3).ApprovalConditions},
+                                    If(IsBlank(wRemark), "—", wRemark)
+                                )
                               Width: =600
             - rowInfoLine4_EPS:
                 Control: GroupContainer@1.5.0

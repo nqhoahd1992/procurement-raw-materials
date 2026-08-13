@@ -22,6 +22,7 @@ Screens:
         ClearCollect(colLineItemsDetail, Filter('RM Procurement Line Items', RequestIDText = Text(gSelectedRequest.ID)));
         ClearCollect(colExecutionLog, Sort(Filter('RM Procurement Execution Log', RequestIDText = Text(gSelectedRequest.ID)), ID, SortOrder.Ascending));
         ClearCollect(colApprovalLog, Sort(Filter('RM Procurement Approval Log', RequestIDText = Text(gRootRequestID)), ID, SortOrder.Ascending));
+        Set(gExecutiveRemark, LookUp(colApprovalLog, StepNumber = 3).ApprovalConditions);
         If(
             gIsDelivery,
             ClearCollect(colReceiptRounds, Filter('RM Procurement Receipt Rounds', RequestIDText = Text(gSelectedRequest.ID))),
@@ -123,30 +124,34 @@ Screens:
                   Align: =Align.Center
                   Color: |-
                     =Switch(gSelectedRequest.Status.Value,
-                      "Completed", RGBA(15, 110, 86, 1),
-                      "Closed", RGBA(15, 110, 86, 1),
-                      "Rejected", RGBA(163, 45, 45, 1),
-                      "Cancelled", RGBA(163, 45, 45, 1),
+                      "Pending Manager", RGBA(146, 84, 14, 1),
+                      "Pending Executive", RGBA(175, 74, 20, 1),
+                      "Pending Procurement", RGBA(122, 108, 10, 1),
                       "In Delivery", RGBA(83, 74, 183, 1),
-                      "Goods Receipt & Acceptance", RGBA(83, 74, 183, 1),
-                      "Pending Manager", RGBA(133, 79, 11, 1),
-                      "Pending Executive", RGBA(133, 79, 11, 1),
-                      "Pending Procurement", RGBA(133, 79, 11, 1),
-                      "Pending Accounting", RGBA(133, 79, 11, 1),
+                      "Closed", RGBA(13, 108, 108, 1),
+                      "Rejected", RGBA(163, 45, 45, 1),
+                      "Goods Receipt & Acceptance", RGBA(37, 92, 178, 1),
+                      "Pending Supplier Follow-up", RGBA(11, 105, 132, 1),
+                      "Pending Invoice", RGBA(124, 58, 173, 1),
+                      "Pending Accounting", RGBA(158, 44, 108, 1),
+                      "Completed", RGBA(15, 110, 86, 1),
+                      "Cancelled", RGBA(148, 87, 87, 1),
                       RGBA(68, 68, 65, 1)
                     )
                   Fill: |-
                     =Switch(gSelectedRequest.Status.Value,
-                      "Completed", RGBA(225, 245, 238, 1),
-                      "Closed", RGBA(225, 245, 238, 1),
-                      "Rejected", RGBA(252, 235, 235, 1),
-                      "Cancelled", RGBA(245, 240, 240, 1),
-                      "In Delivery", RGBA(225, 220, 252, 1),
-                      "Goods Receipt & Acceptance", RGBA(225, 220, 252, 1),
-                      "Pending Manager", RGBA(250, 238, 218, 1),
-                      "Pending Executive", RGBA(250, 238, 218, 1),
-                      "Pending Procurement", RGBA(250, 238, 218, 1),
-                      "Pending Accounting", RGBA(250, 238, 218, 1),
+                      "Pending Manager", RGBA(253, 242, 216, 1),
+                      "Pending Executive", RGBA(253, 234, 222, 1),
+                      "Pending Procurement", RGBA(247, 245, 210, 1),
+                      "In Delivery", RGBA(228, 225, 250, 1),
+                      "Closed", RGBA(219, 243, 243, 1),
+                      "Rejected", RGBA(252, 233, 233, 1),
+                      "Goods Receipt & Acceptance", RGBA(223, 234, 252, 1),
+                      "Pending Supplier Follow-up", RGBA(219, 241, 249, 1),
+                      "Pending Invoice", RGBA(240, 228, 252, 1),
+                      "Pending Accounting", RGBA(252, 230, 242, 1),
+                      "Completed", RGBA(222, 245, 236, 1),
+                      "Cancelled", RGBA(243, 235, 235, 1),
                       RGBA(241, 239, 232, 1)
                     )
                   FontWeight: =FontWeight.Semibold
@@ -190,7 +195,7 @@ Screens:
                         If(Not(IsBlank(gSelectedRequest.RequesterInvoiceURL)), 4 + 60, 0) +
                         If(Not(IsBlank(gSelectedRequest.RemittanceURL)), 4 + 56, 0) +
                         If(gSelectedRequest.ProcurementType.Value = "To be sourced by Procurement", 4 + 70, 0) +
-                        If(Not(IsBlank(gSelectedRequest.ConditionsText)), 4 + 80, 0) +
+                        If(Not(IsBlank(gExecutiveRemark)), 4 + 80, 0) +
                         If(Not(IsBlank(gSelectedRequest.AccountingHandlerID)), 4 + 60, 0) +
                         If(Not(IsBlank(gSelectedRequest.CreditNote)), 4 + 60, 0) +
                         If(gIsDelivery, 4 + 64, 0)
@@ -1154,16 +1159,16 @@ Screens:
                         RadiusBottomRight: =0
                         RadiusTopLeft: =0
                         RadiusTopRight: =0
-                        Visible: =Not(IsBlank(gSelectedRequest.ConditionsText))
+                        Visible: =Not(IsBlank(gExecutiveRemark))
                         Width: =Parent.Width
                       Children:
                         - lblConditionsTextLabel:
                             Control: Label@2.5.1
                             Properties:
-                              Color: =RGBA(133, 79, 11, 1)
+                              Color: =RGBA(136, 135, 128, 1)
                               Height: =20
                               Size: =9
-                              Text: ="Approval Conditions (Executive)"
+                              Text: ="Remark (Executive)"
                               Width: =Parent.Width
                         - lblConditionsTextValue:
                             Control: Label@2.5.1
@@ -1174,7 +1179,7 @@ Screens:
                               LayoutMinHeight: =48
                               Overflow: =Overflow.Scroll
                               Size: =11
-                              Text: =gSelectedRequest.ConditionsText
+                              Text: =gExecutiveRemark
                               Width: =Parent.Width
                   - rowAccountingHandler:
                       Control: GroupContainer@1.5.0
@@ -1461,17 +1466,23 @@ Screens:
                                           Align: =Align.Center
                                           Color: |-
                                             =Switch(ThisItem.Status.Value,
+                                              "Goods Receipt & Acceptance", RGBA(37, 92, 178, 1),
+                                              "Pending Supplier Follow-up", RGBA(11, 105, 132, 1),
+                                              "Pending Invoice", RGBA(124, 58, 173, 1),
+                                              "Pending Accounting", RGBA(158, 44, 108, 1),
                                               "Completed", RGBA(15, 110, 86, 1),
-                                              "Cancelled", RGBA(163, 45, 45, 1),
-                                              "Goods Receipt & Acceptance", RGBA(83, 74, 183, 1),
-                                              RGBA(133, 79, 11, 1)
+                                              "Cancelled", RGBA(148, 87, 87, 1),
+                                              RGBA(68, 68, 65, 1)
                                             )
                                           Fill: |-
                                             =Switch(ThisItem.Status.Value,
-                                              "Completed", RGBA(225, 245, 238, 1),
-                                              "Cancelled", RGBA(245, 240, 240, 1),
-                                              "Goods Receipt & Acceptance", RGBA(225, 220, 252, 1),
-                                              RGBA(250, 238, 218, 1)
+                                              "Goods Receipt & Acceptance", RGBA(223, 234, 252, 1),
+                                              "Pending Supplier Follow-up", RGBA(219, 241, 249, 1),
+                                              "Pending Invoice", RGBA(240, 228, 252, 1),
+                                              "Pending Accounting", RGBA(252, 230, 242, 1),
+                                              "Completed", RGBA(222, 245, 236, 1),
+                                              "Cancelled", RGBA(243, 235, 235, 1),
+                                              RGBA(241, 239, 232, 1)
                                             )
                                           FillPortions: =1
                                           FontWeight: =FontWeight.Semibold
@@ -2327,10 +2338,8 @@ Screens:
                                                       Color: |-
                                                         =Switch(ThisItem.Decision.Value,
                                                           "Approve", RGBA(15, 110, 86, 1),
-                                                          "Approved (within budget)", RGBA(15, 110, 86, 1),
-                                                          "Approve with conditions", RGBA(15, 110, 86, 1),
                                                           "Reject", RGBA(163, 45, 45, 1),
-                                                          RGBA(133, 79, 11, 1)
+                                                          RGBA(68, 68, 65, 1)
                                                         )
                                                       FontWeight: =FontWeight.Semibold
                                                       Height: =24
@@ -2353,9 +2362,7 @@ Screens:
                                                             {FieldLabel: "Approver", FieldValue: Coalesce(ThisItem.ApproverID.Value, "")},
                                                             {FieldLabel: "Decision", FieldValue: Coalesce(ThisItem.Decision.Value, "")},
                                                             {FieldLabel: "Date", FieldValue: If(IsBlank(ThisItem.Created), "", Text(ThisItem.Created, "dd/mm/yyyy hh:mm"))},
-                                                            {FieldLabel: "Remarks", FieldValue: Coalesce(ThisItem.ManagerRemarks, "")},
-                                                            {FieldLabel: "Conditions", FieldValue: Coalesce(ThisItem.ApprovalConditions, "")},
-                                                            {FieldLabel: "Rejection Reason", FieldValue: Coalesce(ThisItem.RejectionReason, "")}
+                                                            {FieldLabel: "Remark", FieldValue: Coalesce(ThisItem.ManagerRemarks, ThisItem.ApprovalConditions, "")}
                                                         );
                                                         RemoveIf(colLogDetail, IsBlank(FieldValue));
                                                         Set(gLogDetailTitle, If(ThisItem.StepNumber = 2, "Department Manager", "Executive") & " · Approval");
@@ -2377,20 +2384,17 @@ Screens:
                                               Properties:
                                                 Color: |-
                                                   =If(
-                                                    Not(IsBlank(ThisItem.RejectionReason)), RGBA(163, 45, 45, 1),
-                                                    If(Not(IsBlank(ThisItem.ApprovalConditions)), RGBA(133, 79, 11, 1), RGBA(136, 135, 128, 1))
+                                                    ThisItem.Decision.Value = "Reject",
+                                                    RGBA(163, 45, 45, 1),
+                                                    RGBA(136, 135, 128, 1)
                                                   )
                                                 Height: =15
                                                 PaddingLeft: =0
                                                 Size: =9
                                                 Text: |-
                                                   =With(
-                                                    {
-                                                      wRemarks: If(IsBlank(ThisItem.ManagerRemarks), "", "Remarks: " & ThisItem.ManagerRemarks),
-                                                      wConditions: If(IsBlank(ThisItem.ApprovalConditions), "", "Conditions: " & ThisItem.ApprovalConditions),
-                                                      wRejection: If(IsBlank(ThisItem.RejectionReason), "", "Rejection reason: " & ThisItem.RejectionReason)
-                                                    },
-                                                    Concat(Filter([wRemarks, wConditions, wRejection], Len(Value) > 0), Value, "   ·   ")
+                                                    {wRemark: Coalesce(ThisItem.ManagerRemarks, ThisItem.ApprovalConditions)},
+                                                    If(IsBlank(wRemark), "", "Remark: " & wRemark)
                                                   )
                                                 Width: =Parent.Width
                                                 Wrap: =false

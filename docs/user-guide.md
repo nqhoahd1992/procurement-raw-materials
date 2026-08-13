@@ -11,11 +11,13 @@ RequestFormScreen (Requester tạo yêu cầu, phải thêm ít nhất 1 raw mat
    │  Luôn bắt đầu ở "Pending Manager" — mọi yêu cầu đều qua đủ 2 cấp duyệt (Manager rồi Executive)
    ▼
 Pending Manager ──(ManagerReviewScreen)
-   │ Bất kỳ quyết định nào (Approved (within budget) / Needs clarification / Exceeds budget / unplanned) → Pending Executive
+   │ "Reject"  → Rejected  (kết thúc — Manager có quyền từ chối dứt điểm)
+   │ "Approve" → Pending Executive
    ▼
 Pending Executive ──(ExecutiveApprovalScreen)
    │ "Reject"                          → Rejected
-   │ "Approve" / "Approve with conditions" → Pending Procurement
+   │ "Approve"                         → Pending Procurement
+   │ (Remark bắt buộc ở CẢ HAI quyết định — không còn ô Rejection Reason riêng)
    ▼
 Pending Procurement ──(ProcurementExecutionScreen)
    │ "Reject"                          → Rejected
@@ -145,21 +147,18 @@ Hiện thêm:
 ### Thông tin chỉ xem
 Toàn bộ thông tin yêu cầu: người tạo, chi phí, cost center, loại mua hàng, loại invoice, mô tả.
 
-### Review Checklist * (phải tick đủ 4 mục)
-- "Business justification is valid and necessary"
-- "Cost is reasonable and aligned with department objectives"
-- "Within approved departmental budget"
-- "Timing and urgency are appropriate"
-
 ### Trường nhập
-- **Manager Remarks*** — bắt buộc
-- **Manager Decision*** — radio: "Approved (within budget)" / "Needs clarification" / "Exceeds budget / unplanned"
+- **Manager Remarks*** — bắt buộc ở **cả hai** quyết định. Khi chọn "Reject", nội dung này chính là lý do từ chối (không có ô lý do riêng).
+- **Manager Decision*** — radio: "Approve" / "Reject"
+
+Màn hình này **không còn Review Checklist**. Bốn ô tick cũ ("Business justification is valid", "Cost is reasonable", "Within approved departmental budget", "Timing and urgency are appropriate") đã bị bỏ hẳn, vì trạng thái tick chưa bao giờ được lưu xuống SharePoint nên chúng không ghi nhận được gì.
 
 ### Case theo quyết định
-Dù chọn quyết định nào ("Approved (within budget)" / "Needs clarification" / "Exceeds budget / unplanned"), yêu cầu **luôn chuyển sang "Pending Executive"** — Manager không còn có thể duyệt thẳng sang Pending Procurement mà bỏ qua Executive. Quyết định chỉ mang tính ghi nhận lý do/kết quả review của Manager.
+- **"Approve"** → yêu cầu chuyển sang **"Pending Executive"**. Manager vẫn không thể duyệt thẳng sang Pending Procurement — mọi yêu cầu được duyệt đều phải qua Executive.
+- **"Reject"** → yêu cầu chuyển sang **"Rejected"** và **kết thúc tại đây**, không đi tới Executive nữa.
 
 ### Lỗi thường gặp
-"Please complete all checklist items", "Manager Remarks is required", "Please select a decision".
+"Manager Remarks is required", "Please select a decision".
 
 ---
 
@@ -174,16 +173,18 @@ Hiện lại tóm tắt Manager Remarks, Manager Decision và 4 checklist đã t
 Banner cam **"⚡ Manager Review Skipped"** (kèm lý do "Urgent purchase" / "Unplanned purchase" / "Estimated cost exceeds threshold") chỉ hiện với các yêu cầu được tạo **trước** khi quy trình đổi sang "luôn 2 cấp duyệt" — những yêu cầu này từng được escalate thẳng lên Executive và không có review của Manager. Yêu cầu tạo mới sẽ không bao giờ thấy banner này.
 
 ### Trường nhập
-- **Executive Decision*** — radio: "Approve" / "Approve with conditions" / "Reject"
-- **Approval Conditions*** — chỉ hiện & bắt buộc khi chọn "Approve with conditions"
-- **Rejection Reason*** — chỉ hiện & bắt buộc khi chọn "Reject" (chữ đỏ)
+- **Executive Decision*** — radio: "Approve" / "Reject". Lựa chọn "Approve with conditions" đã bị bỏ.
+- **Remark*** — **luôn hiện và luôn bắt buộc**, dùng cho cả hai quyết định. Khi chọn "Reject" thì đây chính là lý do từ chối. Nội dung lưu vào `ApprovalConditions` của log (step 3) — chỉ một chỗ duy nhất, cột `ConditionsText` trên request đã bị bỏ.
+
+> Trường **Rejection Reason** riêng đã bị bỏ hẳn — chỉ còn một ô Remark duy nhất cho mọi quyết định.
 
 ### Case theo quyết định
 | Quyết định | Trạng thái tiếp theo |
 |---|---|
-| Approve | Pending Procurement |
-| Approve with conditions | Pending Procurement (kèm điều kiện lưu vào ConditionsText) |
+| Approve | Pending Procurement (hoặc giữ "Pending Executive" + `isExecutivePayment` nếu vượt ngưỡng) |
 | Reject | Rejected |
+
+Vì Remark giờ bắt buộc ở mọi lần Approve, nó xuất hiện trên **gần như mọi** yêu cầu đã duyệt. Các chỗ hiển thị lại giá trị này đã được đổi nhãn thành "Remark"/"Executive Remark" và bỏ tô màu cam cảnh báo (`RequestDetailScreen`, `ProcurementExecutionScreen`, `ExecutivePaymentScreen`) — cam trên 100% yêu cầu thì không còn là cảnh báo.
 
 ---
 
@@ -212,8 +213,8 @@ Banner cam **"⚡ Manager Review Skipped"** (kèm lý do "Urgent purchase" / "Un
 2. **Via Requester (Remittance*)**: upload **Remittance Advice Document***; đồng thời hiện phần kiểm tra invoice của Requester đã nộp (link xem invoice + radio "Is this invoice correct?" Yes/No).
 3. **Official Invoice** (khi không phải Via Requester và không phải Official Invoice Type có sẵn): upload file rồi bấm **"🔍 Extract Invoice"** để AI trích xuất dữ liệu (xem case ở mục 7).
 
-### Case: Executive có kèm điều kiện phê duyệt
-Hiện banner cam "⚠ Executive Approval Conditions" hiển thị nội dung điều kiện.
+### Case: Remark của Executive
+Hiện khối nền be **"Executive Remark"** với nội dung Remark mà Executive đã nhập khi duyệt. Vì Remark là bắt buộc ở mọi lần Approve, khối này xuất hiện trên gần như mọi yêu cầu đi tới bước này (trước đây là banner cam "⚠ Executive Approval Conditions" và chỉ hiện ở nhánh "Approve with conditions").
 
 ### Nút submit và kết quả
 - **"Submit →"**: tạo log bước 1 (ExecutionLog StepNumber 1), chuyển trạng thái sang **"Goods Receipt & Acceptance"** (hoặc Pending Invoice nếu invoice defer).
@@ -377,7 +378,7 @@ Hiển thị toàn bộ dữ liệu của yêu cầu ở dạng chỉ xem:
 - **Escalated to Executive**: "Yes"/"No" — chỉ có ý nghĩa với yêu cầu cũ (trước khi đổi sang luôn 2 cấp duyệt); yêu cầu mới luôn là "No".
 - Invoice Type (màu xanh nếu "Official Invoice", cam nếu "Proforma Invoice").
 - Link Invoice của Requester (nếu invoice qua Requester) và Official Invoice Link (nếu Procurement xử lý) — bấm để mở file.
-- Approval Conditions (Executive) — nếu có điều kiện phê duyệt.
+- Remark (Executive) — Remark mà Executive nhập khi duyệt (luôn có, vì Remark bắt buộc ở cả Approve và Reject).
 - Accounting Handler — người kế toán được assign.
 - **Goods Receipt & Acceptance — Round 1**: người nhận, ngày nhận, trạng thái, quyết định, remarks, ảnh đính kèm, người được assign.
 - **Goods Receipt & Acceptance — Round 2**: tương tự, hiện khi có dữ liệu Follow-up.

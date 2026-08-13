@@ -106,7 +106,7 @@ Screens:
                         PaddingRight: =0
                         Size: =14
                         Text: |-
-                          ="ID: " & gSelectedRequest.ID & " - " & gSelectedRequest.Title
+                          =gSelectedRequest.Title
                         Width: =600
                   - lblStatusBadge_GR:
                       Control: Label@2.5.1
