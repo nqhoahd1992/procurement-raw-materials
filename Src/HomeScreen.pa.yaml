@@ -744,7 +744,12 @@ Screens:
                               Visible: |-
                                 =ThisItem.RequestType.Value = "Request" &&
                                 ThisItem.Status.Value = "In Delivery" &&
-                                (gCurrentUser.Role.Value = "Procurement" || gCurrentUser.Role.Value = "Admin")
+                                (gCurrentUser.Role.Value = "Procurement" || gCurrentUser.Role.Value = "Admin") &&
+                                Not(
+                                    ThisItem.ProcurementType.Value = "Invoice Supplied" &&
+                                    ThisItem.InvoiceType.Value = "Official Invoice" &&
+                                    Coalesce(ThisItem.DeliveryCount, 0) >= 1
+                                )
                               Width: =160
                         - btnCOACompletion_Request:
                             Control: ModernButton@1.0.0

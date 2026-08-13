@@ -1019,7 +1019,7 @@ Screens:
                   RadiusBottomRight: =0
                   RadiusTopLeft: =0
                   RadiusTopRight: =0
-                  Visible: =gSelectedRequest.InvoiceMode.Value = "ViaRequester" && Not(IsBlank(gSelectedRequest.RequesterInvoiceURL))
+                  Visible: =Not(IsBlank(gSelectedRequest.RequesterInvoiceURL))
                   Width: =Parent.Width
                 Children:
                   - lblRequesterInvoiceLabel_ISS:
@@ -1029,7 +1029,12 @@ Screens:
                         FontWeight: =FontWeight.Bold
                         Height: =20
                         Size: =11
-                        Text: ="Invoice submitted by Requester:"
+                        Text: |-
+                          =If(
+                              gSelectedRequest.InvoiceMode.Value = "ViaRequester",
+                              "Invoice submitted by Requester:",
+                              Coalesce(gSelectedRequest.InvoiceType.Value, "Invoice") & " from Requester — reference only, not filed:"
+                          )
                         Width: =Parent.Width - 40
                   - lblRequesterInvoiceURL_ISS:
                       Control: Label@2.5.1

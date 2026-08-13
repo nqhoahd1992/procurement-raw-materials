@@ -190,7 +190,7 @@ Màn hình này **không còn Review Checklist**. Bốn ô tick cũ ("Business j
 **Ai dùng:** Executive, khi yêu cầu ở trạng thái "Pending Executive" — mọi yêu cầu đều qua Manager trước khi tới đây (không còn đường nhảy thẳng).
 
 ### Case: Manager đã review (mọi yêu cầu mới)
-Hiện lại tóm tắt Manager Remarks, Manager Decision và 4 checklist đã tick (chỉ xem).
+Hiện lại tóm tắt Manager Remarks và Manager Decision (chỉ xem). Phần 4 checklist đã tick trước đây đã bị bỏ — trạng thái tick chưa bao giờ được lưu nên nó luôn hiện 4 dấu ✓ vô điều kiện.
 
 ### Case: Manager Review bị bỏ qua — chỉ còn xảy ra với yêu cầu cũ
 Banner cam **"⚡ Manager Review Skipped"** (kèm lý do "Urgent purchase" / "Unplanned purchase" / "Estimated cost exceeds threshold") chỉ hiện với các yêu cầu được tạo **trước** khi quy trình đổi sang "luôn 2 cấp duyệt" — những yêu cầu này từng được escalate thẳng lên Executive và không có review của Manager. Yêu cầu tạo mới sẽ không bao giờ thấy banner này.
@@ -219,22 +219,17 @@ Vì Remark giờ bắt buộc ở mọi lần Approve, nó xuất hiện trên *
 - "Proceed" (mặc định)
 - "Reject" → hiện **Rejection Reason*** bắt buộc (nền đỏ nhạt)
 
-### Case "Proceed" — Procurement Execution Checklist * (bắt buộc tick hết)
-- "Supplier sourcing completed"
-- "Price comparison and/or negotiation completed (where applicable)"
-- "Purchase Order issued (if applicable)"
-- "Supplier coordination and delivery tracking in place"
-- "Official supplier invoice collected" (tùy theo invoice mode)
-- "Invoice verified against approved procurement request and delivery status" (tùy theo invoice mode)
-
-### Các trường khác khi "Proceed"
-- **SO/PO/INV*** — bắt buộc, nhập 1 dòng (số Sales Order/Purchase Order/Invoice)
+### Case "Proceed" — chỉ còn 2 điều kiện bắt buộc
+- **SO/PO/INV*** — bắt buộc, nhập 1 dòng (số Sales Order / Purchase Order / Invoice)
+- **Order Confirmation Document*** — bắt buộc đính kèm 1 file
 - **Purchase Order Link** — không bắt buộc
 
-### Case xử lý invoice — 3 nhánh
-1. **Deferred (Invoice Handling*)**: radio "Submit Invoice Now" / "Defer Invoice". Nếu "Submit Invoice Now" → phải upload **Order Confirmation Document***.
-2. **Via Requester (Remittance*)**: upload **Remittance Advice Document***; đồng thời hiện phần kiểm tra invoice của Requester đã nộp (link xem invoice + radio "Is this invoice correct?" Yes/No).
-3. **Official Invoice** (khi không phải Via Requester và không phải Official Invoice Type có sẵn): upload file rồi bấm **"🔍 Extract Invoice"** để AI trích xuất dữ liệu (xem case ở mục 7).
+**Procurement Execution Checklist đã bị bỏ hẳn.** Sáu ô tick cũ ("Supplier sourcing completed", "Price comparison…", "Purchase Order issued", "Supplier coordination…", và 2 ô liên quan invoice) không còn nữa — trạng thái tick chưa bao giờ được lưu xuống SharePoint nên chúng chỉ chặn submit mà không ghi nhận được gì.
+
+**Màn hình này không còn xử lý invoice.** Toàn bộ phần invoice đã chuyển đi:
+- **Invoice Handling** + **upload Official Invoice** + **Extract Invoice** → `DeliveryBatchFormScreen`, chọn và xử lý theo từng delivery (xem mục 15).
+- **Remittance Advice** → `ExecutivePaymentScreen`, dành cho các request có số tiền lớn cần Executive thanh toán.
+- Nộp/xử lý invoice muộn → `InvoiceSubmissionScreen`.
 
 ### Case: Remark của Executive
 Hiện khối nền be **"Executive Remark"** với nội dung Remark mà Executive đã nhập khi duyệt. Vì Remark là bắt buộc ở mọi lần Approve, khối này xuất hiện trên gần như mọi yêu cầu đi tới bước này (trước đây là banner cam "⚠ Executive Approval Conditions" và chỉ hiện ở nhánh "Approve with conditions").
@@ -430,3 +425,54 @@ Hiển thị toàn bộ dữ liệu của yêu cầu ở dạng chỉ xem:
 - "Failed to [action]. Please try again." — lỗi hệ thống khi lưu, thử lại.
 - "[Action] submitted successfully" — thao tác thành công.
 - Với các bước có **assignment** (Goods Receipt, Supplier Follow-up Round 1): nếu bị đổi người trong lúc đang làm, dữ liệu đang nhập sẽ bị hủy — cần lưu ý người dùng nên hoàn tất nhanh sau khi được giao.
+
+---
+
+## 15. DeliveryBatchFormScreen — Procurement tạo delivery & xử lý invoice
+
+**Ai dùng:** Procurement/Admin, khi request cha ở trạng thái "In Delivery". Vào từ nút "+ Add Delivery" trên HomeScreen hoặc RequestDetailScreen.
+
+Ngoài việc chọn nguyên liệu + số lượng của chuyến hàng này và ngày giao dự kiến, đây là nơi Procurement **xử lý invoice cho từng delivery**. Cả 3 nhánh đều làm trực tiếp tại đây, không phải sang màn hình khác.
+
+**Quan trọng — invoice mode suy ra từ Procurement Type + Invoice Type, không phải lúc nào cũng được chọn:**
+
+| Procurement Type | Invoice Type | Kết luận | UI trên delivery |
+|---|---|---|---|
+| Invoice Supplied | **Official Invoice** | chắc chắn 1 supplier, 1 hóa đơn, **1 delivery duy nhất** | Không có radio. Mode tự là **ViaRequester** |
+| Invoice Supplied | Proforma Invoice | không khẳng định được gì | Radio **Direct / Deferred**, mặc định Direct |
+| To be sourced by Procurement | (trống) | không khẳng định được gì | Radio **Direct / Deferred**, mặc định Direct |
+
+Lý do phân biệt Official/Proforma: chỉ **Official Invoice** thì file Requester nộp mới *chính là* hóa đơn chính thức để file thẳng. **Proforma không phải hóa đơn** — Procurement vẫn phải lấy hóa đơn thật của từng chuyến.
+
+**Với Official Invoice, request chỉ được có 1 delivery.** Nút "+ Add Delivery" tự ẩn sau khi đã có delivery đầu tiên (ở cả HomeScreen và RequestDetailScreen), và submit cũng chặn lại nếu có người cố tạo thêm. Theo đúng định nghĩa: chuyến hàng bổ sung **dưới cùng một hóa đơn** là một **receipt round**, không phải delivery mới.
+
+### Nhánh "Direct" — có invoice sẵn, nộp luôn
+- Bắt buộc đính kèm **Invoice File ***.
+- Bấm **"Create Delivery →"** một lần là chạy hết: tạo delivery → upload file → AI trích xuất (`Parse_Invoice`) → file invoice chính thức (`Submit_Invoice`) → ghi log Step 6. Không có nút thứ hai, không dừng lại cho người dùng soát field.
+- Nếu AI không trích xuất đủ 6 field bắt buộc, hoặc upload/filing lỗi: delivery **vẫn được tạo**, `InvoiceMode` tự rớt về **Deferred** và hiện thông báo Warning — để hoàn tất sau trên InvoiceSubmissionScreen. Không bao giờ bị chặn, không bao giờ sai âm thầm.
+
+### Nhánh "ViaRequester" — dùng invoice Requester đã nộp (tự suy ra)
+- Chỉ áp dụng khi **Invoice Supplied + Official Invoice**. Không chọn tay.
+- Hiện link invoice của Requester để bấm xem, kèm radio bắt buộc **"Is this invoice correct?"**:
+  - **Yes** → file luôn invoice đó làm invoice chính thức của delivery này, chạy đúng chain như Direct.
+  - **No** → xóa link invoice **của delivery này**, gửi mail yêu cầu Requester upload lại (`Procurement_Notify_Remind_Invoice`), delivery vẫn được tạo. Sau đó Requester thấy nút "Submit Invoice" trên HomeScreen, Procurement thấy "Remind Requester" — đúng trạng thái mà app đã xử lý sẵn. Invoice gốc trên request cha **không bị xóa**.
+
+### Khối "Proforma Invoice from Requester — reference only"
+Khi request là **Invoice Supplied + Proforma** (hoặc `Invoice Type` bị để trống), file Requester đã nộp vẫn được hiện — nền be, có link bấm mở — kèm ghi chú rõ: **đây không phải hóa đơn chính thức và sẽ không được file**. Procurement vẫn phải lấy hóa đơn thật cho chuyến này (chọn Direct để nộp ngay, hoặc Deferred để nộp sau).
+
+File này cũng hiện lại trên **InvoiceSubmissionScreen** khi Procurement quay lại nộp hóa đơn muộn, để đối chiếu. Nhưng phần **"Is this invoice correct?" / "Request Re-upload"** thì **không** hiện — hai nút đó là đường file hóa đơn của Requester thành hóa đơn chính thức, không được áp dụng cho proforma.
+
+### Nhánh "Deferred" — để sau
+Không có gì phải nhập. Delivery được tạo, invoice hoàn tất sau trên InvoiceSubmissionScreen khi delivery tới "Pending Invoice". (Không có nút "nộp ngay" ở nhánh này — "nộp ngay" chính là mode Direct.)
+
+### Remittance thì không ở đây
+Upload Remittance Advice vẫn thuộc **ExecutivePaymentScreen**, dành cho các request có số tiền lớn cần Executive thanh toán trước khi tới Procurement.
+
+### Lỗi thường gặp
+- "Please enter a quantity for at least one material in this delivery"
+- "A quantity exceeds what is still outstanding on the request..."
+- "Please pick the expected delivery date"
+- "Please choose how the invoice for this delivery is handled"
+- "Please attach the invoice file — Direct mode submits it as part of creating this delivery"
+- "Please say whether the requester's invoice is correct" — chọn ViaRequester mà chưa trả lời radio Yes/No
+- "This request is no longer open for new deliveries..." / "Another delivery has just been created..." — có người khác vừa thao tác, mở lại screen

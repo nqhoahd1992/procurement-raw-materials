@@ -2859,7 +2859,12 @@ Screens:
                         Visible: |-
                           =Not(gIsDelivery) &&
                           gSelectedRequest.Status.Value = "In Delivery" &&
-                          (gCurrentUser.Role.Value = "Procurement" || gCurrentUser.Role.Value = "Admin")
+                          (gCurrentUser.Role.Value = "Procurement" || gCurrentUser.Role.Value = "Admin") &&
+                          Not(
+                              gSelectedRequest.ProcurementType.Value = "Invoice Supplied" &&
+                              gSelectedRequest.InvoiceType.Value = "Official Invoice" &&
+                              Coalesce(gSelectedRequest.DeliveryCount, 0) >= 1
+                          )
                         Width: =180
                   - btnActionStart:
                       Control: Button@0.0.45
