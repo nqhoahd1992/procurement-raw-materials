@@ -448,7 +448,7 @@ Screens:
                   "GroupKey", SortOrder.Descending,
                   "DeliveryNumber", SortOrder.Ascending
               )
-            OnSelect: =Set(gSelectedRequest, ThisItem); If(ThisItem.Status.Value = "Pending Invoice" && (gCurrentUser.Role.Value = "Procurement" || gCurrentUser.Role.Value = "Admin"), Navigate(InvoiceSubmissionScreen), Navigate(RequestDetailScreen))
+            OnSelect: =Set(gSelectedRequest, ThisItem); Navigate(RequestDetailScreen)
             TemplateSize: =114
             Visible: =Not(IsBlank(gCurrentEmployee.ID)) && Not(IsBlank(gCurrentUser.ID))
             Width: =Parent.Width
@@ -460,7 +460,7 @@ Screens:
                   Fill: =RGBA(0, 0, 0, 0)
                   Height: =82
                   HoverFill: =RGBA(245, 245, 250, 1)
-                  OnSelect: =Set(gSelectedRequest, ThisItem); If(ThisItem.Status.Value = "Pending Invoice" && (gCurrentUser.Role.Value = "Procurement" || gCurrentUser.Role.Value = "Admin"), Navigate(InvoiceSubmissionScreen), Navigate(RequestDetailScreen))
+                  OnSelect: =Set(gSelectedRequest, ThisItem); Navigate(RequestDetailScreen)
                   Width: =Parent.Width
             - rectDeliveryAccent:
                 Control: Rectangle@2.3.0
@@ -637,15 +637,33 @@ Screens:
                         RadiusTopRight: =0
                         Width: =Parent.Width
                       Children:
-                        - btnQuickView:
+                        - btnDoWork:
                             Control: ModernButton@1.0.0
                             Properties:
                               Align: =Align.Center
                               BasePaletteColor: =RGBA(83, 74, 183, 1)
                               FontWeight: =FontWeight.Semibold
                               Height: =28
-                              Icon: ="Info"
-                              OnSelect: =Set(gQuickViewRequest, ThisItem); Set(gShowQuickView, true)
+                              OnSelect: |-
+                                =Set(gSelectedRequest, ThisItem);
+                                Switch(
+                                    ThisItem.Status.Value,
+                                    "Pending Manager", Navigate(ManagerReviewScreen),
+                                    "Pending Executive", If(
+                                        ThisItem.isExecutivePayment,
+                                        Navigate(ExecutivePaymentScreen),
+                                        Navigate(ExecutiveApprovalScreen)
+                                    ),
+                                    "Pending Procurement", Navigate(ProcurementExecutionScreen),
+                                    "Pending Invoice", Navigate(InvoiceSubmissionScreen),
+                                    "Goods Receipt & Acceptance", Navigate(GoodsReceiptScreen),
+                                    "Pending Supplier Follow-up", If(
+                                        ThisItem.LatestReceiptDecision = "Accepted with Adjustment",
+                                        Navigate(ProcurementFollowUpScreen),
+                                        Navigate(SupplierFollowUpScreen)
+                                    ),
+                                    "Pending Accounting", Navigate(AccountingScreen)
+                                )
                               PaddingBottom: =5
                               PaddingLeft: =12
                               PaddingRight: =12
@@ -654,28 +672,57 @@ Screens:
                               RadiusBottomRight: =4
                               RadiusTopLeft: =4
                               RadiusTopRight: =4
-                              Text: ="Quick View"
+                              Text: |-
+                                =Switch(
+                                    ThisItem.Status.Value,
+                                    "Pending Manager", "Review Request →",
+                                    "Pending Executive", If(
+                                        ThisItem.isExecutivePayment,
+                                        "Process Payment →",
+                                        "Review Request →"
+                                    ),
+                                    "Pending Procurement", "Start Procurement →",
+                                    "Pending Invoice", "Submit Invoice →",
+                                    "Goods Receipt & Acceptance", "Goods Receipt & Acceptance →",
+                                    "Pending Supplier Follow-up", If(
+                                        ThisItem.LatestReceiptDecision = "Accepted with Adjustment",
+                                        "Upload Credit Note →",
+                                        "Goods Receipt — Round " & (Coalesce(ThisItem.ReceiptRoundCount, 0) + 1) & " →"
+                                    ),
+                                    "Pending Accounting", "Start Accounting →",
+                                    ""
+                                )
                               VerticalAlign: =VerticalAlign.Middle
-                              Width: =140
-                        - btnViewRequest:
-                            Control: ModernButton@1.0.0
-                            Properties:
-                              Align: =Align.Center
-                              FontWeight: =FontWeight.Semibold
-                              Height: =28
-                              Icon: ="Eye"
-                              OnSelect: =Set(gSelectedRequest, ThisItem); Navigate(RequestDetailScreen)
-                              PaddingBottom: =5
-                              PaddingLeft: =12
-                              PaddingRight: =12
-                              PaddingTop: =5
-                              RadiusBottomLeft: =4
-                              RadiusBottomRight: =4
-                              RadiusTopLeft: =4
-                              RadiusTopRight: =4
-                              Text: ="View"
-                              VerticalAlign: =VerticalAlign.Middle
-                              Width: =90
+                              Visible: |-
+                                =Switch(
+                                    ThisItem.Status.Value,
+                                    "Pending Manager",
+                                        gCurrentUser.Role.Value = "Admin" ||
+                                        (gCurrentUser.Role.Value = "Manager" && ThisItem.ManagerApproverID.Id = gCurrentEmployee.ID),
+                                    "Pending Executive",
+                                        gCurrentUser.Role.Value = "Executive" || gCurrentUser.Role.Value = "Admin",
+                                    "Pending Procurement",
+                                        gCurrentUser.Role.Value = "Procurement" || gCurrentUser.Role.Value = "Admin",
+                                    "Pending Invoice",
+                                        (gCurrentUser.Role.Value = "Procurement" || gCurrentUser.Role.Value = "Admin") &&
+                                        Not(ThisItem.InvoiceMode.Value = "ViaRequester" || ThisItem.InvoiceMode.Value = "Deferred"),
+                                    "Goods Receipt & Acceptance",
+                                        ThisItem.RequesterEmail = gCurrentEmployee.Email ||
+                                        ThisItem.GRAssignedToID.Id = gCurrentEmployee.ID,
+                                    "Pending Supplier Follow-up", If(
+                                        ThisItem.LatestReceiptDecision = "Accepted with Adjustment",
+                                        gCurrentUser.Role.Value = "Procurement" || gCurrentUser.Role.Value = "Admin",
+                                        ThisItem.LatestReceiptDecision = "Requires Supplier Follow-up" &&
+                                        (ThisItem.RequesterEmail = gCurrentEmployee.Email ||
+                                        ThisItem.SFU1AssignedToID.Id = gCurrentEmployee.ID)
+                                    ),
+                                    "Pending Accounting",
+                                        gCurrentUser.Role.Value = "Accounting" ||
+                                        gCurrentUser.Role.Value = "Executive" ||
+                                        gCurrentUser.Role.Value = "Admin",
+                                    false
+                                )
+                              Width: =260
                         - btnAddDelivery:
                             Control: ModernButton@1.0.0
                             Properties:
@@ -783,6 +830,45 @@ Screens:
                                 !ThisItem.InvoiceSubmitted &&
                                 (gCurrentUser.Role.Value = "Procurement" || gCurrentUser.Role.Value = "Admin")
                               Width: =160
+                        - btnQuickView:
+                            Control: ModernButton@1.0.0
+                            Properties:
+                              Align: =Align.Center
+                              BasePaletteColor: =RGBA(83, 74, 183, 1)
+                              FontWeight: =FontWeight.Semibold
+                              Height: =28
+                              Icon: ="Info"
+                              OnSelect: =Set(gQuickViewRequest, ThisItem); Set(gShowQuickView, true)
+                              PaddingBottom: =5
+                              PaddingLeft: =12
+                              PaddingRight: =12
+                              PaddingTop: =5
+                              RadiusBottomLeft: =4
+                              RadiusBottomRight: =4
+                              RadiusTopLeft: =4
+                              RadiusTopRight: =4
+                              Text: ="Quick View"
+                              VerticalAlign: =VerticalAlign.Middle
+                              Width: =140
+                        - btnFullDetail:
+                            Control: ModernButton@1.0.0
+                            Properties:
+                              Align: =Align.Center
+                              FontWeight: =FontWeight.Semibold
+                              Height: =28
+                              Icon: ="Eye"
+                              OnSelect: =Set(gSelectedRequest, ThisItem); Navigate(RequestDetailScreen)
+                              PaddingBottom: =5
+                              PaddingLeft: =12
+                              PaddingRight: =12
+                              PaddingTop: =5
+                              RadiusBottomLeft: =4
+                              RadiusBottomRight: =4
+                              RadiusTopLeft: =4
+                              RadiusTopRight: =4
+                              Text: ="Full Detail"
+                              VerticalAlign: =VerticalAlign.Middle
+                              Width: =130
             - rectSeparator:
                 Control: Rectangle@2.3.0
                 Properties:

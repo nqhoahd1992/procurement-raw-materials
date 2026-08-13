@@ -83,8 +83,31 @@ Nếu thiếu 1 trong 2, màn hình hiện thông báo: *"⚠ Your account was n
   - Đã có link invoice → nút **"Process Invoice"** (tím).
 
 ### Case: Bấm vào một request
-- Nếu trạng thái = "Pending Invoice" và người xem là Procurement/Admin → mở **InvoiceSubmissionScreen**.
-- Ngược lại → mở **RequestDetailScreen** (xem chi tiết).
+Bấm vào **thân dòng** (ở đâu cũng được) → luôn mở **RequestDetailScreen** để xem toàn cảnh. Không còn trường hợp đặc biệt nhảy sang InvoiceSubmissionScreen như trước.
+
+### Các nút trên mỗi dòng request
+Thứ tự từ trái sang: nút làm việc trước, nút xem sau.
+
+1. **Nút thực thi (tím, đổi chữ theo trạng thái)** — đây là nút người thực thi quan tâm nhất, bấm vào là **vào thẳng màn hình làm việc**, không qua trang chi tiết:
+
+   | Trạng thái | Chữ trên nút | Vào màn hình | Ai thấy |
+   |---|---|---|---|
+   | Pending Manager | "Review Request →" | ManagerReviewScreen | Admin, hoặc Manager được chỉ định |
+   | Pending Executive | "Review Request →" / "Process Payment →" | ExecutiveApprovalScreen / ExecutivePaymentScreen | Executive, Admin |
+   | Pending Procurement | "Start Procurement →" | ProcurementExecutionScreen | Procurement, Admin |
+   | Pending Invoice | "Submit Invoice →" | InvoiceSubmissionScreen | Procurement, Admin |
+   | Goods Receipt & Acceptance | "Goods Receipt & Acceptance →" | GoodsReceiptScreen | Người tạo, hoặc người được giao nhận hàng |
+   | Pending Supplier Follow-up | "Goods Receipt — Round N →" / "Upload Credit Note →" | SupplierFollowUpScreen / ProcurementFollowUpScreen | Người nhận hàng / Procurement, Admin |
+   | Pending Accounting | "Start Accounting →" | AccountingScreen | Accounting, Executive, Admin |
+
+   Nếu request đang ở trạng thái không có việc gì cho bạn làm (đã Completed / Rejected / Closed / Cancelled, hoặc việc thuộc vai trò khác), nút này **không hiện**.
+
+2. **"+ Add Delivery"** / **"Link to COA"** / **"Submit Invoice"** / **"Remind Requester"** / **"Process Invoice"** — các nút việc chuyên biệt, giữ nguyên như trước.
+3. **"Quick View"** — popup xem nhanh vài thông tin chính, không rời trang.
+4. **"Full Detail"** — mở RequestDetailScreen. Dùng để xem toàn cảnh hoặc trace lại lịch sử khi có vấn đề, không phải đường vào để làm việc.
+
+### Nút "← Back" trên các màn hình làm việc
+Giờ dùng `Back()` — quay về **đúng màn hình bạn vừa đến từ đó**. Trước đây mọi màn hình đều quay về RequestDetailScreen, nên khi vào thẳng từ Home sẽ bị đẩy tới một trang chưa từng mở.
 
 ### Nút "New Request"
 Mở **RequestFormScreen** để tạo yêu cầu mới. Chỉ hiển thị cho vai trò được phép tạo (Requester và các vai trò khác đều có thể tạo cho bản thân).
