@@ -136,36 +136,6 @@ Screens:
                         RadiusTopRight: =0
                         Width: =Parent.Width - 40
                       Children:
-                        - colParentRequester_DBF:
-                            Control: GroupContainer@1.5.0
-                            Variant: AutoLayout
-                            Properties:
-                              DropShadow: =DropShadow.None
-                              LayoutDirection: =LayoutDirection.Vertical
-                              LayoutGap: =2
-                              LayoutMinHeight: =56
-                              RadiusBottomLeft: =0
-                              RadiusBottomRight: =0
-                              RadiusTopLeft: =0
-                              RadiusTopRight: =0
-                            Children:
-                              - lblParentRequesterLbl_DBF:
-                                  Control: Label@2.5.1
-                                  Properties:
-                                    Color: =RGBA(107, 105, 98, 1)
-                                    FontWeight: =FontWeight.Semibold
-                                    Height: =20
-                                    Size: =9
-                                    Text: ="Requester"
-                                    Width: =Parent.Width
-                              - lblParentRequesterVal_DBF:
-                                  Control: Label@2.5.1
-                                  Properties:
-                                    Height: =24
-                                    Size: =11
-                                    Text: =gSelectedRequest.RequesterID.Value
-                                    Width: =Parent.Width
-                                    Wrap: =false
                         - colParentProject_DBF:
                             Control: GroupContainer@1.5.0
                             Variant: AutoLayout
@@ -586,8 +556,7 @@ Screens:
                         FontWeight: =FontWeight.Semibold
                         Height: =24
                         Size: =11
-                        Text: |-
-                          =Coalesce(gSelectedRequest.InvoiceType.Value, "Invoice") & " from Requester — reference only"
+                        Text: =Coalesce(gSelectedRequest.InvoiceType.Value, "Invoice") & " from Requester — reference only"
                         Width: =Parent.Width - 40
                   - lblProformaNote_DBF:
                       Control: Label@2.5.1

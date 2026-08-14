@@ -267,35 +267,6 @@ Screens:
                         Visible: =Not(gIsDelivery)
                         Width: =Parent.Width
                       Children:
-                        - colRequester:
-                            Control: GroupContainer@1.5.0
-                            Variant: AutoLayout
-                            Properties:
-                              DropShadow: =DropShadow.None
-                              LayoutDirection: =LayoutDirection.Vertical
-                              LayoutGap: =2
-                              RadiusBottomLeft: =0
-                              RadiusBottomRight: =0
-                              RadiusTopLeft: =0
-                              RadiusTopRight: =0
-                              Width: =220
-                            Children:
-                              - lblRequesterLabel_3:
-                                  Control: Label@2.5.1
-                                  Properties:
-                                    Color: =RGBA(136, 135, 128, 1)
-                                    Height: =20
-                                    Size: =9
-                                    Text: ="Requester"
-                                    Width: =220
-                              - lblRequesterValue_3:
-                                  Control: Label@2.5.1
-                                  Properties:
-                                    FontWeight: =FontWeight.Semibold
-                                    Height: =24
-                                    Size: =11
-                                    Text: =gSelectedRequest.RequesterID.Value
-                                    Width: =Parent.Width - 20
                         - colProcurementType:
                             Control: GroupContainer@1.5.0
                             Variant: AutoLayout
@@ -325,23 +296,6 @@ Screens:
                                     Size: =11
                                     Text: =gSelectedRequest.ProcurementType.Value
                                     Width: =Parent.Width - 20
-                  - rowInfo2:
-                      Control: GroupContainer@1.5.0
-                      Variant: AutoLayout
-                      Properties:
-                        DropShadow: =DropShadow.None
-                        FillPortions: =0
-                        Height: =90
-                        LayoutDirection: =LayoutDirection.Horizontal
-                        LayoutMinHeight: =80
-                        PaddingBottom: =4
-                        PaddingTop: =4
-                        RadiusBottomLeft: =0
-                        RadiusBottomRight: =0
-                        RadiusTopLeft: =0
-                        RadiusTopRight: =0
-                        Width: =Parent.Width
-                      Children:
                         - colAccordance:
                             Control: GroupContainer@1.5.0
                             Variant: AutoLayout
@@ -355,6 +309,8 @@ Screens:
                               RadiusTopRight: =0
                               Visible: =Not(gIsDelivery)
                               Width: =220
+                              X: =40
+                              Y: =40
                             Children:
                               - lblAccordanceLabel:
                                   Control: Label@2.5.1
@@ -372,71 +328,6 @@ Screens:
                                     Size: =11
                                     Text: =gSelectedRequest.PurchaseAccordance.Value
                                     Width: =Parent.Width - 20
-                        - colRegionInvoice:
-                            Control: GroupContainer@1.5.0
-                            Variant: AutoLayout
-                            Properties:
-                              DropShadow: =DropShadow.None
-                              LayoutDirection: =LayoutDirection.Vertical
-                              LayoutGap: =2
-                              LayoutMinHeight: =60
-                              RadiusBottomLeft: =0
-                              RadiusBottomRight: =0
-                              RadiusTopLeft: =0
-                              RadiusTopRight: =0
-                              Visible: =Not(gIsDelivery)
-                              Width: =220
-                              X: =40
-                              Y: =40
-                            Children:
-                              - lblRegionInvoiceLabel:
-                                  Control: Label@2.5.1
-                                  Properties:
-                                    Color: =RGBA(136, 135, 128, 1)
-                                    Height: =20
-                                    Size: =9
-                                    Text: ="Cost Center"
-                                    Width: =220
-                              - lblRegionInvoiceValue:
-                                  Control: Label@2.5.1
-                                  Properties:
-                                    FontWeight: =FontWeight.Semibold
-                                    Height: =24
-                                    Size: =11
-                                    Text: =If(IsBlank(gSelectedRequest.CostCenter.Value), "—", gSelectedRequest.CostCenter.Value)
-                                    Width: =Parent.Width - 20
-                        - colDeliveryLoc_1:
-                            Control: GroupContainer@1.5.0
-                            Variant: AutoLayout
-                            Properties:
-                              DropShadow: =DropShadow.None
-                              LayoutDirection: =LayoutDirection.Vertical
-                              LayoutGap: =2
-                              RadiusBottomLeft: =0
-                              RadiusBottomRight: =0
-                              RadiusTopLeft: =0
-                              RadiusTopRight: =0
-                              Visible: =Not(gIsDelivery)
-                              Width: =220
-                            Children:
-                              - lblDeliveryLocLabel:
-                                  Control: Label@2.5.1
-                                  Properties:
-                                    Color: =RGBA(136, 135, 128, 1)
-                                    Height: =20
-                                    Size: =9
-                                    Text: ="Delivery Location"
-                                    Width: =220
-                              - lblDeliveryLocValue:
-                                  Control: Label@2.5.1
-                                  Properties:
-                                    AlignInContainer: =AlignInContainer.Stretch
-                                    FontWeight: =FontWeight.Semibold
-                                    Height: =48
-                                    Size: =11
-                                    Text: =gSelectedRequest.DeliveryLocation.Value
-                                    VerticalAlign: =VerticalAlign.Top
-                                    Width: =Parent.Width - 20
                         - colDeliveryDate_1:
                             Control: GroupContainer@1.5.0
                             Variant: AutoLayout
@@ -449,6 +340,8 @@ Screens:
                               RadiusTopLeft: =0
                               RadiusTopRight: =0
                               Width: =200
+                              X: =40
+                              Y: =40
                             Children:
                               - lblDeliveryDateLabel:
                                   Control: Label@2.5.1
@@ -608,6 +501,88 @@ Screens:
                                     Height: =24
                                     Size: =11
                                     Text: =If(gSelectedRequest.SkippedManagerReview, "Yes", "No")
+                                    Width: =Parent.Width - 20
+                  - rowInfo2:
+                      Control: GroupContainer@1.5.0
+                      Variant: AutoLayout
+                      Properties:
+                        DropShadow: =DropShadow.None
+                        FillPortions: =0
+                        Height: =90
+                        LayoutDirection: =LayoutDirection.Horizontal
+                        LayoutMinHeight: =80
+                        PaddingBottom: =4
+                        PaddingTop: =4
+                        RadiusBottomLeft: =0
+                        RadiusBottomRight: =0
+                        RadiusTopLeft: =0
+                        RadiusTopRight: =0
+                        Width: =Parent.Width
+                      Children:
+                        - colRegionInvoice:
+                            Control: GroupContainer@1.5.0
+                            Variant: AutoLayout
+                            Properties:
+                              DropShadow: =DropShadow.None
+                              LayoutDirection: =LayoutDirection.Vertical
+                              LayoutGap: =2
+                              LayoutMinHeight: =60
+                              RadiusBottomLeft: =0
+                              RadiusBottomRight: =0
+                              RadiusTopLeft: =0
+                              RadiusTopRight: =0
+                              Visible: =Not(gIsDelivery)
+                              Width: =220
+                              X: =40
+                              Y: =40
+                            Children:
+                              - lblRegionInvoiceLabel:
+                                  Control: Label@2.5.1
+                                  Properties:
+                                    Color: =RGBA(136, 135, 128, 1)
+                                    Height: =20
+                                    Size: =9
+                                    Text: ="Cost Center"
+                                    Width: =220
+                              - lblRegionInvoiceValue:
+                                  Control: Label@2.5.1
+                                  Properties:
+                                    FontWeight: =FontWeight.Semibold
+                                    Height: =24
+                                    Size: =11
+                                    Text: =If(IsBlank(gSelectedRequest.CostCenter.Value), "—", gSelectedRequest.CostCenter.Value)
+                                    Width: =Parent.Width - 20
+                        - colDeliveryLoc_1:
+                            Control: GroupContainer@1.5.0
+                            Variant: AutoLayout
+                            Properties:
+                              DropShadow: =DropShadow.None
+                              LayoutDirection: =LayoutDirection.Vertical
+                              LayoutGap: =2
+                              RadiusBottomLeft: =0
+                              RadiusBottomRight: =0
+                              RadiusTopLeft: =0
+                              RadiusTopRight: =0
+                              Visible: =Not(gIsDelivery)
+                              Width: =220
+                            Children:
+                              - lblDeliveryLocLabel:
+                                  Control: Label@2.5.1
+                                  Properties:
+                                    Color: =RGBA(136, 135, 128, 1)
+                                    Height: =20
+                                    Size: =9
+                                    Text: ="Delivery Location"
+                                    Width: =220
+                              - lblDeliveryLocValue:
+                                  Control: Label@2.5.1
+                                  Properties:
+                                    AlignInContainer: =AlignInContainer.Stretch
+                                    FontWeight: =FontWeight.Semibold
+                                    Height: =48
+                                    Size: =11
+                                    Text: =gSelectedRequest.DeliveryLocation.Value
+                                    VerticalAlign: =VerticalAlign.Top
                                     Width: =Parent.Width - 20
                   - rowInfo3:
                       Control: GroupContainer@1.5.0
