@@ -561,6 +561,7 @@ Screens:
                               Visible: |-
                                 =(ThisItem.InvoiceMode.Value = "ViaRequester" || ThisItem.InvoiceMode.Value = "Deferred") &&
                                 !ThisItem.InvoiceSubmitted &&
+                                ThisItem.Status.Value <> "Cancelled" &&
                                 (gCurrentUser.Role.Value = "Procurement" || gCurrentUser.Role.Value = "Admin")
                               Width: =160
                         - btnSubmitInvoice:
@@ -583,6 +584,7 @@ Screens:
                               VerticalAlign: =VerticalAlign.Middle
                               Visible: |-
                                 =ThisItem.InvoiceMode.Value = "ViaRequester" && !ThisItem.InvoiceSubmitted &&
+                                ThisItem.Status.Value <> "Cancelled" &&
                                 (
                                   gCurrentUser.Role.Value <> "Procurement" && gCurrentUser.Role.Value <> "Admin" ||
                                   ThisItem.RequesterEmail = gCurrentEmployee.Email
@@ -609,6 +611,7 @@ Screens:
                               Visible: |-
                                 =(gCurrentUser.Role.Value = "Procurement" || gCurrentUser.Role.Value = "Admin") &&
                                 ThisItem.Status.Value <> "Rejected" &&
+                                ThisItem.Status.Value <> "Cancelled" &&
                                 Not(IsEmpty(Filter('RM Procurement Receipt Rounds',
                                     RequestIDText = Text(ThisItem.ID)
                                 )))
@@ -807,7 +810,8 @@ Screens:
                         OnSelect: =If(Not(IsBlank(gQuickViewRequest.RequesterInvoiceURL)), Launch(gQuickViewRequest.RequesterInvoiceURL, {}, LaunchTarget.New))
                         PaddingLeft: =0
                         Size: =11
-                        Text: =If(IsBlank(gQuickViewRequest.RequesterInvoiceURL), "—", gQuickViewRequest.RequesterInvoiceURL)
+                        Text: =If(IsBlank(gQuickViewRequest.RequesterInvoiceURL), "—", "Open invoice ↗")
+                        Tooltip: =gQuickViewRequest.RequesterInvoiceURL
                         Underline: =Not(IsBlank(gQuickViewRequest.RequesterInvoiceURL))
                         Width: =Parent.Width
                         Wrap: =false
@@ -844,7 +848,8 @@ Screens:
                         OnSelect: =If(Not(IsBlank(gQuickViewRequest.OfficialInvoiceLink)), Launch(gQuickViewRequest.OfficialInvoiceLink, {}, LaunchTarget.New))
                         PaddingLeft: =0
                         Size: =11
-                        Text: =If(IsBlank(gQuickViewRequest.OfficialInvoiceLink), "—", gQuickViewRequest.OfficialInvoiceLink)
+                        Text: =If(IsBlank(gQuickViewRequest.OfficialInvoiceLink), "—", "Open official invoice ↗")
+                        Tooltip: =gQuickViewRequest.OfficialInvoiceLink
                         Underline: =Not(IsBlank(gQuickViewRequest.OfficialInvoiceLink))
                         Width: =Parent.Width
                         Wrap: =false

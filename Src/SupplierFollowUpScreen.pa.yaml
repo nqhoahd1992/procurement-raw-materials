@@ -2241,7 +2241,8 @@ Screens:
                               OnSelect: =If(Not(IsBlank(ThisItem.COALink)), Launch(ThisItem.COALink, {}, LaunchTarget.New))
                               PaddingLeft: =0
                               Size: =10
-                              Text: =If(IsBlank(ThisItem.COALink), "Not linked", "Open COA")
+                              Text: =If(IsBlank(ThisItem.COALink), "Not linked", "Open COA ↗")
+                              Tooltip: =ThisItem.COALink
                               Underline: =Not(IsBlank(ThisItem.COALink))
                               Width: =Parent.Width * 0.095
                               Wrap: =false

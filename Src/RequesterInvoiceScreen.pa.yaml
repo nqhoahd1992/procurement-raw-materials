@@ -247,7 +247,8 @@ Screens:
                         Height: =28
                         OnSelect: =Launch(gSelectedRequest.RequesterInvoiceURL, {}, LaunchTarget.New)
                         Size: =11
-                        Text: =gSelectedRequest.RequesterInvoiceURL
+                        Text: ="Open invoice ↗"
+                        Tooltip: =gSelectedRequest.RequesterInvoiceURL
                         Underline: =true
                         Width: =Parent.Width - 40
                         Wrap: =false

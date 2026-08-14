@@ -259,6 +259,7 @@ Screens:
                         PaddingLeft: =0
                         Size: =11
                         Text: =If(IsBlank(gSelectedRequest.OfficialInvoiceLink), "—", "Open official invoice ↗")
+                        Tooltip: =gSelectedRequest.OfficialInvoiceLink
                         Underline: =true
                         Width: =Parent.Width - 40
                         Wrap: =false
@@ -330,6 +331,7 @@ Screens:
                         PaddingRight: =0
                         Size: =11
                         Text: =If(IsBlank(gSelectedRequest.CreditNote), "—", "Open credit note ↗")
+                        Tooltip: =gSelectedRequest.CreditNote
                         Underline: =Not(IsBlank(gSelectedRequest.CreditNote))
                         VerticalAlign: =VerticalAlign.Top
                         Width: =Parent.Width - 40
