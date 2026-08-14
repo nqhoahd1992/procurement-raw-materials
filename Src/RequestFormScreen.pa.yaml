@@ -216,7 +216,7 @@ Screens:
                                                                                                       RequestType: {Value: "Request"},
                                                                                                       DeliveryNumber: 0,
                                                                                                       DeliveryCount: 0,
-                                                                                                      Status: {Value: "Pending Manager"}
+                                                                                                      Status: {Value: If(gCurrentUser.Role.Value = "Trusted Requester", "Pending Procurement", "Pending Manager")}
                                                                                                   }
                                                                                               )
                                                                                           },
@@ -238,7 +238,7 @@ Screens:
                                                                                                       {ID: wNewRequest.ID},
                                                                                                       {
                                                                                                           GroupKey: wNewRequest.ID,
-                                                                                                          Title: "ID: " & Text(wNewRequest.ID) & " - " & gCurrentEmployee.Title & " - " & Text(Today(), "dd/mm/yyyy") & " - " & ddProject_1.Selected.Title
+                                                                                                          Title: "ID - " & Text(wNewRequest.ID) & " - " & gCurrentEmployee.Title & " - " & Text(Today(), "dd/mm/yyyy")
                                                                                                       }
                                                                                                   )
                                                                                               );

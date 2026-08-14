@@ -9,7 +9,7 @@
 EditorState:
   ScreensOrder:
     - HomeScreen
-    - COACompletionScreen
+    - ReceiptAmendmentScreen
     - RequestFormScreen
     - RequestDetailScreen
     - ManagerReviewScreen

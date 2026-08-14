@@ -41,8 +41,8 @@ App:
       Clear(colLineItemsDetail);
       ClearCollect(colRequirementFiles, {FileName: "", FileURL: ""});
       Clear(colRequirementFiles);
-      ClearCollect(colCOAOutstanding, {ID: 0, MaterialName: "", COARound: 1, ReceivedQty: 0, BatchNumber: "", ExpiryDate: Today(), QCNumber: "", RMPKCode: "", NewCOALink: ""});
-      Clear(colCOAOutstanding);
+      ClearCollect(colReceiptAmend, {ID: 0, MaterialName: "", RARound: 1, RMPKCode: "", ReceivedQty: 0, NewReceivedQty: "", BatchNumber: "", NewBatchNumber: "", ExpiryDate: Today(), NewExpiryDate: Today(), QCNumber: "", NewQCNumber: "", COALink: "", NewCOALink: ""});
+      Clear(colReceiptAmend);
       ClearCollect(colReceiptRounds, {ID: 0, LineItemID: 0, ParentLineItemID: 0, RoundNumber: 0, MaterialName: "", Unit: "", ReceivedQty: 0, BatchNumber: "", ExpiryDate: Today(), QCNumber: "", RMPKCode: "", COALink: "", COAMissing: false});
       Clear(colReceiptRounds);
       ClearCollect(colLineItemsSummary, {ID: 0, MaterialID: 0, MaterialName: "", Unit: "", Quantity: 0, TotalReceivedQty: 0});

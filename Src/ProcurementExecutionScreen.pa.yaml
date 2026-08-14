@@ -1211,6 +1211,11 @@ Screens:
                                               PurchaseOrderLink: txtPurchaseOrder_PE.Value
                                           }
                                       );
+                                      Patch(
+                                          'RM Procurement Requests',
+                                          {ID: wReq.ID},
+                                          {Title: wReq.Title & " - " & txtSupplierSummary_PE.Value}
+                                      );
                                       Set(gSelectedRequest, LookUp('RM Procurement Requests', ID = gSelectedRequest.ID));
                                       Notify("Request approved for sourcing. You can now create the first delivery.", NotificationType.Success);
                                       Navigate(RequestDetailScreen)

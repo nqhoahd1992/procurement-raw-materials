@@ -1,37 +1,37 @@
 Screens:
-  COACompletionScreen:
+  ReceiptAmendmentScreen:
     Properties:
       LoadingSpinnerColor: =RGBA(56, 96, 178, 1)
       OnVisible: |-
         =Set(gSelectedRequest, LookUp('RM Procurement Requests', ID = gSelectedRequest.ID));
         ClearCollect(
-            colCOAOutstanding,
+            colReceiptAmend,
             ForAll(
                 Filter(
                     'RM Procurement Receipt Rounds',
-                    RequestIDText = Text(gSelectedRequest.ID) && COAMissing
+                    RequestIDText = Text(gSelectedRequest.ID)
                 ),
-                {ID: ID, MaterialName: MaterialName, COARound: RoundNumber, ReceivedQty: ReceivedQty, BatchNumber: BatchNumber, ExpiryDate: ExpiryDate, QCNumber: QCNumber, RMPKCode: RMPKCode, NewCOALink: ""}
+                {ID: ID, MaterialName: MaterialName, RARound: RoundNumber, RMPKCode: RMPKCode, ReceivedQty: ReceivedQty, NewReceivedQty: Text(ReceivedQty), BatchNumber: BatchNumber, NewBatchNumber: Coalesce(BatchNumber, ""), ExpiryDate: ExpiryDate, NewExpiryDate: ExpiryDate, QCNumber: QCNumber, NewQCNumber: Coalesce(QCNumber, ""), COALink: COALink, NewCOALink: Coalesce(COALink, "")}
             )
         )
     Children:
-      - rectHeader_COA:
+      - rectHeader_RA:
           Control: Rectangle@2.3.0
           Properties:
             Fill: =RGBA(83, 74, 183, 1)
             Height: =60
             Width: =Parent.Width
-      - lblScreenTitle_COA:
+      - lblScreenTitle_RA:
           Control: Label@2.5.1
           Properties:
             Color: =RGBA(255, 255, 255, 1)
             FontWeight: =FontWeight.Bold
             Height: =60
             Size: =14
-            Text: ="Raw Material Procurement - Link to COA Completion"
+            Text: ="Raw Material Procurement - Receipt Data Amendment"
             Width: =700
             X: =20
-      - lblNotAuthorized_COA:
+      - lblNotAuthorized_RA:
           Control: Label@2.5.1
           Properties:
             Align: =Align.Center
@@ -43,7 +43,7 @@ Screens:
             Visible: =gCurrentUser.Role.Value <> "Procurement" && gCurrentUser.Role.Value <> "Admin"
             Width: =Parent.Width
             Y: =60
-      - rowInfoBlock_COA:
+      - rowInfoBlock_RA:
           Control: GroupContainer@1.5.0
           Variant: AutoLayout
           Properties:
@@ -64,7 +64,7 @@ Screens:
             Width: =Parent.Width
             Y: =60
           Children:
-            - rowInfoLine1_COA:
+            - rowInfoLine1_RA:
                 Control: GroupContainer@1.5.0
                 Variant: AutoLayout
                 Properties:
@@ -82,7 +82,7 @@ Screens:
                   RadiusTopRight: =0
                   Width: =Parent.Width - 40
                 Children:
-                  - lblInfoTitle_COA:
+                  - lblInfoTitle_RA:
                       Control: Label@2.5.1
                       Properties:
                         FillPortions: =1
@@ -92,7 +92,7 @@ Screens:
                         Text: |-
                           =gSelectedRequest.Title
                         Width: =600
-                  - lblStatusBadge_COA:
+                  - lblStatusBadge_RA:
                       Control: Label@2.5.1
                       Properties:
                         Align: =Align.Center
@@ -107,15 +107,15 @@ Screens:
                         Size: =10
                         Text: =gSelectedRequest.Status.Value
                         Width: =220
-            - lblOutstandingCount_COA:
+            - lblOutstandingCount_RA:
                 Control: Label@2.5.1
                 Properties:
                   Color: =RGBA(136, 135, 128, 1)
                   Height: =20
                   Size: =11
-                  Text: =CountRows(colCOAOutstanding) & " material line item(s) awaiting Link to COA on this request"
+                  Text: =CountRows(colReceiptAmend) & " material line item(s) received on this request — review and correct what the receiver entered if needed"
                   Width: =Parent.Width - 40
-      - rowTableHeader_COA:
+      - rowTableHeader_RA:
           Control: GroupContainer@1.5.0
           Variant: AutoLayout
           Properties:
@@ -135,7 +135,7 @@ Screens:
             Width: =Parent.Width
             Y: =150
           Children:
-            - lblColMaterial_COA:
+            - lblColMaterial_RA:
                 Control: Label@2.5.1
                 Properties:
                   Color: =RGBA(68, 68, 65, 1)
@@ -143,8 +143,8 @@ Screens:
                   Height: =32
                   Size: =9
                   Text: ="Material"
-                  Width: =Parent.Width * 0.16
-            - lblColRound_COA:
+                  Width: =Parent.Width * 0.14
+            - lblColRound_RA:
                 Control: Label@2.5.1
                 Properties:
                   Color: =RGBA(68, 68, 65, 1)
@@ -152,8 +152,17 @@ Screens:
                   Height: =32
                   Size: =9
                   Text: ="Round"
-                  Width: =Parent.Width * 0.06
-            - lblColQty_COA:
+                  Width: =Parent.Width * 0.05
+            - lblColRMPK_RA:
+                Control: Label@2.5.1
+                Properties:
+                  Color: =RGBA(68, 68, 65, 1)
+                  FontWeight: =FontWeight.Semibold
+                  Height: =32
+                  Size: =9
+                  Text: ="RM Code"
+                  Width: =Parent.Width * 0.08
+            - lblColQty_RA:
                 Control: Label@2.5.1
                 Properties:
                   Color: =RGBA(68, 68, 65, 1)
@@ -162,7 +171,7 @@ Screens:
                   Size: =9
                   Text: ="Received Qty"
                   Width: =Parent.Width * 0.08
-            - lblColBatch_COA:
+            - lblColBatch_RA:
                 Control: Label@2.5.1
                 Properties:
                   Color: =RGBA(68, 68, 65, 1)
@@ -171,7 +180,7 @@ Screens:
                   Size: =9
                   Text: ="Batch No"
                   Width: =Parent.Width * 0.1
-            - lblColExpiry_COA:
+            - lblColExpiry_RA:
                 Control: Label@2.5.1
                 Properties:
                   Color: =RGBA(68, 68, 65, 1)
@@ -180,7 +189,7 @@ Screens:
                   Size: =9
                   Text: ="Expiry Date"
                   Width: =Parent.Width * 0.1
-            - lblColQC_COA:
+            - lblColQC_RA:
                 Control: Label@2.5.1
                 Properties:
                   Color: =RGBA(68, 68, 65, 1)
@@ -189,16 +198,7 @@ Screens:
                   Size: =9
                   Text: ="QC Number"
                   Width: =Parent.Width * 0.1
-            - lblColRMPK_COA:
-                Control: Label@2.5.1
-                Properties:
-                  Color: =RGBA(68, 68, 65, 1)
-                  FontWeight: =FontWeight.Semibold
-                  Height: =32
-                  Size: =9
-                  Text: ="RM/PK Code"
-                  Width: =Parent.Width * 0.1
-            - lblColCOAInput_COA:
+            - lblColCOAInput_RA:
                 Control: Label@2.5.1
                 Properties:
                   Color: =RGBA(68, 68, 65, 1)
@@ -207,18 +207,18 @@ Screens:
                   Size: =9
                   Text: ="Link to COA (URL)"
                   Width: =Parent.Width * 0.28
-      - galCOAOutstanding:
+      - galReceiptAmend:
           Control: Gallery@2.15.0
           Variant: BrowseLayout_Vertical_TwoTextOneImageVariant_ver5.0
           Properties:
             Height: =Parent.Height - 246
-            Items: =colCOAOutstanding
+            Items: =colReceiptAmend
             TemplateSize: =56
             Visible: =gCurrentUser.Role.Value = "Procurement" || gCurrentUser.Role.Value = "Admin"
             Width: =Parent.Width
             Y: =186
           Children:
-            - rowCOAItem:
+            - rowRAItem:
                 Control: GroupContainer@1.5.0
                 Variant: AutoLayout
                 Properties:
@@ -236,76 +236,83 @@ Screens:
                   RadiusTopRight: =0
                   Width: =1358
                 Children:
-                  - lblCOAItemMaterial:
+                  - lblRAItemMaterial:
                       Control: Label@2.5.1
                       Properties:
                         Height: =32
                         Size: =11
                         Text: =ThisItem.MaterialName
-                        Width: =Parent.Width * 0.16
+                        Width: =Parent.Width * 0.14
                         Wrap: =false
-                  - lblCOAItemRound:
+                  - lblRAItemRound:
                       Control: Label@2.5.1
                       Properties:
                         Color: =RGBA(136, 135, 128, 1)
                         Height: =32
                         Size: =10
-                        Text: ="Round " & ThisItem.COARound
-                        Width: =Parent.Width * 0.06
-                  - lblCOAItemQty:
+                        Text: ="Round " & ThisItem.RARound
+                        Width: =Parent.Width * 0.05
+                  - lblRAItemRMPK:
                       Control: Label@2.5.1
                       Properties:
-                        Color: =RGBA(68, 68, 65, 1)
-                        Height: =32
-                        Size: =10
-                        Text: =Text(ThisItem.ReceivedQty)
-                        Width: =Parent.Width * 0.08
-                  - lblCOAItemBatch:
-                      Control: Label@2.5.1
-                      Properties:
-                        Color: =RGBA(68, 68, 65, 1)
-                        Height: =32
-                        Size: =10
-                        Text: =ThisItem.BatchNumber
-                        Width: =Parent.Width * 0.1
-                        Wrap: =false
-                  - lblCOAItemExpiry:
-                      Control: Label@2.5.1
-                      Properties:
-                        Color: =RGBA(68, 68, 65, 1)
-                        Height: =32
-                        Size: =10
-                        Text: =If(IsBlank(ThisItem.ExpiryDate), "", Text(ThisItem.ExpiryDate, "dd/mm/yyyy"))
-                        Width: =Parent.Width * 0.1
-                  - lblCOAItemQC:
-                      Control: Label@2.5.1
-                      Properties:
-                        Color: =RGBA(68, 68, 65, 1)
-                        Height: =32
-                        Size: =10
-                        Text: =ThisItem.QCNumber
-                        Width: =Parent.Width * 0.1
-                        Wrap: =false
-                  - lblCOAItemRMPK:
-                      Control: Label@2.5.1
-                      Properties:
-                        Color: =RGBA(68, 68, 65, 1)
+                        Color: =RGBA(136, 135, 128, 1)
                         Height: =32
                         Size: =10
                         Text: =ThisItem.RMPKCode
-                        Width: =Parent.Width * 0.1
+                        Width: =Parent.Width * 0.08
                         Wrap: =false
-                  - txtCOALinkInput:
+                  - txtRAQtyInput:
+                      Control: TextInput@0.0.54
+                      Properties:
+                        Height: =36
+                        OnChange: |-
+                          =UpdateIf(colReceiptAmend, ID = ThisItem.ID, {NewReceivedQty: Self.Value})
+                        Placeholder: ="Received qty"
+                        Value: =ThisItem.NewReceivedQty
+                        Width: =Parent.Width * 0.08
+                  - txtRABatchInput:
+                      Control: TextInput@0.0.54
+                      Properties:
+                        Height: =36
+                        OnChange: |-
+                          =UpdateIf(colReceiptAmend, ID = ThisItem.ID, {NewBatchNumber: Self.Value})
+                        Placeholder: ="Batch no."
+                        Value: =ThisItem.NewBatchNumber
+                        Width: =Parent.Width * 0.1
+                  - dpRAExpiryInput:
+                      Control: ModernDatePicker@1.0.1
+                      Properties:
+                        BorderStyle: =""
+                        DefaultDate: =ThisItem.NewExpiryDate
+                        Font: =""
+                        FontWeight: =""
+                        Format: ="dd/mm/yyyy"
+                        Height: =36
+                        OnChange: |-
+                          =UpdateIf(colReceiptAmend, ID = ThisItem.ID, {NewExpiryDate: Self.SelectedDate})
+                        Placeholder: ="Expiry date"
+                        Size: =0
+                        Width: =Parent.Width * 0.1
+                  - txtRAQCInput:
+                      Control: TextInput@0.0.54
+                      Properties:
+                        Height: =36
+                        OnChange: |-
+                          =UpdateIf(colReceiptAmend, ID = ThisItem.ID, {NewQCNumber: Self.Value})
+                        Placeholder: ="QC number"
+                        Value: =ThisItem.NewQCNumber
+                        Width: =Parent.Width * 0.1
+                  - txtRACOALinkInput:
                       Control: TextInput@0.0.54
                       Properties:
                         FillPortions: =1
                         Height: =36
                         OnChange: |-
-                          =UpdateIf(colCOAOutstanding, ID = ThisItem.ID, {NewCOALink: Self.Value})
+                          =UpdateIf(colReceiptAmend, ID = ThisItem.ID, {NewCOALink: Self.Value})
                         Placeholder: ="Link to COA (URL)"
                         Value: =ThisItem.NewCOALink
                         Width: =Parent.Width * 0.28
-      - rowFooter_COA:
+      - rowFooter_RA:
           Control: GroupContainer@1.5.0
           Variant: AutoLayout
           Properties:
@@ -324,36 +331,57 @@ Screens:
             Width: =Parent.Width
             Y: =Parent.Height - 60
           Children:
-            - btnBack_COA:
+            - btnBack_RA:
                 Control: Button@0.0.45
                 Properties:
                   Height: =36
                   OnSelect: =Back()
                   Text: ="Back"
                   Width: =120
-            - btnSaveCOA_COA:
+            - btnSaveRA_RA:
                 Control: Button@0.0.45
                 Properties:
                   Height: =40
                   OnSelect: |-
-                    =If(
-                        CountRows(Filter(colCOAOutstanding, Not(IsBlank(NewCOALink)))) = 0,
-                        Notify("Please enter at least one Link to COA before saving.", NotificationType.Warning),
-                        ForAll(
-                            Filter(colCOAOutstanding, Not(IsBlank(NewCOALink))) As co,
-                            Patch('RM Procurement Receipt Rounds', {ID: co.ID}, {COALink: co.NewCOALink, COAMissing: false})
-                        );
-                        Notify("Link to COA saved.", NotificationType.Success);
-                        ClearCollect(
-                            colCOAOutstanding,
+                    =With(
+                        {wChanged: Filter(
+                            colReceiptAmend,
+                            (Not(IsBlank(NewReceivedQty)) && IsNumeric(NewReceivedQty) && Value(NewReceivedQty) <> Coalesce(ReceivedQty, 0)) ||
+                            NewBatchNumber <> Coalesce(BatchNumber, "") ||
+                            NewExpiryDate <> ExpiryDate ||
+                            NewQCNumber <> Coalesce(QCNumber, "") ||
+                            NewCOALink <> Coalesce(COALink, "")
+                        )},
+                        If(
+                            CountRows(wChanged) = 0,
+                            Notify("No changes to save.", NotificationType.Warning),
                             ForAll(
-                                Filter(
+                                wChanged As ra,
+                                Patch(
                                     'RM Procurement Receipt Rounds',
-                                    RequestIDText = Text(gSelectedRequest.ID) && COAMissing
-                                ),
-                                {ID: ID, MaterialName: MaterialName, COARound: RoundNumber, ReceivedQty: ReceivedQty, BatchNumber: BatchNumber, ExpiryDate: ExpiryDate, QCNumber: QCNumber, RMPKCode: RMPKCode, NewCOALink: ""}
+                                    {ID: ra.ID},
+                                    {
+                                        ReceivedQty: If(IsNumeric(ra.NewReceivedQty), Value(ra.NewReceivedQty), ra.ReceivedQty),
+                                        BatchNumber: ra.NewBatchNumber,
+                                        ExpiryDate: ra.NewExpiryDate,
+                                        QCNumber: ra.NewQCNumber,
+                                        COALink: ra.NewCOALink,
+                                        COAMissing: IsBlank(ra.NewCOALink)
+                                    }
+                                )
+                            );
+                            Notify("Receipt data changes saved.", NotificationType.Success);
+                            ClearCollect(
+                                colReceiptAmend,
+                                ForAll(
+                                    Filter(
+                                        'RM Procurement Receipt Rounds',
+                                        RequestIDText = Text(gSelectedRequest.ID)
+                                    ),
+                                    {ID: ID, MaterialName: MaterialName, RARound: RoundNumber, RMPKCode: RMPKCode, ReceivedQty: ReceivedQty, NewReceivedQty: Text(ReceivedQty), BatchNumber: BatchNumber, NewBatchNumber: Coalesce(BatchNumber, ""), ExpiryDate: ExpiryDate, NewExpiryDate: ExpiryDate, QCNumber: QCNumber, NewQCNumber: Coalesce(QCNumber, ""), COALink: COALink, NewCOALink: Coalesce(COALink, "")}
+                                )
                             )
                         )
                     )
-                  Text: ="Save Link to COA"
+                  Text: ="Save Changes"
                   Width: =180
