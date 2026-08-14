@@ -61,7 +61,7 @@ Screens:
                     BatchNumber: "",
                     ExpiryDate: Blank(),
                     QCNumber: "",
-                    RMPKCode: Coalesce(LookUp('Raw Materials', ID = li.MaterialID.Id).Code, ""),
+                    RMPKCode: With({wMatID: li.MaterialID.Id}, Coalesce(LookUp('Raw Materials', ID = wMatID).Code, "")),
                     COALink: ""
                 }
             )

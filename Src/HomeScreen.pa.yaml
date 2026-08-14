@@ -86,21 +86,42 @@ Screens:
                     )
                   Width: =400
             - btnStatusFilterDropdown_HS:
-                Control: Button@0.0.45
+                Control: ModernButton@1.0.0
                 Properties:
+                  Align: =Align.Center
+                  FontWeight: =""
                   Height: =36
                   Icon: ="ChevronDown"
                   OnSelect: =ClearCollect(colStatusFilterDraft, If(IsEmpty(colStatusFilterChecked), colStatusFilterOptions_HS, colStatusFilterChecked)); Set(gShowStatusFilter, true)
-                  Text: |-
-                    ="Status" & If(IsEmpty(colStatusFilterChecked), "", " (" & CountRows(colStatusFilterChecked) & ")")
+                  PaddingBottom: =5
+                  PaddingLeft: =12
+                  PaddingRight: =12
+                  PaddingTop: =5
+                  RadiusBottomLeft: =4
+                  RadiusBottomRight: =4
+                  RadiusTopLeft: =4
+                  RadiusTopRight: =4
+                  Text: ="Status" & If(IsEmpty(colStatusFilterChecked), "", " (" & CountRows(colStatusFilterChecked) & ")")
+                  VerticalAlign: =VerticalAlign.Middle
                   Width: =160
             - btnNewRequest:
-                Control: Button@0.0.45
+                Control: ModernButton@1.0.0
                 Properties:
+                  Align: =Align.Center
+                  FontWeight: =""
                   Height: =36
                   Icon: ="Add"
                   OnSelect: =Navigate(RequestFormScreen)
+                  PaddingBottom: =5
+                  PaddingLeft: =12
+                  PaddingRight: =12
+                  PaddingTop: =5
+                  RadiusBottomLeft: =4
+                  RadiusBottomRight: =4
+                  RadiusTopLeft: =4
+                  RadiusTopRight: =4
                   Text: ="New Request"
+                  VerticalAlign: =VerticalAlign.Middle
                   Width: =150
       - rectFilterBarBorder:
           Control: Rectangle@2.3.0
@@ -509,56 +530,6 @@ Screens:
                                     Coalesce(ThisItem.DeliveryCount, 0) >= 1
                                 )
                               Width: =160
-                        - btnReceiptAmend_Request:
-                            Control: ModernButton@1.0.0
-                            Properties:
-                              Align: =Align.Center
-                              BasePaletteColor: =RGBA(83, 74, 183, 1)
-                              FontWeight: =FontWeight.Semibold
-                              Height: =28
-                              OnSelect: =Set(gSelectedRequest, ThisItem); Navigate(ReceiptAmendmentScreen)
-                              PaddingBottom: =5
-                              PaddingLeft: =12
-                              PaddingRight: =12
-                              PaddingTop: =5
-                              RadiusBottomLeft: =4
-                              RadiusBottomRight: =4
-                              RadiusTopLeft: =4
-                              RadiusTopRight: =4
-                              Text: ="Amend Receipt Data"
-                              VerticalAlign: =VerticalAlign.Middle
-                              Visible: |-
-                                =(gCurrentUser.Role.Value = "Procurement" || gCurrentUser.Role.Value = "Admin") &&
-                                ThisItem.Status.Value <> "Rejected" &&
-                                Not(IsEmpty(Filter('RM Procurement Receipt Rounds',
-                                    RequestIDText = Text(ThisItem.ID)
-                                )))
-                              Width: =180
-                        - btnSubmitInvoice:
-                            Control: ModernButton@1.0.0
-                            Properties:
-                              Align: =Align.Center
-                              BasePaletteColor: =RGBA(133, 79, 11, 1)
-                              FontWeight: =FontWeight.Semibold
-                              Height: =28
-                              OnSelect: =Set(gSelectedRequest, ThisItem); Navigate(RequesterInvoiceScreen)
-                              PaddingBottom: =5
-                              PaddingLeft: =12
-                              PaddingRight: =12
-                              PaddingTop: =5
-                              RadiusBottomLeft: =4
-                              RadiusBottomRight: =4
-                              RadiusTopLeft: =4
-                              RadiusTopRight: =4
-                              Text: ="Submit Invoice"
-                              VerticalAlign: =VerticalAlign.Middle
-                              Visible: |-
-                                =ThisItem.InvoiceMode.Value = "ViaRequester" && !ThisItem.InvoiceSubmitted &&
-                                (
-                                  gCurrentUser.Role.Value <> "Procurement" && gCurrentUser.Role.Value <> "Admin" ||
-                                  ThisItem.RequesterEmail = gCurrentEmployee.Email
-                                )
-                              Width: =160
                         - btnProcessInvoice:
                             Control: ModernButton@1.0.0
                             Properties:
@@ -592,6 +563,56 @@ Screens:
                                 !ThisItem.InvoiceSubmitted &&
                                 (gCurrentUser.Role.Value = "Procurement" || gCurrentUser.Role.Value = "Admin")
                               Width: =160
+                        - btnSubmitInvoice:
+                            Control: ModernButton@1.0.0
+                            Properties:
+                              Align: =Align.Center
+                              BasePaletteColor: =RGBA(133, 79, 11, 1)
+                              FontWeight: =FontWeight.Semibold
+                              Height: =28
+                              OnSelect: =Set(gSelectedRequest, ThisItem); Navigate(RequesterInvoiceScreen)
+                              PaddingBottom: =5
+                              PaddingLeft: =12
+                              PaddingRight: =12
+                              PaddingTop: =5
+                              RadiusBottomLeft: =4
+                              RadiusBottomRight: =4
+                              RadiusTopLeft: =4
+                              RadiusTopRight: =4
+                              Text: ="Submit Invoice"
+                              VerticalAlign: =VerticalAlign.Middle
+                              Visible: |-
+                                =ThisItem.InvoiceMode.Value = "ViaRequester" && !ThisItem.InvoiceSubmitted &&
+                                (
+                                  gCurrentUser.Role.Value <> "Procurement" && gCurrentUser.Role.Value <> "Admin" ||
+                                  ThisItem.RequesterEmail = gCurrentEmployee.Email
+                                )
+                              Width: =160
+                        - btnReceiptAmend_Request:
+                            Control: ModernButton@1.0.0
+                            Properties:
+                              Align: =Align.Center
+                              BasePaletteColor: =RGBA(83, 74, 183, 1)
+                              FontWeight: =FontWeight.Semibold
+                              Height: =28
+                              OnSelect: =Set(gSelectedRequest, ThisItem); Navigate(ReceiptAmendmentScreen)
+                              PaddingBottom: =5
+                              PaddingLeft: =12
+                              PaddingRight: =12
+                              PaddingTop: =5
+                              RadiusBottomLeft: =4
+                              RadiusBottomRight: =4
+                              RadiusTopLeft: =4
+                              RadiusTopRight: =4
+                              Text: ="Amend Receipt Data"
+                              VerticalAlign: =VerticalAlign.Middle
+                              Visible: |-
+                                =(gCurrentUser.Role.Value = "Procurement" || gCurrentUser.Role.Value = "Admin") &&
+                                ThisItem.Status.Value <> "Rejected" &&
+                                Not(IsEmpty(Filter('RM Procurement Receipt Rounds',
+                                    RequestIDText = Text(ThisItem.ID)
+                                )))
+                              Width: =180
             - rectSeparator:
                 Control: Rectangle@2.3.0
                 Properties:
@@ -845,16 +866,38 @@ Screens:
                   Width: =Parent.Width - 40
                 Children:
                   - btnQuickViewOpenDetail_HS:
-                      Control: Button@0.0.45
+                      Control: ModernButton@1.0.0
                       Properties:
+                        Align: =Align.Center
+                        FontWeight: =""
                         OnSelect: =Set(gShowQuickView, false); Set(gSelectedRequest, gQuickViewRequest); Navigate(RequestDetailScreen)
+                        PaddingBottom: =5
+                        PaddingLeft: =12
+                        PaddingRight: =12
+                        PaddingTop: =5
+                        RadiusBottomLeft: =4
+                        RadiusBottomRight: =4
+                        RadiusTopLeft: =4
+                        RadiusTopRight: =4
                         Text: ="Open Full Detail"
+                        VerticalAlign: =VerticalAlign.Middle
                         Width: =160
                   - btnCloseQuickView_HS:
-                      Control: Button@0.0.45
+                      Control: ModernButton@1.0.0
                       Properties:
+                        Align: =Align.Center
+                        FontWeight: =""
                         OnSelect: =Set(gShowQuickView, false)
+                        PaddingBottom: =5
+                        PaddingLeft: =12
+                        PaddingRight: =12
+                        PaddingTop: =5
+                        RadiusBottomLeft: =4
+                        RadiusBottomRight: =4
+                        RadiusTopLeft: =4
+                        RadiusTopRight: =4
                         Text: ="Close"
+                        VerticalAlign: =VerticalAlign.Middle
                         Width: =100
       - rectStatusFilterOverlay_HS:
           Control: Rectangle@2.3.0
@@ -949,10 +992,8 @@ Screens:
                 Variant: BrowseLayout_Vertical_TwoTextOneImageVariant_ver5.0
                 Properties:
                   BorderColor: =RGBA(0, 0, 0, 0)
-                  FillPortions: =1
                   Items: =colStatusFilterOptions_HS
                   LayoutMinHeight: =260
-                  TemplatePadding: =0
                   TemplateSize: =32
                   Width: =Parent.Width - 40
                 Children:
@@ -969,7 +1010,7 @@ Screens:
                         RadiusBottomRight: =0
                         RadiusTopLeft: =0
                         RadiusTopRight: =0
-                        Width: =Parent.Width
+                        Width: =Parent.Width - 20
                       Children:
                         - lblStatusFilterCheck_HS:
                             Control: Label@2.5.1
@@ -1069,14 +1110,36 @@ Screens:
                   Width: =Parent.Width - 40
                 Children:
                   - btnStatusFilterCancel_HS:
-                      Control: Button@0.0.45
+                      Control: ModernButton@1.0.0
                       Properties:
+                        Align: =Align.Center
+                        FontWeight: =""
                         OnSelect: =Set(gShowStatusFilter, false)
+                        PaddingBottom: =5
+                        PaddingLeft: =12
+                        PaddingRight: =12
+                        PaddingTop: =5
+                        RadiusBottomLeft: =4
+                        RadiusBottomRight: =4
+                        RadiusTopLeft: =4
+                        RadiusTopRight: =4
                         Text: ="Cancel"
+                        VerticalAlign: =VerticalAlign.Middle
                         Width: =90
                   - btnStatusFilterApply_HS:
-                      Control: Button@0.0.45
+                      Control: ModernButton@1.0.0
                       Properties:
+                        Align: =Align.Center
+                        FontWeight: =""
                         OnSelect: =ClearCollect(colStatusFilterChecked, colStatusFilterDraft); Set(gShowStatusFilter, false)
+                        PaddingBottom: =5
+                        PaddingLeft: =12
+                        PaddingRight: =12
+                        PaddingTop: =5
+                        RadiusBottomLeft: =4
+                        RadiusBottomRight: =4
+                        RadiusTopLeft: =4
+                        RadiusTopRight: =4
                         Text: ="Apply"
+                        VerticalAlign: =VerticalAlign.Middle
                         Width: =90
