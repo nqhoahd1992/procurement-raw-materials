@@ -90,8 +90,7 @@ Screens:
                         FontWeight: =FontWeight.Bold
                         Height: =24
                         Size: =14
-                        Text: |-
-                          =gSelectedRequest.Title
+                        Text: =gSelectedRequest.Title
                         Width: =600
                   - lblStatusBadge_RA:
                       Control: Label@2.5.1
@@ -290,8 +289,7 @@ Screens:
                         Height: =18
                         PaddingLeft: =0
                         Size: =9
-                        Text: |-
-                          ="Raw Materials (" & CountRows(colLineItemsDetail) & ")"
+                        Text: ="Raw Materials (" & CountRows(colLineItemsDetail) & ")"
                         Width: =Parent.Width
                   - lblInfoMaterialsValue_RA:
                       Control: Label@2.5.1
@@ -414,12 +412,12 @@ Screens:
           Control: Gallery@2.15.0
           Variant: BrowseLayout_Vertical_TwoTextOneImageVariant_ver5.0
           Properties:
-            Height: =Parent.Height - 338
+            Height: =Parent.Height - 302
             Items: =colReceiptAmend
             TemplateSize: =56
             Visible: =gCurrentUser.Role.Value = "Procurement" || gCurrentUser.Role.Value = "Admin"
             Width: =Parent.Width
-            Y: =278
+            Y: =242
           Children:
             - rowRAItem:
                 Control: GroupContainer@1.5.0
