@@ -213,7 +213,6 @@ Screens:
                                                                                                       ),
                                                                                                       ManagerApproverID: If(gCurrentUser.Role.Value = "Trusted Requester", Blank(), {Id: ddManagerApprover_1.Selected.EmployeeID.Id, Value: ddManagerApprover_1.Selected.EmployeeID.Value}),
                                                                                                       ManagerApproverNum: If(gCurrentUser.Role.Value = "Trusted Requester", Blank(), ddManagerApprover_1.Selected.EmployeeID.Id),
-                                                                                                      SkippedManagerReview: false,
                                                                                                       RequestType: {Value: "Request"},
                                                                                                       DeliveryNumber: 0,
                                                                                                       DeliveryCount: 0,

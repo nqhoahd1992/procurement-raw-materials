@@ -992,7 +992,6 @@ Screens:
                                                                           InvoiceSubmitted: false,
                                                                           RequesterInvoiceURL: If(gIsViaRequesterBatch, gSelectedRequest.RequesterInvoiceURL, ""),
                                                                           ReceiptRoundCount: 0,
-                                                                          SkippedManagerReview: false,
                                                                           ProcurementExecutedBy: {Id: gCurrentEmployee.ID, Value: gCurrentEmployee.Title},
                                                                           ProcurementExecutedAt: Now()
                                                                       }

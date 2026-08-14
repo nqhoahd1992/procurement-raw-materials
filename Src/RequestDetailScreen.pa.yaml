@@ -466,39 +466,7 @@ Screens:
                                     FontWeight: =FontWeight.Semibold
                                     Height: =24
                                     Size: =11
-                                    Text: =If(gSelectedRequest.SkippedManagerReview, "Escalated to Executive", gSelectedRequest.ManagerApproverID.Value)
-                                    Width: =Parent.Width - 20
-                        - colSkipped:
-                            Control: GroupContainer@1.5.0
-                            Variant: AutoLayout
-                            Properties:
-                              DropShadow: =DropShadow.None
-                              LayoutDirection: =LayoutDirection.Vertical
-                              LayoutGap: =2
-                              LayoutMinHeight: =60
-                              RadiusBottomLeft: =0
-                              RadiusBottomRight: =0
-                              RadiusTopLeft: =0
-                              RadiusTopRight: =0
-                              Visible: =false
-                              Width: =220
-                            Children:
-                              - lblSkippedLabel:
-                                  Control: Label@2.5.1
-                                  Properties:
-                                    Color: =RGBA(136, 135, 128, 1)
-                                    Height: =20
-                                    Size: =9
-                                    Text: ="Escalated to Executive"
-                                    Width: =220
-                              - lblSkippedValue:
-                                  Control: Label@2.5.1
-                                  Properties:
-                                    Color: =If(gSelectedRequest.SkippedManagerReview, RGBA(133, 79, 11, 1), RGBA(68, 68, 65, 1))
-                                    FontWeight: =FontWeight.Semibold
-                                    Height: =24
-                                    Size: =11
-                                    Text: =If(gSelectedRequest.SkippedManagerReview, "Yes", "No")
+                                    Text: =Coalesce(gSelectedRequest.ManagerApproverID.Value, "—")
                                     Width: =Parent.Width - 20
                   - rowInfo2:
                       Control: GroupContainer@1.5.0

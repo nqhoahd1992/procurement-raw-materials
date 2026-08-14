@@ -315,10 +315,10 @@ Screens:
                 Properties:
                   DropShadow: =DropShadow.None
                   FillPortions: =0
-                  Height: =120 + CountRows(colLineItemsDetail) * 48
+                  Height: =88
                   LayoutDirection: =LayoutDirection.Vertical
                   LayoutGap: =4
-                  LayoutMinHeight: =60
+                  LayoutMinHeight: =88
                   PaddingBottom: =20
                   PaddingLeft: =20
                   PaddingRight: =20
@@ -336,158 +336,33 @@ Screens:
                         Height: =24
                         PaddingLeft: =0
                         Size: =11
-                        Text: ="Raw Materials"
+                        Text: |-
+                          ="Raw Materials (" & CountRows(colLineItemsDetail) & ")"
                         Width: =Parent.Width
-                  - rowReqLineItemsHeader_PE_1:
-                      Control: GroupContainer@1.5.0
-                      Variant: AutoLayout
+                  - lblReqLineItemsValue_PE_1:
+                      Control: Label@2.5.1
                       Properties:
-                        DropShadow: =DropShadow.None
-                        Fill: =RGBA(232, 230, 221, 1)
-                        FillPortions: =0
-                        Height: =32
-                        LayoutAlignItems: =LayoutAlignItems.Center
-                        LayoutDirection: =LayoutDirection.Horizontal
-                        LayoutGap: =8
-                        PaddingLeft: =8
-                        PaddingRight: =8
-                        RadiusBottomLeft: =0
-                        RadiusBottomRight: =0
-                        RadiusTopLeft: =0
-                        RadiusTopRight: =0
+                        Height: =20
+                        PaddingLeft: =0
+                        Size: =11
+                        Text: |-
+                          =If(
+                              CountRows(colLineItemsDetail) = 0,
+                              "—",
+                              Concat(
+                                  colLineItemsDetail,
+                                  MaterialName & " (" & Text(Quantity) & " " & Unit & ")",
+                                  "  ·  "
+                              )
+                          )
+                        Tooltip: |-
+                          =Concat(
+                              colLineItemsDetail,
+                              MaterialName & " (" & Text(Quantity) & " " & Unit & ")",
+                              Char(10)
+                          )
                         Width: =Parent.Width
-                      Children:
-                        - lblReqListColName_PE_1:
-                            Control: Label@2.5.1
-                            Properties:
-                              Color: =RGBA(107, 105, 98, 1)
-                              FillPortions: =1
-                              FontWeight: =FontWeight.Semibold
-                              Height: =32
-                              LayoutMinWidth: =100
-                              Size: =9
-                              Text: ="Trade Name"
-                              Width: =Parent.Width * 0.62
-                        - lblReqListColUnit_PE_1:
-                            Control: Label@2.5.1
-                            Properties:
-                              Color: =RGBA(107, 105, 98, 1)
-                              FontWeight: =FontWeight.Semibold
-                              Height: =32
-                              Size: =9
-                              Text: ="Unit"
-                              Width: =Parent.Width * 0.16
-                        - lblReqListColQty_PE_1:
-                            Control: Label@2.5.1
-                            Properties:
-                              Align: =Align.Center
-                              Color: =RGBA(107, 105, 98, 1)
-                              FontWeight: =FontWeight.Semibold
-                              Height: =32
-                              Size: =9
-                              Text: ="Req. Qty"
-                              Width: =Parent.Width * 0.2
-                  - galReqLineItems_PE_1:
-                      Control: Gallery@2.15.0
-                      Variant: BrowseLayout_Vertical_TwoTextOneImageVariant_ver5.0
-                      Properties:
-                        FillPortions: =0
-                        Height: =CountRows(colLineItemsDetail) * 48 + 12
-                        Items: =colLineItemsDetail
-                        ShowScrollbar: =false
-                        TemplatePadding: =2
-                        TemplateSize: =48
-                        Width: =Parent.Width
-                      Children:
-                        - rowReqListItem_PE_1:
-                            Control: GroupContainer@1.5.0
-                            Variant: AutoLayout
-                            Properties:
-                              DropShadow: =DropShadow.None
-                              Fill: =RGBA(255, 255, 255, 1)
-                              Height: =48
-                              LayoutDirection: =LayoutDirection.Vertical
-                              RadiusBottomLeft: =0
-                              RadiusBottomRight: =0
-                              RadiusTopLeft: =0
-                              RadiusTopRight: =0
-                              Width: =Parent.Width
-                            Children:
-                              - rowReqListItemBody_PE_1:
-                                  Control: GroupContainer@1.5.0
-                                  Variant: AutoLayout
-                                  Properties:
-                                    DropShadow: =DropShadow.None
-                                    FillPortions: =0
-                                    Height: =47
-                                    LayoutAlignItems: =LayoutAlignItems.Center
-                                    LayoutDirection: =LayoutDirection.Horizontal
-                                    LayoutGap: =8
-                                    PaddingLeft: =8
-                                    PaddingRight: =8
-                                    RadiusBottomLeft: =0
-                                    RadiusBottomRight: =0
-                                    RadiusTopLeft: =0
-                                    RadiusTopRight: =0
-                                    Width: =Parent.Width
-                                  Children:
-                                    - colReqListItemName_PE_1:
-                                        Control: GroupContainer@1.5.0
-                                        Variant: AutoLayout
-                                        Properties:
-                                          DropShadow: =DropShadow.None
-                                          LayoutDirection: =LayoutDirection.Vertical
-                                          LayoutGap: =2
-                                          RadiusBottomLeft: =0
-                                          RadiusBottomRight: =0
-                                          RadiusTopLeft: =0
-                                          RadiusTopRight: =0
-                                          Width: =Parent.Width * 0.62
-                                        Children:
-                                          - lblReqListItemName_PE_1:
-                                              Control: Label@2.5.1
-                                              Properties:
-                                                Height: =25
-                                                PaddingTop: =10
-                                                Size: =11
-                                                Text: =ThisItem.MaterialName
-                                                Width: =Parent.Width
-                                                Wrap: =false
-                                          - lblReqListItemSubtitle_PE_1:
-                                              Control: Label@2.5.1
-                                              Properties:
-                                                Color: =RGBA(136, 135, 128, 1)
-                                                Height: =16
-                                                Size: =8
-                                                Text: |-
-                                                  =With({wMat: LookUp('Raw Materials', ID = ThisItem.MaterialID.Id)}, If(IsBlank(wMat), "", wMat.Code & " · " & wMat.Category & " · " & wMat.Supplier))
-                                                Width: =Parent.Width
-                                                Wrap: =false
-                                    - lblReqListUnit_PE_1:
-                                        Control: Label@2.5.1
-                                        Properties:
-                                          Color: =RGBA(136, 135, 128, 1)
-                                          Size: =10
-                                          Text: =ThisItem.Unit
-                                          Width: =Parent.Width * 0.16
-                                          Wrap: =false
-                                    - lblReqListQty_PE_1:
-                                        Control: Label@2.5.1
-                                        Properties:
-                                          Align: =Align.Center
-                                          Color: =RGBA(68, 68, 65, 1)
-                                          FontWeight: =FontWeight.Semibold
-                                          Size: =10
-                                          Text: =Text(ThisItem.Quantity)
-                                          Width: =Parent.Width * 0.2
-                              - rectReqListItemRule_PE_1:
-                                  Control: Rectangle@2.3.0
-                                  Properties:
-                                    BorderColor: =RGBA(0, 0, 0, 0)
-                                    Fill: =RGBA(232, 230, 221, 1)
-                                    Height: =1
-                                    LayoutMinHeight: =1
-                                    Width: =Parent.Width
+                        Wrap: =false
             - rowProjectInfo_MR:
                 Control: GroupContainer@1.5.0
                 Variant: AutoLayout
@@ -663,59 +538,6 @@ Screens:
                         Size: =11
                         Text: =Coalesce(gProjectInfo.ProjectDescription, "—")
                         Width: =Parent.Width - 40
-            - rowEscalation_1:
-                Control: GroupContainer@1.5.0
-                Variant: AutoLayout
-                Properties:
-                  DropShadow: =DropShadow.None
-                  Fill: =RGBA(250, 238, 218, 1)
-                  LayoutDirection: =LayoutDirection.Vertical
-                  LayoutGap: =4
-                  LayoutMinHeight: =120
-                  PaddingBottom: =12
-                  PaddingLeft: =20
-                  PaddingRight: =20
-                  PaddingTop: =12
-                  RadiusBottomLeft: =0
-                  RadiusBottomRight: =0
-                  RadiusTopLeft: =0
-                  RadiusTopRight: =0
-                  Visible: =false
-                  Width: =Parent.Width
-                Children:
-                  - lblEscalationTitle:
-                      Control: Label@2.5.1
-                      Properties:
-                        Color: =RGBA(133, 79, 11, 1)
-                        FontWeight: =FontWeight.Bold
-                        Height: =24
-                        Size: =11
-                        Text: ="A request must be escalated to Executive level if:"
-                        Width: =Parent.Width
-                  - lblEscalationConditions:
-                      Control: Label@2.5.1
-                      Properties:
-                        Color: =RGBA(133, 79, 11, 1)
-                        Height: =20
-                        Size: =10
-                        Text: ="• Exceeds approved budget threshold"
-                        Width: =Parent.Width
-                  - lblEscalationConditions2:
-                      Control: Label@2.5.1
-                      Properties:
-                        Color: =RGBA(133, 79, 11, 1)
-                        Height: =20
-                        Size: =10
-                        Text: ="• Is not part of approved financial planning"
-                        Width: =Parent.Width
-                  - lblEscalationConditions3:
-                      Control: Label@2.5.1
-                      Properties:
-                        Color: =RGBA(133, 79, 11, 1)
-                        Height: =20
-                        Size: =10
-                        Text: ="• Involves potential risk"
-                        Width: =Parent.Width
             - rowRemarks:
                 Control: GroupContainer@1.5.0
                 Variant: AutoLayout

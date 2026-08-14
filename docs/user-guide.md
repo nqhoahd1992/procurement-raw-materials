@@ -192,8 +192,8 @@ Màn hình này **không còn Review Checklist**. Bốn ô tick cũ ("Business j
 ### Case: Manager đã review (mọi yêu cầu mới)
 Hiện lại tóm tắt Manager Remarks và Manager Decision (chỉ xem). Phần 4 checklist đã tick trước đây đã bị bỏ — trạng thái tick chưa bao giờ được lưu nên nó luôn hiện 4 dấu ✓ vô điều kiện.
 
-### Case: Manager Review bị bỏ qua — chỉ còn xảy ra với yêu cầu cũ
-Banner cam **"⚡ Manager Review Skipped"** (kèm lý do "Urgent purchase" / "Unplanned purchase" / "Estimated cost exceeds threshold") chỉ hiện với các yêu cầu được tạo **trước** khi quy trình đổi sang "luôn 2 cấp duyệt" — những yêu cầu này từng được escalate thẳng lên Executive và không có review của Manager. Yêu cầu tạo mới sẽ không bao giờ thấy banner này.
+### Case: Manager Review bị bỏ qua — không còn tồn tại
+Quy trình đã đổi sang **luôn 2 cấp duyệt**, không còn trường hợp nào yêu cầu đi thẳng lên Executive mà bỏ qua Manager. Toàn bộ phần hiển thị liên quan (banner "Manager Review Skipped", ô "Escalated to Executive", bảng điều kiện escalate trên màn hình duyệt) đã được gỡ khỏi app. Vài yêu cầu tạo từ trước khi đổi quy trình vẫn còn dữ liệu cũ trong SharePoint nhưng app không hiển thị nữa.
 
 ### Trường nhập
 - **Executive Decision*** — radio: "Approve" / "Reject". Lựa chọn "Approve with conditions" đã bị bỏ.
@@ -393,7 +393,6 @@ Nếu log Bước 2 đã tồn tại, hiện banner xanh **"Supplier Follow-up C
 Hiển thị toàn bộ dữ liệu của yêu cầu ở dạng chỉ xem:
 - Thông tin cơ bản: Requester, Procurement Type, Purchase Accordance, Cost Center, Delivery Location, Required Delivery Date, Estimated Cost.
 - **Raw Materials** — bảng danh sách nguyên liệu của yêu cầu (Trade Name, Category, Supplier, Unit, Qty), chỉ xem.
-- **Escalated to Executive**: "Yes"/"No" — chỉ có ý nghĩa với yêu cầu cũ (trước khi đổi sang luôn 2 cấp duyệt); yêu cầu mới luôn là "No".
 - Invoice Type (màu xanh nếu "Official Invoice", cam nếu "Proforma Invoice").
 - Link Invoice của Requester (nếu invoice qua Requester) và Official Invoice Link (nếu Procurement xử lý) — bấm để mở file.
 - Remark (Executive) — Remark mà Executive nhập khi duyệt (luôn có, vì Remark bắt buộc ở cả Approve và Reject).

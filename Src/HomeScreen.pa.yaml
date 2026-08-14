@@ -385,7 +385,13 @@ Screens:
                               FontWeight: =FontWeight.Semibold
                               Height: =28
                               Icon: ="Info"
-                              OnSelect: =Set(gQuickViewRequest, ThisItem); Set(gShowQuickView, true)
+                              OnSelect: |-
+                                =Set(gQuickViewRequest, ThisItem);
+                                ClearCollect(
+                                    colQuickViewItems,
+                                    Filter('RM Procurement Line Items', RequestIDText = Text(ThisItem.ID))
+                                );
+                                Set(gShowQuickView, true)
                               PaddingBottom: =5
                               PaddingLeft: =12
                               PaddingRight: =12
@@ -638,7 +644,7 @@ Screens:
           Properties:
             DropShadow: =DropShadow.Bold
             Fill: =RGBA(255, 255, 255, 1)
-            Height: =540
+            Height: =660
             LayoutDirection: =LayoutDirection.Vertical
             LayoutGap: =8
             PaddingBottom: =16
@@ -652,7 +658,7 @@ Screens:
             Visible: =gShowQuickView
             Width: =720
             X: =(Parent.Width - 720) / 2
-            Y: =(Parent.Height - 540) / 2
+            Y: =(Parent.Height - 660) / 2
           Children:
             - lblQuickViewTitle_HS:
                 Control: Label@2.5.1
@@ -742,6 +748,170 @@ Screens:
                         Text: =If(IsBlank(gQuickViewRequest.ProcurementType.Value), "—", gQuickViewRequest.ProcurementType.Value)
                         Width: =Parent.Width
                         Wrap: =false
+            - rowQVIdent_HS:
+                Control: GroupContainer@1.5.0
+                Variant: AutoLayout
+                Properties:
+                  DropShadow: =DropShadow.None
+                  FillPortions: =0
+                  Height: =52
+                  LayoutDirection: =LayoutDirection.Horizontal
+                  LayoutGap: =16
+                  RadiusBottomLeft: =0
+                  RadiusBottomRight: =0
+                  RadiusTopLeft: =0
+                  RadiusTopRight: =0
+                  Width: =Parent.Width - 40
+                Children:
+                  - colQVProject_HS:
+                      Control: GroupContainer@1.5.0
+                      Variant: AutoLayout
+                      Properties:
+                        DropShadow: =DropShadow.None
+                        LayoutDirection: =LayoutDirection.Vertical
+                        LayoutGap: =2
+                        RadiusBottomLeft: =0
+                        RadiusBottomRight: =0
+                        RadiusTopLeft: =0
+                        RadiusTopRight: =0
+                        Width: =260
+                      Children:
+                        - lblQVProjectLabel_HS:
+                            Control: Label@2.5.1
+                            Properties:
+                              Color: =RGBA(136, 135, 128, 1)
+                              Height: =20
+                              PaddingLeft: =0
+                              Size: =9
+                              Text: ="Related Project"
+                              Width: =Parent.Width
+                        - lblQVProjectValue_HS:
+                            Control: Label@2.5.1
+                            Properties:
+                              FontWeight: =FontWeight.Semibold
+                              Height: =28
+                              PaddingLeft: =0
+                              Size: =11
+                              Text: |-
+                                =If(
+                                    IsBlank(gQuickViewRequest.ProjectID),
+                                    "—",
+                                    Coalesce(LookUp(Project_List, ProjectID = gQuickViewRequest.ProjectID).Title, "—")
+                                )
+                              Width: =Parent.Width
+                              Wrap: =false
+                  - colQVReqDate_HS:
+                      Control: GroupContainer@1.5.0
+                      Variant: AutoLayout
+                      Properties:
+                        DropShadow: =DropShadow.None
+                        LayoutDirection: =LayoutDirection.Vertical
+                        LayoutGap: =2
+                        RadiusBottomLeft: =0
+                        RadiusBottomRight: =0
+                        RadiusTopLeft: =0
+                        RadiusTopRight: =0
+                        Width: =160
+                      Children:
+                        - lblQVReqDateLabel_HS:
+                            Control: Label@2.5.1
+                            Properties:
+                              Color: =RGBA(136, 135, 128, 1)
+                              Height: =20
+                              PaddingLeft: =0
+                              Size: =9
+                              Text: ="Required Delivery Date"
+                              Width: =Parent.Width
+                        - lblQVReqDateValue_HS:
+                            Control: Label@2.5.1
+                            Properties:
+                              FontWeight: =FontWeight.Semibold
+                              Height: =28
+                              PaddingLeft: =0
+                              Size: =11
+                              Text: |-
+                                =If(
+                                    IsBlank(gQuickViewRequest.RequiredDeliveryDate),
+                                    "—",
+                                    Text(gQuickViewRequest.RequiredDeliveryDate, "dd/mm/yyyy")
+                                )
+                              Width: =Parent.Width
+                              Wrap: =false
+                  - colQVRequester_HS:
+                      Control: GroupContainer@1.5.0
+                      Variant: AutoLayout
+                      Properties:
+                        DropShadow: =DropShadow.None
+                        FillPortions: =1
+                        LayoutDirection: =LayoutDirection.Vertical
+                        LayoutGap: =2
+                        RadiusBottomLeft: =0
+                        RadiusBottomRight: =0
+                        RadiusTopLeft: =0
+                        RadiusTopRight: =0
+                      Children:
+                        - lblQVRequesterLabel_HS:
+                            Control: Label@2.5.1
+                            Properties:
+                              Color: =RGBA(136, 135, 128, 1)
+                              Height: =20
+                              PaddingLeft: =0
+                              Size: =9
+                              Text: ="Requested by"
+                              Width: =Parent.Width
+                        - lblQVRequesterValue_HS:
+                            Control: Label@2.5.1
+                            Properties:
+                              FontWeight: =FontWeight.Semibold
+                              Height: =28
+                              PaddingLeft: =0
+                              Size: =11
+                              Text: =Coalesce(gQuickViewRequest.RequesterID.Value, gQuickViewRequest.RequesterEmail, "—")
+                              Width: =Parent.Width
+                              Wrap: =false
+            - rowQVMaterials_HS:
+                Control: GroupContainer@1.5.0
+                Variant: AutoLayout
+                Properties:
+                  DropShadow: =DropShadow.None
+                  FillPortions: =0
+                  Height: =76
+                  LayoutDirection: =LayoutDirection.Vertical
+                  LayoutGap: =2
+                  RadiusBottomLeft: =0
+                  RadiusBottomRight: =0
+                  RadiusTopLeft: =0
+                  RadiusTopRight: =0
+                  Width: =Parent.Width - 40
+                Children:
+                  - lblQVMaterialsLabel_HS:
+                      Control: Label@2.5.1
+                      Properties:
+                        Color: =RGBA(136, 135, 128, 1)
+                        Height: =20
+                        PaddingLeft: =0
+                        Size: =9
+                        Text: |-
+                          ="Raw Materials (" & CountRows(colQuickViewItems) & ")"
+                        Width: =Parent.Width
+                  - lblQVMaterialsValue_HS:
+                      Control: Label@2.5.1
+                      Properties:
+                        Height: =52
+                        Overflow: =Overflow.Scroll
+                        PaddingLeft: =0
+                        Size: =11
+                        Text: |-
+                          =If(
+                              CountRows(colQuickViewItems) = 0,
+                              "—",
+                              Concat(
+                                  colQuickViewItems,
+                                  MaterialName & " (" & Text(Quantity) & " " & Unit & ")",
+                                  "  ·  "
+                              )
+                          )
+                        Width: =Parent.Width
             - rowQVDescription_HS:
                 Control: GroupContainer@1.5.0
                 Variant: AutoLayout
@@ -870,6 +1040,101 @@ Screens:
                   RadiusTopRight: =0
                   Width: =Parent.Width - 40
                 Children:
+                  - btnQVDoWork_HS:
+                      Control: ModernButton@1.0.0
+                      Properties:
+                        Align: =Align.Center
+                        BasePaletteColor: =RGBA(83, 74, 183, 1)
+                        FontWeight: =FontWeight.Semibold
+                        OnSelect: |-
+                          =Set(gShowQuickView, false);
+                          Set(gSelectedRequest, gQuickViewRequest);
+                          Switch(
+                              gQuickViewRequest.Status.Value,
+                              "Pending Manager", Navigate(ManagerReviewScreen),
+                              "Pending Executive", If(
+                                  gQuickViewRequest.isExecutivePayment,
+                                  Navigate(ExecutivePaymentScreen),
+                                  Navigate(ExecutiveApprovalScreen)
+                              ),
+                              "Pending Procurement", Navigate(ProcurementExecutionScreen),
+                              "Pending Invoice", Navigate(InvoiceSubmissionScreen),
+                              "Goods Receipt & Acceptance", Navigate(GoodsReceiptScreen),
+                              "Pending Supplier Follow-up", If(
+                                  gQuickViewRequest.LatestReceiptDecision = "Accepted with Adjustment",
+                                  Navigate(ProcurementFollowUpScreen),
+                                  Navigate(SupplierFollowUpScreen)
+                              ),
+                              "Pending Accounting", Navigate(AccountingScreen),
+                              "In Delivery", Navigate(DeliveryBatchFormScreen)
+                          )
+                        PaddingBottom: =5
+                        PaddingLeft: =12
+                        PaddingRight: =12
+                        PaddingTop: =5
+                        RadiusBottomLeft: =4
+                        RadiusBottomRight: =4
+                        RadiusTopLeft: =4
+                        RadiusTopRight: =4
+                        Text: |-
+                          =Switch(
+                              gQuickViewRequest.Status.Value,
+                              "Pending Manager", "Review Request →",
+                              "Pending Executive", If(
+                                  gQuickViewRequest.isExecutivePayment,
+                                  "Process Payment →",
+                                  "Review Request →"
+                              ),
+                              "Pending Procurement", "Start Procurement →",
+                              "Pending Invoice", "Submit Invoice →",
+                              "Goods Receipt & Acceptance", "Goods Receipt & Acceptance →",
+                              "Pending Supplier Follow-up", If(
+                                  gQuickViewRequest.LatestReceiptDecision = "Accepted with Adjustment",
+                                  "Upload Credit Note →",
+                                  "Goods Receipt — Round " & (Coalesce(gQuickViewRequest.ReceiptRoundCount, 0) + 1) & " →"
+                              ),
+                              "Pending Accounting", "Start Accounting →",
+                              "In Delivery", "+ Add Delivery",
+                              ""
+                          )
+                        VerticalAlign: =VerticalAlign.Middle
+                        Visible: |-
+                          =Switch(
+                              gQuickViewRequest.Status.Value,
+                              "Pending Manager",
+                                  gCurrentUser.Role.Value = "Admin" ||
+                                  (gCurrentUser.Role.Value = "Manager" && gQuickViewRequest.ManagerApproverID.Id = gCurrentEmployee.ID),
+                              "Pending Executive",
+                                  gCurrentUser.Role.Value = "Executive" || gCurrentUser.Role.Value = "Admin",
+                              "Pending Procurement",
+                                  gCurrentUser.Role.Value = "Procurement" || gCurrentUser.Role.Value = "Admin",
+                              "Pending Invoice",
+                                  gCurrentUser.Role.Value = "Procurement" || gCurrentUser.Role.Value = "Admin",
+                              "Goods Receipt & Acceptance",
+                                  gQuickViewRequest.RequesterEmail = gCurrentEmployee.Email ||
+                                  gQuickViewRequest.GRAssignedToID.Id = gCurrentEmployee.ID,
+                              "Pending Supplier Follow-up", If(
+                                  gQuickViewRequest.LatestReceiptDecision = "Accepted with Adjustment",
+                                  gQuickViewRequest.InvoiceSubmitted && (gCurrentUser.Role.Value = "Procurement" || gCurrentUser.Role.Value = "Admin"),
+                                  gQuickViewRequest.LatestReceiptDecision = "Requires Supplier Follow-up" &&
+                                  (gQuickViewRequest.RequesterEmail = gCurrentEmployee.Email ||
+                                  gQuickViewRequest.SFU1AssignedToID.Id = gCurrentEmployee.ID)
+                              ),
+                              "Pending Accounting",
+                                  gCurrentUser.Role.Value = "Accounting" ||
+                                  gCurrentUser.Role.Value = "Executive" ||
+                                  gCurrentUser.Role.Value = "Admin",
+                              "In Delivery",
+                                  gQuickViewRequest.RequestType.Value = "Request" &&
+                                  (gCurrentUser.Role.Value = "Procurement" || gCurrentUser.Role.Value = "Admin") &&
+                                  Not(
+                                      gQuickViewRequest.ProcurementType.Value = "Invoice Supplied" &&
+                                      gQuickViewRequest.InvoiceType.Value = "Official Invoice" &&
+                                      Coalesce(gQuickViewRequest.DeliveryCount, 0) >= 1
+                                  ),
+                              false
+                          )
+                        Width: =260
                   - btnQuickViewOpenDetail_HS:
                       Control: ModernButton@1.0.0
                       Properties:

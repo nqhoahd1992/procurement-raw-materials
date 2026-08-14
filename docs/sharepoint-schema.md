@@ -59,7 +59,7 @@ Does **not** have a `Category`, `PreferredSupplier`, or `Department` column (all
 | `CostCenter` ⚠ | Choice | User-selectable `ModernCombobox` (`ddCostCenter_1`), `Items: =Choices('RM Procurement Requests'.CostCenter)`, default-selected `"Port Melbourne Warehouse"` — no longer tied to the linked Project |
 | `RequesterID` ⚠ | Lookup→Employee List | `{Id,Value}` (→Title) |
 | `ManagerApproverID` ⚠ | Lookup→Employee List | always set — every request requires a Manager Approver (no more skip-to-Executive path) |
-| `SkippedManagerReview` | Yes/No | always written `false` on submit now — every request goes through both Manager and Executive approval. Kept only so older requests submitted before this change (where it may be `true`) still display correctly on `ExecutiveApprovalScreen`/`RequestDetailScreen` |
+| `SkippedManagerReview` | Yes/No | **dead — no longer written or read by the app.** Every request goes through both Manager and Executive approval, so nothing escalates past a level. Pre-change rows may still hold `true`; the column is kept on the list for that history only |
 | `isExecutivePayment` | Yes/No | true when Executive approves an over-threshold request (`Currency <> "AUD" \|\| EstimatedCost > 10000`). Set by `ExecutiveApprovalScreen` on Approve/Approve-with-conditions; `Status` stays `"Pending Executive"` while this is true (UI shows "Pending Payment From Executive" as a computed label — see `CLAUDE.md`) |
 | `InvoiceMode` | Choice | `Direct`, `Deferred`, `ViaRequester` — set by Procurement Execution |
 | `InvoiceSubmitted` | Yes/No | true once the official invoice has been processed inline (drives whether Goods Receipt/Supplier Follow-up route to `Pending Invoice` or `Pending Accounting`) |
