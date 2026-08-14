@@ -172,7 +172,7 @@ Screens:
                                                                   CountRows(DataCardValue15.Attachments) = 0,
                                                                   Notify("Please attach the invoice file before submitting", NotificationType.Error),
                                                                   If(
-                                                                      IsBlank(ddManagerApprover_1.Selected) || IsBlank(ddManagerApprover_1.Selected.EmployeeID.Id),
+                                                                      gCurrentUser.Role.Value <> "Trusted Requester" && (IsBlank(ddManagerApprover_1.Selected) || IsBlank(ddManagerApprover_1.Selected.EmployeeID.Id)),
                                                                       Notify("Please select a Manager Approver", NotificationType.Error),
                                                                       If(
                                                                           CountRows(colLineItems) = 0,
@@ -211,8 +211,8 @@ Screens:
                                                                                                           {Value: rdoInvoiceType_1.Selected.Value},
                                                                                                           Blank()
                                                                                                       ),
-                                                                                                      ManagerApproverID: {Id: ddManagerApprover_1.Selected.EmployeeID.Id, Value: ddManagerApprover_1.Selected.EmployeeID.Value},
-                                                                                                      ManagerApproverNum: ddManagerApprover_1.Selected.EmployeeID.Id,
+                                                                                                      ManagerApproverID: If(gCurrentUser.Role.Value = "Trusted Requester", Blank(), {Id: ddManagerApprover_1.Selected.EmployeeID.Id, Value: ddManagerApprover_1.Selected.EmployeeID.Value}),
+                                                                                                      ManagerApproverNum: If(gCurrentUser.Role.Value = "Trusted Requester", Blank(), ddManagerApprover_1.Selected.EmployeeID.Id),
                                                                                                       SkippedManagerReview: false,
                                                                                                       RequestType: {Value: "Request"},
                                                                                                       DeliveryNumber: 0,
@@ -1290,6 +1290,7 @@ Screens:
                   RadiusBottomRight: =0
                   RadiusTopLeft: =0
                   RadiusTopRight: =0
+                  Visible: =gCurrentUser.Role.Value <> "Trusted Requester"
                   Width: =Parent.Width
                 Children:
                   - lblManagerApproverLabel_1:
