@@ -189,7 +189,8 @@ Screens:
                   LayoutDirection: =LayoutDirection.Vertical
                   LayoutGap: =4
                   LayoutMinHeight: |-
-                    =510 +
+                    =510 -
+                        If(gIsDelivery, (4 + 60) + (4 + 60), 0) +
                         (24 + (36 + CountRows(colLineItemsSummary) * 48 + 12) + 16) +
                         If(CountRows(colRequirementFiles) > 0, 4 + 36 + CountRows(colRequirementFiles) * 32, 0) +
                         If(Not(IsBlank(gSelectedRequest.RequesterInvoiceURL)), 4 + 60, 0) +
@@ -263,6 +264,7 @@ Screens:
                         RadiusBottomRight: =0
                         RadiusTopLeft: =0
                         RadiusTopRight: =0
+                        Visible: =Not(gIsDelivery)
                         Width: =Parent.Width
                       Children:
                         - colRequester:
@@ -351,6 +353,7 @@ Screens:
                               RadiusBottomRight: =0
                               RadiusTopLeft: =0
                               RadiusTopRight: =0
+                              Visible: =Not(gIsDelivery)
                               Width: =220
                             Children:
                               - lblAccordanceLabel:
@@ -381,6 +384,7 @@ Screens:
                               RadiusBottomRight: =0
                               RadiusTopLeft: =0
                               RadiusTopRight: =0
+                              Visible: =Not(gIsDelivery)
                               Width: =220
                               X: =40
                               Y: =40
@@ -412,6 +416,7 @@ Screens:
                               RadiusBottomRight: =0
                               RadiusTopLeft: =0
                               RadiusTopRight: =0
+                              Visible: =Not(gIsDelivery)
                               Width: =220
                             Children:
                               - lblDeliveryLocLabel:
@@ -476,6 +481,7 @@ Screens:
                         RadiusBottomRight: =0
                         RadiusTopLeft: =0
                         RadiusTopRight: =0
+                        Visible: =Not(gIsDelivery)
                         Width: =Parent.Width
                       Children:
                         - colRelatedProject_1:
@@ -631,7 +637,7 @@ Screens:
                               RadiusBottomRight: =0
                               RadiusTopLeft: =0
                               RadiusTopRight: =0
-                              Visible: =gSelectedRequest.ProcurementType.Value = "Invoice Supplied"
+                              Visible: =Not(gIsDelivery) && gSelectedRequest.ProcurementType.Value = "Invoice Supplied"
                               Width: =220
                             Children:
                               - lblInvoiceTypeLabel_1:
@@ -1493,7 +1499,7 @@ Screens:
                                                 ThisItem.Status.Value = "Pending Supplier Follow-up",
                                                 If(
                                                     ThisItem.LatestReceiptDecision = "Accepted with Adjustment",
-                                                    "Procurement Close-out (Credit Note)",
+                                                    If(ThisItem.InvoiceSubmitted, "Procurement Close-out (Credit Note)", "Submit Invoice"),
                                                     "Goods Receipt (Round " & (Coalesce(ThisItem.ReceiptRoundCount, 0) + 1) & ")"
                                                 ),
                                                 ThisItem.Status.Value
@@ -2098,7 +2104,7 @@ Screens:
                   RadiusBottomRight: =0
                   RadiusTopLeft: =0
                   RadiusTopRight: =0
-                  Visible: =CountRows(colApprovalLog) > 0
+                  Visible: =Not(gIsDelivery) && CountRows(colApprovalLog) > 0
                   Width: =Parent.Width
                 Children:
                   - lblApprovalHistoryTitle:
@@ -2912,6 +2918,7 @@ Screens:
                         Visible: |-
                           =gSelectedRequest.Status.Value = "Pending Supplier Follow-up" &&
                           gSelectedRequest.LatestReceiptDecision = "Accepted with Adjustment" &&
+                          gSelectedRequest.InvoiceSubmitted &&
                           (gCurrentUser.Role.Value = "Procurement" || gCurrentUser.Role.Value = "Admin")
                         Width: =280
                         X: =40

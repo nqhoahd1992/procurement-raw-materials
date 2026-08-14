@@ -296,7 +296,7 @@ Screens:
                                   ThisItem.Status.Value = "Pending Supplier Follow-up",
                                   If(
                                     ThisItem.LatestReceiptDecision = "Accepted with Adjustment",
-                                    "Procurement Close-out (Credit Note)",
+                                    If(ThisItem.InvoiceSubmitted, "Procurement Close-out (Credit Note)", "Submit Invoice"),
                                     "Goods Receipt (Round " & (Coalesce(ThisItem.ReceiptRoundCount, 0) + 1) & ")"
                                   ),
                                   If(
@@ -328,7 +328,7 @@ Screens:
                               Height: =22
                               Size: =11
                               Text: |-
-                                =If(ThisItem.RequestType.Value = "Delivery", "Expected Delivery Date: ", "Required Date: ") & Text(ThisItem.RequiredDeliveryDate, "dd/mm/yyyy") & If(ThisItem.RequestType.Value = "Delivery" || IsBlank(ThisItem.EstimatedCost) || ThisItem.EstimatedCost = 0, "", " | Estimated Cost: " & Text(ThisItem.EstimatedCost, "#,###") & " " & ThisItem.Currency) & If(IsBlank(ThisItem.ProjectID), "", " | Project: " & Coalesce(LookUp(Project_List, ProjectID = ThisItem.ProjectID).Title, "—"))
+                                =If(ThisItem.RequestType.Value = "Delivery", "Expected Delivery Date: ", "Required Date: ") & Text(ThisItem.RequiredDeliveryDate, "dd/mm/yyyy") & If(ThisItem.RequestType.Value = "Delivery" || IsBlank(ThisItem.EstimatedCost) || ThisItem.EstimatedCost = 0, "", " | Estimated Cost: " & Text(ThisItem.EstimatedCost, "#,###.00") & " " & ThisItem.Currency) & If(IsBlank(ThisItem.ProjectID), "", " | Project: " & Coalesce(LookUp(Project_List, ProjectID = ThisItem.ProjectID).Title, "—"))
                               Width: =Parent.Width - 440
                         - lblRequesterName:
                             Control: Label@2.5.1
@@ -490,7 +490,7 @@ Screens:
                                         ThisItem.GRAssignedToID.Id = gCurrentEmployee.ID,
                                     "Pending Supplier Follow-up", If(
                                         ThisItem.LatestReceiptDecision = "Accepted with Adjustment",
-                                        gCurrentUser.Role.Value = "Procurement" || gCurrentUser.Role.Value = "Admin",
+                                        ThisItem.InvoiceSubmitted && (gCurrentUser.Role.Value = "Procurement" || gCurrentUser.Role.Value = "Admin"),
                                         ThisItem.LatestReceiptDecision = "Requires Supplier Follow-up" &&
                                         (ThisItem.RequesterEmail = gCurrentEmployee.Email ||
                                         ThisItem.SFU1AssignedToID.Id = gCurrentEmployee.ID)

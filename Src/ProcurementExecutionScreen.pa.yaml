@@ -51,8 +51,7 @@ Screens:
             FontWeight: =FontWeight.Bold
             Height: =60
             Size: =14
-            Text: |-
-              ="Procurement Execution - " & gSelectedRequest.Title
+            Text: ="Procurement Execution - " & gSelectedRequest.Title
             Width: =654
             X: =20
       - conScrollable_PE:
@@ -214,38 +213,6 @@ Screens:
                                           PaddingLeft: =0
                                           Size: =11
                                           Text: =gSelectedRequest.RequesterID.Value
-                                          Width: =Parent.Width - 20
-                                          Wrap: =false
-                              - colReqAccordance_PE:
-                                  Control: GroupContainer@1.5.0
-                                  Variant: AutoLayout
-                                  Properties:
-                                    DropShadow: =DropShadow.None
-                                    LayoutDirection: =LayoutDirection.Vertical
-                                    LayoutGap: =2
-                                    RadiusBottomLeft: =0
-                                    RadiusBottomRight: =0
-                                    RadiusTopLeft: =0
-                                    RadiusTopRight: =0
-                                    Width: =240
-                                  Children:
-                                    - lblReqAccordanceLabel_PE:
-                                        Control: Label@2.5.1
-                                        Properties:
-                                          Color: =RGBA(136, 135, 128, 1)
-                                          Height: =20
-                                          PaddingLeft: =0
-                                          Size: =9
-                                          Text: ="Purchase Accordance"
-                                          Width: =240
-                                    - lblReqAccordanceValue_PE:
-                                        Control: Label@2.5.1
-                                        Properties:
-                                          FontWeight: =FontWeight.Semibold
-                                          Height: =24
-                                          PaddingLeft: =0
-                                          Size: =11
-                                          Text: =Coalesce(gSelectedRequest.PurchaseAccordance.Value, "—")
                                           Width: =Parent.Width - 20
                                           Wrap: =false
                               - colReqProcType_PE:
@@ -539,38 +506,6 @@ Screens:
                                           PaddingLeft: =0
                                           Size: =11
                                           Text: =Coalesce(gSelectedRequest.ManagerApproverID.Value, "—")
-                                          Width: =Parent.Width - 20
-                                          Wrap: =false
-                              - colReqSubmittedOn_PE:
-                                  Control: GroupContainer@1.5.0
-                                  Variant: AutoLayout
-                                  Properties:
-                                    DropShadow: =DropShadow.None
-                                    LayoutDirection: =LayoutDirection.Vertical
-                                    LayoutGap: =2
-                                    RadiusBottomLeft: =0
-                                    RadiusBottomRight: =0
-                                    RadiusTopLeft: =0
-                                    RadiusTopRight: =0
-                                    Width: =220
-                                  Children:
-                                    - lblReqSubmittedOnLabel_PE:
-                                        Control: Label@2.5.1
-                                        Properties:
-                                          Color: =RGBA(136, 135, 128, 1)
-                                          Height: =20
-                                          PaddingLeft: =0
-                                          Size: =9
-                                          Text: ="Submitted On"
-                                          Width: =220
-                                    - lblReqSubmittedOnValue_PE:
-                                        Control: Label@2.5.1
-                                        Properties:
-                                          FontWeight: =FontWeight.Semibold
-                                          Height: =24
-                                          PaddingLeft: =0
-                                          Size: =11
-                                          Text: =Text(gSelectedRequest.Created, "dd/mm/yyyy hh:mm")
                                           Width: =Parent.Width - 20
                                           Wrap: =false
                         - rowReqDescription_PE:
