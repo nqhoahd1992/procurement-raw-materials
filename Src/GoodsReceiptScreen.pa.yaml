@@ -283,7 +283,7 @@ Screens:
                                     )
                                 );
                                 Set(gGRDelegationMode, "I will receive");
-                                Set(gSelectedRequest, Patch('RM Procurement Requests', LookUp('RM Procurement Requests', ID = gSelectedRequest.ID), {GRAssignedToID: Blank()}))
+                                Set(gSelectedRequest, Patch('RM Procurement Requests', LookUp('RM Procurement Requests', ID = gSelectedRequest.ID), {GRAssignedToID: Blank(), GRAssignedToNum: Blank()}))
                               Text: ="I will receive"
                               Width: =160
                         - btnAssignToOther_GR:
@@ -1180,7 +1180,7 @@ Screens:
                                   )
                               );
                               With(
-                                  {wPatched: Patch('RM Procurement Requests', LookUp('RM Procurement Requests', ID = gSelectedRequest.ID), {GRAssignedToID: {Id: ddAssignReceiver_GR.Selected.ID, Value: ddAssignReceiver_GR.Selected.Title}})},
+                                  {wPatched: Patch('RM Procurement Requests', LookUp('RM Procurement Requests', ID = gSelectedRequest.ID), {GRAssignedToID: {Id: ddAssignReceiver_GR.Selected.ID, Value: ddAssignReceiver_GR.Selected.Title}, GRAssignedToNum: ddAssignReceiver_GR.Selected.ID})},
                                   If(
                                       IsBlank(wPatched.ID),
                                       Notify("Failed to save assignment. Please try again.", NotificationType.Error),
@@ -1256,7 +1256,8 @@ Screens:
                                                           )},
                                                           ReceiptRoundCount: 1,
                                                           LatestReceiptDecision: ddAcceptanceDecision_GR.Selected.Value,
-                                                          GRAssignedToID: Blank()
+                                                          GRAssignedToID: Blank(),
+                                                          GRAssignedToNum: Blank()
                                                       }
                                                   )
                                               },

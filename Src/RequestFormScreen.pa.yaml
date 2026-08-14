@@ -212,6 +212,7 @@ Screens:
                                                                                                           Blank()
                                                                                                       ),
                                                                                                       ManagerApproverID: {Id: ddManagerApprover_1.Selected.EmployeeID.Id, Value: ddManagerApprover_1.Selected.EmployeeID.Value},
+                                                                                                      ManagerApproverNum: ddManagerApprover_1.Selected.EmployeeID.Id,
                                                                                                       SkippedManagerReview: false,
                                                                                                       RequestType: {Value: "Request"},
                                                                                                       DeliveryNumber: 0,

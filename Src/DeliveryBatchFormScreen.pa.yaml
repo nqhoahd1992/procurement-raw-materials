@@ -1005,6 +1005,7 @@ Screens:
                                                                           RequesterID: {Id: gSelectedRequest.RequesterID.Id, Value: gSelectedRequest.RequesterID.Value},
                                                                           RequesterEmail: gSelectedRequest.RequesterEmail,
                                                                           ManagerApproverID: {Id: gSelectedRequest.ManagerApproverID.Id, Value: gSelectedRequest.ManagerApproverID.Value},
+                                                                          ManagerApproverNum: gSelectedRequest.ManagerApproverID.Id,
                                                                           ProjectID: gSelectedRequest.ProjectID,
                                                                           ProcurementType: {Value: gSelectedRequest.ProcurementType.Value},
                                                                           InvoiceType: If(IsBlank(gSelectedRequest.InvoiceType.Value), Blank(), {Value: gSelectedRequest.InvoiceType.Value}),

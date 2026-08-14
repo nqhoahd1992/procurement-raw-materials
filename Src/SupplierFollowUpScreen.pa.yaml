@@ -710,7 +710,7 @@ Screens:
                                     )
                                 );
                                 Set(gSFU1DelegationMode, "I will receive");
-                                Set(gSelectedRequest, Patch('RM Procurement Requests', LookUp('RM Procurement Requests', ID = gSelectedRequest.ID), {SFU1AssignedToID: Blank()}))
+                                Set(gSelectedRequest, Patch('RM Procurement Requests', LookUp('RM Procurement Requests', ID = gSelectedRequest.ID), {SFU1AssignedToID: Blank(), SFU1AssignedToNum: Blank()}))
                               Text: ="I will receive"
                               Width: =160
                         - btnAssignToOther_SFU:
@@ -1613,7 +1613,7 @@ Screens:
                               )
                             );
                             With(
-                              {wPatched: Patch('RM Procurement Requests', LookUp('RM Procurement Requests', ID = gSelectedRequest.ID), {SFU1AssignedToID: {Id: ddAssignReceiver_SFU.Selected.ID, Value: ddAssignReceiver_SFU.Selected.Title}})},
+                              {wPatched: Patch('RM Procurement Requests', LookUp('RM Procurement Requests', ID = gSelectedRequest.ID), {SFU1AssignedToID: {Id: ddAssignReceiver_SFU.Selected.ID, Value: ddAssignReceiver_SFU.Selected.Title}, SFU1AssignedToNum: ddAssignReceiver_SFU.Selected.ID})},
                               If(
                                 IsBlank(wPatched.ID),
                                 Notify("Failed to save assignment. Please try again.", NotificationType.Error),
@@ -1693,7 +1693,8 @@ Screens:
                                                               )},
                                                               ReceiptRoundCount: gCurrentRound,
                                                               LatestReceiptDecision: ddAcceptanceDecision2_SFU.Selected.Value,
-                                                              SFU1AssignedToID: Blank()
+                                                              SFU1AssignedToID: Blank(),
+                                                              SFU1AssignedToNum: Blank()
                                                           }
                                                       )
                                                   },
