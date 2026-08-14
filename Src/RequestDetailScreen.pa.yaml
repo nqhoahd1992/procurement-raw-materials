@@ -189,7 +189,7 @@ Screens:
                   LayoutGap: =4
                   LayoutMinHeight: |-
                     =510 -
-                        If(gIsDelivery, (4 + 60) + (4 + 60), 0) +
+                        If(gIsDelivery, (4 + 60) + (4 + 60) + (4 + 84), 0) +
                         (24 + (36 + CountRows(colLineItemsSummary) * 48 + 12) + 16) +
                         If(CountRows(colRequirementFiles) > 0, 4 + 36 + CountRows(colRequirementFiles) * 32, 0) +
                         If(Not(IsBlank(gSelectedRequest.RequesterInvoiceURL)), 4 + 60, 0) +
@@ -515,7 +515,6 @@ Screens:
                         RadiusBottomRight: =0
                         RadiusTopLeft: =0
                         RadiusTopRight: =0
-                        Visible: =Not(gIsDelivery)
                         Width: =Parent.Width
                       Children:
                         - colRegionInvoice:
