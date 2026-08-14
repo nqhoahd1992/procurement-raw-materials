@@ -22,7 +22,6 @@ Screens:
         ClearCollect(colLineItemsDetail, Filter('RM Procurement Line Items', RequestIDText = Text(gSelectedRequest.ID)));
         ClearCollect(colExecutionLog, Sort(Filter('RM Procurement Execution Log', RequestIDText = Text(gSelectedRequest.ID)), ID, SortOrder.Ascending));
         ClearCollect(colApprovalLog, Sort(Filter('RM Procurement Approval Log', RequestIDText = Text(gRootRequestID)), ID, SortOrder.Ascending));
-        Set(gExecutiveRemark, LookUp(colApprovalLog, StepNumber = 3).ApprovalConditions);
         If(
             gIsDelivery,
             ClearCollect(colReceiptRounds, Filter('RM Procurement Receipt Rounds', RequestIDText = Text(gSelectedRequest.ID))),
@@ -196,7 +195,6 @@ Screens:
                         If(Not(IsBlank(gSelectedRequest.RequesterInvoiceURL)), 4 + 60, 0) +
                         If(Not(IsBlank(gSelectedRequest.RemittanceURL)), 4 + 56, 0) +
                         If(gSelectedRequest.ProcurementType.Value = "To be sourced by Procurement", 4 + 70, 0) +
-                        If(Not(IsBlank(gExecutiveRemark)), 4 + 80, 0) +
                         If(Not(IsBlank(gSelectedRequest.AccountingHandlerID)), 4 + 60, 0) +
                         If(Not(IsBlank(gSelectedRequest.CreditNote)), 4 + 60, 0) +
                         If(gIsDelivery, 4 + 64, 0)
@@ -517,6 +515,7 @@ Screens:
                         RadiusBottomRight: =0
                         RadiusTopLeft: =0
                         RadiusTopRight: =0
+                        Visible: =Not(gIsDelivery)
                         Width: =Parent.Width
                       Children:
                         - colRegionInvoice:
@@ -599,6 +598,7 @@ Screens:
                         RadiusBottomRight: =0
                         RadiusTopLeft: =0
                         RadiusTopRight: =0
+                        Visible: =Not(gIsDelivery) && gSelectedRequest.ProcurementType.Value = "Invoice Supplied"
                         Width: =Parent.Width
                       Children:
                         - colInvoiceType:
@@ -1124,44 +1124,6 @@ Screens:
                               VerticalAlign: =VerticalAlign.Top
                               Width: =Parent.Width
                               Wrap: =false
-                  - rowConditionsText:
-                      Control: GroupContainer@1.5.0
-                      Variant: AutoLayout
-                      Properties:
-                        DropShadow: =DropShadow.None
-                        FillPortions: =0
-                        Height: =80
-                        LayoutDirection: =LayoutDirection.Vertical
-                        LayoutGap: =2
-                        LayoutMinHeight: =80
-                        PaddingBottom: =8
-                        PaddingTop: =4
-                        RadiusBottomLeft: =0
-                        RadiusBottomRight: =0
-                        RadiusTopLeft: =0
-                        RadiusTopRight: =0
-                        Visible: =Not(IsBlank(gExecutiveRemark))
-                        Width: =Parent.Width
-                      Children:
-                        - lblConditionsTextLabel:
-                            Control: Label@2.5.1
-                            Properties:
-                              Color: =RGBA(136, 135, 128, 1)
-                              Height: =20
-                              Size: =9
-                              Text: ="Remark (Executive)"
-                              Width: =Parent.Width
-                        - lblConditionsTextValue:
-                            Control: Label@2.5.1
-                            Properties:
-                              AutoHeight: =true
-                              FontWeight: =FontWeight.Semibold
-                              Height: =48
-                              LayoutMinHeight: =48
-                              Overflow: =Overflow.Scroll
-                              Size: =11
-                              Text: =gExecutiveRemark
-                              Width: =Parent.Width
                   - rowAccountingHandler:
                       Control: GroupContainer@1.5.0
                       Variant: AutoLayout

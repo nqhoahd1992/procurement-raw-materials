@@ -979,7 +979,7 @@ Screens:
                         FillPortions: =0
                         Height: =36
                         LayoutDirection: =LayoutDirection.Horizontal
-                        LayoutJustifyContent: =LayoutJustifyContent.SpaceBetween
+                        LayoutGap: =8
                         RadiusBottomLeft: =0
                         RadiusBottomRight: =0
                         Width: =Parent.Width

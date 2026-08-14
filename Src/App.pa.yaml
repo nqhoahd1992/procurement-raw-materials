@@ -61,7 +61,6 @@ App:
       Set(gQuickViewRequest, Blank());
       Set(gShowLogDetail, false);
       Set(gLogDetailTitle, "");
-      Set(gExecutiveRemark, "");
       Set(gInvoiceFileURL, "");
       Set(gIsViaRequesterBatch, false);
       Set(gShowBulkCodes, false);

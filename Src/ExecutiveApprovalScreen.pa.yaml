@@ -14,7 +14,8 @@ Screens:
                 Not(IsBlank(gSelectedRequest.ProjectID)) &&
                 ProjectID = gSelectedRequest.ProjectID
             )
-        )
+        );
+        ClearCollect(colLineItemsDetail, Filter('RM Procurement Line Items', RequestIDText = Text(gSelectedRequest.ID)))
     Children:
       - rectHeader_3:
           Control: Rectangle@2.3.0
