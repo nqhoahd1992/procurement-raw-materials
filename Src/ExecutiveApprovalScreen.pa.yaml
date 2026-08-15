@@ -318,15 +318,15 @@ Screens:
                 Variant: AutoLayout
                 Properties:
                   DropShadow: =DropShadow.None
+                  Fill: =RGBA(241, 239, 232, 1)
                   FillPortions: =0
-                  Height: =88
+                  Height: =90
                   LayoutDirection: =LayoutDirection.Vertical
                   LayoutGap: =4
                   LayoutMinHeight: =88
                   PaddingBottom: =20
                   PaddingLeft: =20
                   PaddingRight: =20
-                  PaddingTop: =20
                   RadiusBottomLeft: =0
                   RadiusBottomRight: =0
                   RadiusTopLeft: =0
@@ -336,17 +336,15 @@ Screens:
                   - lblReqLineItemsTitle_PE_2:
                       Control: Label@2.5.1
                       Properties:
-                        FontWeight: =FontWeight.Bold
                         Height: =24
-                        PaddingLeft: =0
                         Size: =11
                         Text: ="Raw Materials (" & CountRows(colLineItemsDetail) & ")"
-                        Width: =Parent.Width
+                        Width: =Parent.Width - 40
                   - lblReqLineItemsValue_PE_2:
                       Control: Label@2.5.1
                       Properties:
+                        FontWeight: =FontWeight.Semibold
                         Height: =20
-                        PaddingLeft: =0
                         Size: =11
                         Text: |-
                           =If(
@@ -364,7 +362,7 @@ Screens:
                               MaterialName & " (" & Text(Quantity) & " " & Unit & ")",
                               Char(10)
                           )
-                        Width: =Parent.Width
+                        Width: =Parent.Width - 40
                         Wrap: =false
             - rowProjectInfo_EA:
                 Control: GroupContainer@1.5.0
@@ -513,7 +511,7 @@ Screens:
                                   ),
                                   AUDAmount
                               ),
-                              "[#,###.00]"
+                              "#,###.00"
                           ) & " AUD"
                         Width: =Parent.Width - 40
                   - lblProjectRateLink_EA:
@@ -671,7 +669,7 @@ Screens:
                   PaddingBottom: =8
                   PaddingLeft: =20
                   PaddingRight: =20
-                  PaddingTop: =8
+                  PaddingTop: =20
                   RadiusBottomLeft: =0
                   RadiusBottomRight: =0
                   RadiusTopLeft: =0

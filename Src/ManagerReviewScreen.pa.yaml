@@ -81,10 +81,13 @@ Screens:
                 Control: GroupContainer@1.5.0
                 Variant: AutoLayout
                 Properties:
+                  AlignInContainer: =AlignInContainer.Start
                   DropShadow: =DropShadow.None
                   Fill: =RGBA(241, 239, 232, 1)
+                  FillPortions: =0
+                  Height: =80
                   LayoutDirection: =LayoutDirection.Horizontal
-                  LayoutMinHeight: =80
+                  LayoutMinHeight: =140
                   LayoutWrap: =true
                   PaddingBottom: =12
                   PaddingLeft: =20
@@ -96,7 +99,7 @@ Screens:
                   RadiusTopRight: =0
                   Width: =Parent.Width
                 Children:
-                  - colCost_2:
+                  - colCost_4:
                       Control: GroupContainer@1.5.0
                       Variant: AutoLayout
                       Properties:
@@ -109,7 +112,7 @@ Screens:
                         RadiusTopRight: =0
                         Width: =240
                       Children:
-                        - lblCostLabel:
+                        - lblCostLabel_5:
                             Control: Label@2.5.1
                             Properties:
                               Color: =RGBA(136, 135, 128, 1)
@@ -117,15 +120,15 @@ Screens:
                               Size: =9
                               Text: ="Estimated Cost"
                               Width: =240
-                        - lblCostValue:
+                        - lblCostValue_5:
                             Control: Label@2.5.1
                             Properties:
                               FontWeight: =FontWeight.Semibold
                               Height: =24
                               Size: =11
-                              Text: =Text(gSelectedRequest.EstimatedCost, "#,###.00") & " " & gSelectedRequest.Currency
+                              Text: =Text(gSelectedRequest.EstimatedCost, "#,###.00")  & " " & gSelectedRequest.Currency
                               Width: =240
-                  - colCostCenter:
+                  - colCostCenter_4:
                       Control: GroupContainer@1.5.0
                       Variant: AutoLayout
                       Properties:
@@ -140,7 +143,7 @@ Screens:
                         X: =40
                         Y: =40
                       Children:
-                        - lblCostLabel_3:
+                        - lblCostLabel_6:
                             Control: Label@2.5.1
                             Properties:
                               Color: =RGBA(136, 135, 128, 1)
@@ -148,7 +151,7 @@ Screens:
                               Size: =9
                               Text: ="Cost Center"
                               Width: =240
-                        - lblCostValue_3:
+                        - lblCostValue_6:
                             Control: Label@2.5.1
                             Properties:
                               FontWeight: =FontWeight.Semibold
@@ -314,15 +317,15 @@ Screens:
                 Variant: AutoLayout
                 Properties:
                   DropShadow: =DropShadow.None
+                  Fill: =RGBA(241, 239, 232, 1)
                   FillPortions: =0
-                  Height: =88
+                  Height: =90
                   LayoutDirection: =LayoutDirection.Vertical
                   LayoutGap: =4
                   LayoutMinHeight: =88
                   PaddingBottom: =20
                   PaddingLeft: =20
                   PaddingRight: =20
-                  PaddingTop: =20
                   RadiusBottomLeft: =0
                   RadiusBottomRight: =0
                   RadiusTopLeft: =0
@@ -332,17 +335,15 @@ Screens:
                   - lblReqLineItemsTitle_PE_1:
                       Control: Label@2.5.1
                       Properties:
-                        FontWeight: =FontWeight.Bold
                         Height: =24
-                        PaddingLeft: =0
                         Size: =11
                         Text: ="Raw Materials (" & CountRows(colLineItemsDetail) & ")"
-                        Width: =Parent.Width
+                        Width: =Parent.Width - 40
                   - lblReqLineItemsValue_PE_1:
                       Control: Label@2.5.1
                       Properties:
+                        FontWeight: =FontWeight.Semibold
                         Height: =20
-                        PaddingLeft: =0
                         Size: =11
                         Text: |-
                           =If(
@@ -360,7 +361,7 @@ Screens:
                               MaterialName & " (" & Text(Quantity) & " " & Unit & ")",
                               Char(10)
                           )
-                        Width: =Parent.Width
+                        Width: =Parent.Width - 40
                         Wrap: =false
             - rowProjectInfo_MR:
                 Control: GroupContainer@1.5.0
@@ -399,7 +400,7 @@ Screens:
                         DropShadow: =DropShadow.None
                         Height: =60
                         LayoutDirection: =LayoutDirection.Horizontal
-                        LayoutMinHeight: =50
+                        LayoutMinHeight: =60
                         LayoutWrap: =true
                         RadiusBottomLeft: =0
                         RadiusBottomRight: =0
@@ -414,7 +415,7 @@ Screens:
                               DropShadow: =DropShadow.None
                               LayoutDirection: =LayoutDirection.Vertical
                               LayoutGap: =2
-                              LayoutMinHeight: =40
+                              LayoutMinHeight: =50
                               RadiusBottomLeft: =0
                               RadiusBottomRight: =0
                               RadiusTopLeft: =0
@@ -444,7 +445,7 @@ Screens:
                               DropShadow: =DropShadow.None
                               LayoutDirection: =LayoutDirection.Vertical
                               LayoutGap: =2
-                              LayoutMinHeight: =40
+                              LayoutMinHeight: =50
                               RadiusBottomLeft: =0
                               RadiusBottomRight: =0
                               RadiusTopLeft: =0
@@ -546,13 +547,13 @@ Screens:
                 Properties:
                   DropShadow: =DropShadow.None
                   FillPortions: =0
-                  Height: =128
+                  Height: =140
                   LayoutDirection: =LayoutDirection.Vertical
                   LayoutGap: =4
                   PaddingBottom: =8
                   PaddingLeft: =20
                   PaddingRight: =20
-                  PaddingTop: =8
+                  PaddingTop: =20
                   RadiusBottomLeft: =0
                   RadiusBottomRight: =0
                   RadiusTopLeft: =0
