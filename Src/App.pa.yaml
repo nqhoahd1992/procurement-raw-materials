@@ -68,7 +68,7 @@ App:
       Set(gShowBulkCodes, false);
       ClearCollect(colBulkCodes, {Code: "", MaterialID: 0, MaterialName: "", Unit: "", Quantity: 0});
       Clear(colBulkCodes);
-      ClearCollect(colLogDetail, {FieldLabel: "", FieldValue: ""});
+      ClearCollect(colLogDetail, {FieldLabel: "", FieldValue: "", FieldURL: ""});
       Clear(colLogDetail);
       ClearCollect(colReceiptPhotos, First('RM Procurement Execution Log').Attachments);
       Clear(colReceiptPhotos);

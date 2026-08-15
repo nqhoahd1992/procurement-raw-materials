@@ -8,12 +8,12 @@ Live flow name in the portal: **`RM Procurement - Update COA Reminder for Procur
 
 ## Why
 
-`COALink` on `'RM Procurement Receipt Rounds'` is **optional** at submit time on `GoodsReceiptScreen` / `SupplierFollowUpScreen` — the request keeps moving through its normal Status workflow even if a receiver leaves it blank. Completing it later is deliberately **decoupled from the request workflow**: Procurement fills it in via `Src/COACompletionScreen.pa.yaml` (reached via a "Link to COA" button on that request's row in `HomeScreen`), whenever convenient, without blocking or re-routing any request. Nothing in the app prompts Procurement to go check which requests need this, so this flow is the nudge.
+`COALink` on `'RM Procurement Receipt Rounds'` is **required** at submit time on `GoodsReceiptScreen` / `SupplierFollowUpScreen`, so rounds recorded from that change onward are never outstanding — this flow now only ever surfaces rows created while it was still optional, plus any row whose link is later cleared. Fixing one is deliberately **decoupled from the request workflow**: Procurement edits it via `Src/ReceiptAmendmentScreen.pa.yaml` (reached via the "Amend Receipt Data" button on that request's row in `HomeScreen`), whenever convenient, without blocking or re-routing any request. Nothing in the app prompts Procurement to go check which requests need this, so this flow is the nudge.
 
 ## What it reports
 
 - **What counts as outstanding:** a `'RM Procurement Receipt Rounds'` row with `COAMissing = Yes`. Nothing more — a receipt-round row only exists for a material actually received in that round (`ReceivedQty > 0`), so the old `ReceivedQty1 gt 0` / `ReceivedQty2 gt 0` guards are gone.
-- **Granularity: request level, not line-item level.** Outstanding rows are collapsed to their parent request, so the email lists *requests* pending COA, not individual material/round rows. Procurement can't act on a single row from the email anyway — they open the request and `COACompletionScreen` lists every outstanding row for it. This is a deliberate change from the original design (which listed `<request> — <material> — Round <n>` per row); the trade-off is that the email doesn't show *how many* rows a request is missing.
+- **Granularity: request level, not line-item level.** Outstanding rows are collapsed to their parent request, so the email lists *requests* pending COA, not individual material/round rows. Procurement can't act on a single row from the email anyway — they open the request and `ReceiptAmendmentScreen` lists every receipt round for it. This is a deliberate change from the original design (which listed `<request> — <material> — Round <n>` per row); the trade-off is that the email doesn't show *how many* rows a request is missing.
 
 > ⚠ **Since the parent/delivery split, "request" here means a *delivery* row, not the Requester's original request.** Receipt-round rows are written against the **delivery** (`RequestIDText` = the delivery's ID), so `RequestID.Value` resolves to the delivery's Title — `<parent title> - #<n>`. That string still names the parent, so the email stays readable, but the `union()` dedupe in step 5 is **per delivery**: one original request with three COA-deficient deliveries produces three lines, not one. That is arguably the more useful granularity (each delivery has its own COA paperwork), but it contradicts the "request level" claim above, so read this section as *delivery level*. If you want true parent-level grouping, project the new `ParentRequestID` (Number) column in the step-4 `Select` and dedupe on that instead. See `CLAUDE.md`'s "Two request types" section.
 - **Recipients:** every active `'RM User'` row with `Role = "Procurement"`, resolved to an email via `Employee List`. Not per-assignee (there is no assignee column for this task) and not Admin — Procurement only, as scoped. One email is sent **per recipient** (inside `Apply to each`), so a run sends N emails for N Procurement users.
@@ -33,7 +33,7 @@ Live flow name in the portal: **`RM Procurement - Update COA Reminder for Procur
 Two **single-column indexes** on `'RM Procurement Receipt Rounds'` (List settings → Indexed columns), both with Secondary column `(none)`:
 
 1. `COAMissing` — used by this flow's filter.
-2. `RequestIDText` — used by the app (`COACompletionScreen`, `HomeScreen`).
+2. `RequestIDText` — used by the app (`ReceiptAmendmentScreen`, `HomeScreen`).
 
 No compound index is needed: every query filters on one of the two, and the app's `RequestIDText = … && COAMissing` narrows on the indexed text column first.
 
@@ -123,7 +123,7 @@ Two notes on the email HTML: every gradient is preceded by a plain `background-c
 ## Notes & edge cases
 
 - **Rejected requests are not excluded.** `'RM Procurement Receipt Rounds'` has no `Status` column, and a request is only ever Rejected at the Manager / Executive / Procurement stage — before any receipt round exists — so the set is empty in practice and the check was deliberately skipped. Residual case: a request rejected **manually in SharePoint** after goods receipt would be reminded about forever, while `HomeScreen`'s "Link to COA" button hides for Rejected requests, so Procurement couldn't act from the app. Fix that by hand: clear `COAMissing` on those rows.
-- **`COAMissing` is only maintained by the app.** Someone filling `COALink` directly in SharePoint leaves the flag at `1`, and that request keeps appearing every morning. Only `COACompletionScreen`'s save clears it.
+- **`COAMissing` is only maintained by the app.** Someone filling `COALink` directly in SharePoint leaves the flag at `1`, and that request keeps appearing every morning. Only `ReceiptAmendmentScreen`'s save recomputes it (as `IsBlank(NewCOALink)`).
 - **No "already nudged" suppression.** The same requests repeat in the digest each morning until someone completes them.
 - **Per-recipient emails.** The send sits inside `Apply to each`, so each Procurement user gets their own copy (rather than one email with a joined `To` list). Cost is one email per recipient per run.
 - **Row counts are not shown.** A request missing 1 COA and one missing 20 render identically. Adding a count would need an `Apply to each` plus a variable — inside a nested `filter()` the inner `item()` shadows the outer element, so there is no compact expression for it. Judged not worth the complexity, since opening the request shows everything.

@@ -402,8 +402,7 @@ Screens:
                         Height: =18
                         PaddingLeft: =0
                         Size: =9
-                        Text: |-
-                          ="Raw Materials (" & CountRows(colLineItemsDetail) & ")"
+                        Text: ="Raw Materials (" & CountRows(colLineItemsDetail) & ")"
                         Width: =Parent.Width
                   - lblInfoMaterialsValue_SFU:
                       Control: Label@2.5.1
@@ -1275,7 +1274,7 @@ Screens:
                       Properties:
                         DropShadow: =DropShadow.None
                         FillPortions: =0
-                        Height: =24
+                        Height: =36
                         LayoutAlignItems: =LayoutAlignItems.Center
                         LayoutDirection: =LayoutDirection.Horizontal
                         LayoutJustifyContent: =LayoutJustifyContent.SpaceBetween
@@ -1297,7 +1296,7 @@ Screens:
                         - btnBulkReceipt_SFU:
                             Control: Button@0.0.45
                             Properties:
-                              Height: =24
+                              Height: =36
                               OnSelect: |-
                                 =Reset(txtBulkReceipt_SFU);
                                 Set(gShowBulkReceipt_SFU, true)
@@ -1382,7 +1381,7 @@ Screens:
                               Height: =36
                               Size: =9
                               Text: ="Ordered"
-                              Width: =Parent.Width * 0.04
+                              Width: =Parent.Width * 0.05
                         - lblGRColPrevQty_1:
                             Control: Label@2.5.1
                             Properties:
@@ -1402,7 +1401,7 @@ Screens:
                               Height: =36
                               Size: =9
                               Text: ="Received This Round *"
-                              Width: =Parent.Width * 0.06
+                              Width: =Parent.Width * 0.07
                         - lblGRColUnit_1:
                             Control: Label@2.5.1
                             Properties:
@@ -1505,6 +1504,7 @@ Screens:
                                   Variant: AutoLayout
                                   Properties:
                                     DropShadow: =DropShadow.None
+                                    FillPortions: =0
                                     LayoutDirection: =LayoutDirection.Vertical
                                     LayoutGap: =2
                                     RadiusBottomLeft: =0
@@ -1538,7 +1538,7 @@ Screens:
                                     Color: =RGBA(136, 135, 128, 1)
                                     Size: =11
                                     Text: =Text(ThisItem.OrderedQty)
-                                    Width: =Parent.Width * 0.04
+                                    Width: =Parent.Width * 0.05
                               - lblSFUPrevQty:
                                   Control: Label@2.5.1
                                   Properties:
@@ -1557,7 +1557,7 @@ Screens:
                                       =UpdateIf(colRoundEntry, LineItemID = ThisItem.LineItemID, {ReceivedQty: Value(Self.Value)})
                                     Placeholder: ="0"
                                     Value: =If(IsBlank(ThisItem.ReceivedQty) || ThisItem.ReceivedQty = 0, "", Text(ThisItem.ReceivedQty))
-                                    Width: =Parent.Width * 0.06
+                                    Width: =Parent.Width * 0.07
                               - lblSFUItemUnit:
                                   Control: Label@2.5.1
                                   Properties:

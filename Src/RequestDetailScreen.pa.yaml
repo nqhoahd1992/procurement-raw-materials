@@ -1953,13 +1953,13 @@ Screens:
                                                             OnSelect: |-
                                                               =ClearCollect(
                                                                   colLogDetail,
-                                                                  {FieldLabel: If(ThisItem.StepNumber = 5, "Closing receipt round", "Round"), FieldValue: "Round " & ThisItem.RoundNumber},
-                                                                  {FieldLabel: "Step", FieldValue: Coalesce(ThisItem.StepLabel, "")},
-                                                                  {FieldLabel: "Performed by", FieldValue: Coalesce(ThisItem.ActorName, "")},
-                                                                  {FieldLabel: "Date", FieldValue: If(IsBlank(ThisItem.ActionDate), "", Text(ThisItem.ActionDate, "dd/mm/yyyy hh:mm"))},
-                                                                  {FieldLabel: "Receipt Status", FieldValue: Coalesce(ThisItem.ReceiptStatus, "")},
-                                                                  {FieldLabel: "Acceptance Decision", FieldValue: Coalesce(ThisItem.AcceptanceDecision, "")},
-                                                                  {FieldLabel: "Notes", FieldValue: Coalesce(ThisItem.Notes, "")}
+                                                                  {FieldLabel: If(ThisItem.StepNumber = 5, "Closing receipt round", "Round"), FieldValue: "Round " & ThisItem.RoundNumber, FieldURL: ""},
+                                                                  {FieldLabel: "Step", FieldValue: Coalesce(ThisItem.StepLabel, ""), FieldURL: ""},
+                                                                  {FieldLabel: "Performed by", FieldValue: Coalesce(ThisItem.ActorName, ""), FieldURL: ""},
+                                                                  {FieldLabel: "Date", FieldValue: If(IsBlank(ThisItem.ActionDate), "", Text(ThisItem.ActionDate, "dd/mm/yyyy hh:mm")), FieldURL: ""},
+                                                                  {FieldLabel: "Receipt Status", FieldValue: Coalesce(ThisItem.ReceiptStatus, ""), FieldURL: ""},
+                                                                  {FieldLabel: "Acceptance Decision", FieldValue: Coalesce(ThisItem.AcceptanceDecision, ""), FieldURL: ""},
+                                                                  {FieldLabel: "Notes", FieldValue: Coalesce(ThisItem.Notes, ""), FieldURL: ""}
                                                               );
                                                               RemoveIf(colLogDetail, IsBlank(FieldValue));
                                                               Set(gLogDetailTitle,
@@ -2280,11 +2280,11 @@ Screens:
                                                       OnSelect: |-
                                                         =ClearCollect(
                                                             colLogDetail,
-                                                            {FieldLabel: "Step", FieldValue: If(ThisItem.StepNumber = 2, "Department Manager", "Executive")},
-                                                            {FieldLabel: "Approver", FieldValue: Coalesce(ThisItem.ApproverID.Value, "")},
-                                                            {FieldLabel: "Decision", FieldValue: Coalesce(ThisItem.Decision.Value, "")},
-                                                            {FieldLabel: "Date", FieldValue: If(IsBlank(ThisItem.Created), "", Text(ThisItem.Created, "dd/mm/yyyy hh:mm"))},
-                                                            {FieldLabel: "Remark", FieldValue: Coalesce(ThisItem.ManagerRemarks, ThisItem.ApprovalConditions, "")}
+                                                            {FieldLabel: "Step", FieldValue: If(ThisItem.StepNumber = 2, "Department Manager", "Executive"), FieldURL: ""},
+                                                            {FieldLabel: "Approver", FieldValue: Coalesce(ThisItem.ApproverID.Value, ""), FieldURL: ""},
+                                                            {FieldLabel: "Decision", FieldValue: Coalesce(ThisItem.Decision.Value, ""), FieldURL: ""},
+                                                            {FieldLabel: "Date", FieldValue: If(IsBlank(ThisItem.Created), "", Text(ThisItem.Created, "dd/mm/yyyy hh:mm")), FieldURL: ""},
+                                                            {FieldLabel: "Remark", FieldValue: Coalesce(ThisItem.ManagerRemarks, ThisItem.ApprovalConditions, ""), FieldURL: ""}
                                                         );
                                                         RemoveIf(colLogDetail, IsBlank(FieldValue));
                                                         Set(gLogDetailTitle, If(ThisItem.StepNumber = 2, "Department Manager", "Executive") & " · Approval");
@@ -2625,12 +2625,13 @@ Screens:
                                                                   7, "Delivery #" & Coalesce(ThisItem.RoundNumber, 1) & " Created",
                                                                   8, "Request Closed",
                                                                 ""
-                                                            )},
-                                                            {FieldLabel: "Executed by", FieldValue: Coalesce(ThisItem.ExecutedBy.Value, "")},
-                                                            {FieldLabel: "Date", FieldValue: If(IsBlank(ThisItem.ExecutedAt), "", Text(ThisItem.ExecutedAt, "dd/mm/yyyy hh:mm"))},
-                                                            {FieldLabel: "SO/PO/INV", FieldValue: Coalesce(ThisItem.SupplierSummary, "")},
-                                                            {FieldLabel: "Purchase Order Link", FieldValue: Coalesce(ThisItem.PurchaseOrderLink, "")},
-                                                            {FieldLabel: "Notes", FieldValue: Coalesce(ThisItem.Notes, "")}
+                                                            ), FieldURL: ""},
+                                                            {FieldLabel: "Executed by", FieldValue: Coalesce(ThisItem.ExecutedBy.Value, ""), FieldURL: ""},
+                                                            {FieldLabel: "Date", FieldValue: If(IsBlank(ThisItem.ExecutedAt), "", Text(ThisItem.ExecutedAt, "dd/mm/yyyy hh:mm")), FieldURL: ""},
+                                                            {FieldLabel: "SO/PO/INV", FieldValue: Coalesce(ThisItem.SupplierSummary, ""), FieldURL: ""},
+                                                            {FieldLabel: "Purchase Order Link", FieldValue: If(IsBlank(ThisItem.PurchaseOrderLink), "", "Open purchase order ↗"), FieldURL: Coalesce(ThisItem.PurchaseOrderLink, "")},
+                                                            {FieldLabel: "Order Confirmation", FieldValue: If(ThisItem.StepNumber = 1 && Not(IsBlank(gSelectedRequest.OrderConfirmationURL)), "Open order confirmation ↗", ""), FieldURL: If(ThisItem.StepNumber = 1, Coalesce(gSelectedRequest.OrderConfirmationURL, ""), "")},
+                                                            {FieldLabel: "Notes", FieldValue: Coalesce(ThisItem.Notes, ""), FieldURL: ""}
                                                         );
                                                         RemoveIf(colLogDetail, IsBlank(FieldValue));
                                                         Set(gLogDetailTitle, Switch(ThisItem.StepNumber,
@@ -3442,12 +3443,16 @@ Screens:
                         - lblLogDlgFieldValue_RD:
                             Control: Label@2.5.1
                             Properties:
-                              Color: =RGBA(68, 68, 65, 1)
+                              Color: =If(IsBlank(ThisItem.FieldURL), RGBA(68, 68, 65, 1), RGBA(56, 96, 178, 1))
+                              FontWeight: =If(IsBlank(ThisItem.FieldURL), FontWeight.Normal, FontWeight.Semibold)
                               Height: =70
+                              OnSelect: =If(Not(IsBlank(ThisItem.FieldURL)), Launch(ThisItem.FieldURL, {}, LaunchTarget.New))
                               Overflow: =Overflow.Scroll
                               PaddingLeft: =0
                               Size: =11
                               Text: =ThisItem.FieldValue
+                              Tooltip: =ThisItem.FieldURL
+                              Underline: =Not(IsBlank(ThisItem.FieldURL))
                               VerticalAlign: =VerticalAlign.Top
                               Width: =Parent.Width
                         - rectLogDlgFieldRule_RD:
