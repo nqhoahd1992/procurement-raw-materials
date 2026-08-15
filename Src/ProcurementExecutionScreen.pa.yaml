@@ -275,40 +275,6 @@ Screens:
                                           Text: =Coalesce(gSelectedRequest.InvoiceType.Value, "—")
                                           Width: =Parent.Width - 20
                                           Wrap: =false
-                              - colReqCost_PE:
-                                  Control: GroupContainer@1.5.0
-                                  Variant: AutoLayout
-                                  Properties:
-                                    DropShadow: =DropShadow.None
-                                    LayoutDirection: =LayoutDirection.Vertical
-                                    LayoutGap: =2
-                                    RadiusBottomLeft: =0
-                                    RadiusBottomRight: =0
-                                    RadiusTopLeft: =0
-                                    RadiusTopRight: =0
-                                    Width: =240
-                                    X: =40
-                                    Y: =40
-                                  Children:
-                                    - lblReqCostLabel_PE:
-                                        Control: Label@2.5.1
-                                        Properties:
-                                          Color: =RGBA(136, 135, 128, 1)
-                                          Height: =20
-                                          PaddingLeft: =0
-                                          Size: =9
-                                          Text: ="Estimated Cost"
-                                          Width: =240
-                                    - lblReqCostValue_PE:
-                                        Control: Label@2.5.1
-                                        Properties:
-                                          FontWeight: =FontWeight.Semibold
-                                          Height: =24
-                                          PaddingLeft: =0
-                                          Size: =11
-                                          Text: =Text(gSelectedRequest.EstimatedCost, "#,###.00") & " " & gSelectedRequest.Currency
-                                          Width: =Parent.Width - 20
-                                          Wrap: =false
                         - rowReqInfoB_PE:
                             Control: GroupContainer@1.5.0
                             Variant: AutoLayout
@@ -504,6 +470,7 @@ Screens:
                                   Control: Label@2.5.1
                                   Properties:
                                     FillPortions: =1
+                                    FontWeight: =FontWeight.Semibold
                                     Height: =68
                                     PaddingLeft: =0
                                     Size: =11
@@ -531,16 +498,16 @@ Screens:
                               - lblReqLineItemsTitle_PE:
                                   Control: Label@2.5.1
                                   Properties:
-                                    FontWeight: =FontWeight.Bold
+                                    Color: =RGBA(136, 135, 128, 1)
                                     Height: =24
                                     PaddingLeft: =0
-                                    Size: =11
-                                    Text: |-
-                                      ="Raw Materials (" & CountRows(colLineItemsDetail) & ")"
+                                    Size: =9
+                                    Text: ="Raw Materials (" & CountRows(colLineItemsDetail) & ")"
                                     Width: =Parent.Width
                               - lblReqLineItemsValue_PE:
                                   Control: Label@2.5.1
                                   Properties:
+                                    FontWeight: =FontWeight.Semibold
                                     Height: =20
                                     PaddingLeft: =0
                                     Size: =11
@@ -611,8 +578,6 @@ Screens:
                                           LayoutAlignItems: =LayoutAlignItems.Center
                                           LayoutDirection: =LayoutDirection.Horizontal
                                           LayoutGap: =8
-                                          PaddingLeft: =5
-                                          PaddingRight: =5
                                           Width: =Parent.Width
                                         Children:
                                           - lblReqRequirementFileName_PE:
@@ -624,6 +589,7 @@ Screens:
                                                 Height: =28
                                                 OnSelect: =Launch(ThisItem.FileURL, {}, LaunchTarget.New)
                                                 PaddingLeft: =0
+                                                PaddingRight: =0
                                                 Size: =11
                                                 Text: =ThisItem.FileName
                                                 Underline: =true
@@ -724,13 +690,58 @@ Screens:
                                     Underline: =Not(IsBlank(gSelectedRequest.RemittanceURL))
                                     Width: =Parent.Width
                                     Wrap: =false
+            - rowConditionsBanner_PE:
+                Control: GroupContainer@1.5.0
+                Variant: AutoLayout
+                Properties:
+                  DropShadow: =DropShadow.None
+                  Fill: =RGBA(241, 239, 232, 1)
+                  LayoutDirection: =LayoutDirection.Vertical
+                  LayoutGap: =4
+                  LayoutMinHeight: =110
+                  PaddingBottom: =12
+                  PaddingLeft: =20
+                  PaddingRight: =20
+                  PaddingTop: =12
+                  RadiusBottomLeft: =0
+                  RadiusBottomRight: =0
+                  RadiusTopLeft: =0
+                  RadiusTopRight: =0
+                  Visible: |-
+                    =rdoDecision_PE.Selected.Value = "Proceed" &&
+                    Not(IsBlank(LookUp('RM Procurement Approval Log', RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 3).ApprovalConditions))
+                  Width: =Parent.Width
+                Children:
+                  - lblConditionsTitle_PE:
+                      Control: Label@2.5.1
+                      Properties:
+                        Color: =RGBA(136, 135, 128, 1)
+                        Height: =24
+                        PaddingLeft: =0
+                        PaddingRight: =0
+                        Size: =9
+                        Text: ="Executive Remark"
+                        Width: =Parent.Width - 40
+                  - lblConditionsText_PE:
+                      Control: Label@2.5.1
+                      Properties:
+                        Color: =RGBA(68, 68, 65, 1)
+                        FontWeight: =FontWeight.Semibold
+                        Height: =50
+                        Overflow: =Overflow.Scroll
+                        PaddingLeft: =0
+                        PaddingRight: =0
+                        Size: =11
+                        Text: =LookUp('RM Procurement Approval Log', RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 3).ApprovalConditions
+                        VerticalAlign: =VerticalAlign.Top
+                        Width: =Parent.Width - 40
             - rowDecision_PE:
                 Control: GroupContainer@1.5.0
                 Variant: AutoLayout
                 Properties:
                   DropShadow: =DropShadow.None
                   FillPortions: =0
-                  Height: =100
+                  Height: =90
                   LayoutDirection: =LayoutDirection.Vertical
                   LayoutGap: =8
                   PaddingBottom: =12
@@ -808,46 +819,6 @@ Screens:
                         Height: =80
                         Mode: ='TextInputCanvas.Mode'.Multiline
                         Placeholder: ="Enter rejection reason..."
-                        Width: =Parent.Width - 40
-            - rowConditionsBanner_PE:
-                Control: GroupContainer@1.5.0
-                Variant: AutoLayout
-                Properties:
-                  DropShadow: =DropShadow.None
-                  Fill: =RGBA(241, 239, 232, 1)
-                  LayoutDirection: =LayoutDirection.Vertical
-                  LayoutGap: =4
-                  PaddingBottom: =12
-                  PaddingLeft: =20
-                  PaddingRight: =20
-                  PaddingTop: =12
-                  RadiusBottomLeft: =0
-                  RadiusBottomRight: =0
-                  RadiusTopLeft: =0
-                  RadiusTopRight: =0
-                  Visible: |-
-                    =rdoDecision_PE.Selected.Value = "Proceed" &&
-                    Not(IsBlank(LookUp('RM Procurement Approval Log', RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 3).ApprovalConditions))
-                  Width: =Parent.Width
-                Children:
-                  - lblConditionsTitle_PE:
-                      Control: Label@2.5.1
-                      Properties:
-                        Color: =RGBA(136, 135, 128, 1)
-                        FontWeight: =FontWeight.Semibold
-                        Height: =24
-                        Size: =11
-                        Text: ="Executive Remark"
-                        Width: =Parent.Width - 40
-                  - lblConditionsText_PE:
-                      Control: Label@2.5.1
-                      Properties:
-                        Color: =RGBA(68, 68, 65, 1)
-                        Height: =50
-                        Overflow: =Overflow.Scroll
-                        Size: =11
-                        Text: =LookUp('RM Procurement Approval Log', RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 3).ApprovalConditions
-                        VerticalAlign: =VerticalAlign.Top
                         Width: =Parent.Width - 40
             - rowSupplierSummary_PE:
                 Control: GroupContainer@1.5.0
