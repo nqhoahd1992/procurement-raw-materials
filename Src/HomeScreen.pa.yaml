@@ -328,7 +328,7 @@ Screens:
                               Height: =22
                               Size: =11
                               Text: |-
-                                =If(ThisItem.RequestType.Value = "Delivery", "Expected Delivery Date: ", "Required Date: ") & Text(ThisItem.RequiredDeliveryDate, "dd/mm/yyyy") & If(ThisItem.RequestType.Value = "Delivery" || IsBlank(ThisItem.EstimatedCost) || ThisItem.EstimatedCost = 0, "", " | Estimated Cost: " & Text(ThisItem.EstimatedCost, "#,###.00") & " " & ThisItem.Currency) & If(IsBlank(ThisItem.ProjectID), "", " | Project: " & Coalesce(LookUp(Project_List, ProjectID = ThisItem.ProjectID).Title, "—"))
+                                =If(IsBlank(ThisItem.ProjectID), "", "Project: " & Coalesce(LookUp(Project_List, ProjectID = ThisItem.ProjectID).Title, "—")) & If(ThisItem.RequestType.Value = "Delivery", " | Expected Delivery Date: ", " | Required Date: ") & Text(ThisItem.RequiredDeliveryDate, "dd/mm/yyyy") & If(ThisItem.RequestType.Value = "Delivery" || IsBlank(ThisItem.EstimatedCost) || ThisItem.EstimatedCost = 0, "", " | Estimated Cost: " & Text(ThisItem.EstimatedCost, "#,###.00") & " " & ThisItem.Currency)
                               Width: =Parent.Width - 440
                         - lblRequesterName:
                             Control: Label@2.5.1
@@ -842,7 +842,6 @@ Screens:
                       Variant: AutoLayout
                       Properties:
                         DropShadow: =DropShadow.None
-                        FillPortions: =1
                         LayoutDirection: =LayoutDirection.Vertical
                         LayoutGap: =2
                         RadiusBottomLeft: =0
@@ -891,8 +890,7 @@ Screens:
                         Height: =20
                         PaddingLeft: =0
                         Size: =9
-                        Text: |-
-                          ="Raw Materials (" & CountRows(colQuickViewItems) & ")"
+                        Text: ="Raw Materials (" & CountRows(colQuickViewItems) & ")"
                         Width: =Parent.Width
                   - lblQVMaterialsValue_HS:
                       Control: Label@2.5.1

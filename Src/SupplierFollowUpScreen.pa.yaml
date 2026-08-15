@@ -1528,7 +1528,7 @@ Screens:
                                           Height: =16
                                           Size: =8
                                           Text: |-
-                                            =With({wMat: LookUp('Raw Materials', ID = ThisItem.MaterialID)}, If(IsBlank(wMat), "", wMat.Category))
+                                            =With({wMat: LookUp('Raw Materials', ID = ThisItem.MaterialID)}, If(IsBlank(wMat), "", wMat.Category.Value))
                                           Width: =Parent.Width
                                           Wrap: =false
                               - lblSFUOrderedQty:

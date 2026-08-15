@@ -212,7 +212,7 @@ Only these columns are currently referenced anywhere in the app's Power Fx (conf
 | `ID` | Number (system) | used as `MaterialID` |
 | `Title` (Title) | Text | trade name — the material picker's primary display field; copied into `RM Procurement Line Items.MaterialName` on add |
 | `Code` | Text | the picker's secondary display field, and searchable alongside `Title`; also shown read-only next to the picker once a material is selected |
-| `Category` | Text | shown read-only next to the material picker once a material is selected. **Not a Choice column** — read directly as `ddMaterial_1.Selected.Category`, no `.Value` |
+| `Category` | **Choice** | shown read-only next to the material picker once a material is selected. Being a Choice, **every read needs `.Value`** — `ddMaterial_1.Selected.Category.Value`, `wMat.Category.Value`. Adding a category is a List settings change, not a code change. It was a Text column until Aug 2026; if a formula ever concatenates `wMat.Category` without `.Value` the whole label errors, since a Choice record has no string coercion |
 | `Supplier` | Text | shown read-only next to the material picker once a material is selected — the raw material's own supplier, now the only place supplier information lives (the request-level `PreferredSupplier` field was removed) |
 
 Loaded in full into `colRawMaterials` on `RequestFormScreen.OnVisible`; `App.OnStart` preloads `FirstN('Raw Materials', 1)` as a schema-shape seed. The picker (`ddMaterial_1`), its `DefaultSelectedItems` and the bulk-code parser all read that collection, never the list directly — pointing `ddMaterial_1.Items` at the list caps the combobox's search at the app's Data row limit, because its search runs in memory (`Search()` is not delegable for SharePoint).

@@ -1112,7 +1112,7 @@ Screens:
                                     PaddingLeft: =8
                                     PaddingRight: =8
                                     Size: =10
-                                    Text: =If(IsBlank(ddMaterial_1.Selected), "—", ddMaterial_1.Selected.Category)
+                                    Text: =If(IsBlank(ddMaterial_1.Selected), "—", Coalesce(ddMaterial_1.Selected.Category.Value, "—"))
                                     Width: =80
                                     Wrap: =false
                               - lblLineItemSupplier_1:
