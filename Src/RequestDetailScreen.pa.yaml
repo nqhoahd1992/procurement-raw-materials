@@ -3613,8 +3613,8 @@ Screens:
                               IsBlank(txtCloseRemarks_RD.Value),
                               Notify("Please enter the closing remarks", NotificationType.Error),
                               If(
-                                  Not(IsEmpty(Filter(colDeliveryBatches, Status.Value <> "Completed" && Status.Value <> "Cancelled"))),
-                                  Notify("Some deliveries are still open. Finish or cancel them before closing the request.", NotificationType.Warning),
+                                  Not(IsEmpty(Filter(colDeliveryBatches, Status.Value <> "Completed" && Status.Value <> "Cancelled" && Status.Value <> "Pending Accounting"))),
+                                  Notify("Some deliveries are still receiving or awaiting their invoice. Finish or cancel them before closing the request.", NotificationType.Error),
                                   With(
                                       {wLatest: LookUp('RM Procurement Requests', ID = gSelectedRequest.ID)},
                                       If(

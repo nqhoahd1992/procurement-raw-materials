@@ -2,7 +2,7 @@ Screens:
   HomeScreen:
     Properties:
       LoadingSpinnerColor: =RGBA(56, 96, 178, 1)
-      OnVisible: =Set(gShowQuickView, false); Set(gInvoiceFromPFU, false); Set(gShowStatusFilter, false); Clear(colStatusFilterChecked); Clear(colStatusFilterDraft); ClearCollect(colStatusFilterOptions_HS, ["Pending Manager", "Pending Executive", "Pending Procurement", "In Delivery", "Pending Accounting", "Pending Invoice", "Goods Receipt & Acceptance", "Pending Supplier Follow-up", "Completed", "Closed", "Cancelled", "Rejected"])
+      OnVisible: =Set(gShowQuickView, false); Set(gInvoiceFromPFU, false); Set(gShowStatusFilter, false); Set(gParentsOnly, false); Clear(colStatusFilterChecked); Clear(colStatusFilterDraft); ClearCollect(colStatusFilterOptions_HS, ["Pending Manager", "Pending Executive", "Pending Procurement", "In Delivery", "Pending Accounting", "Pending Invoice", "Goods Receipt & Acceptance", "Pending Supplier Follow-up", "Completed", "Closed", "Cancelled", "Rejected"])
     Children:
       - lblNoRole:
           Control: Label@2.5.1
@@ -85,6 +85,14 @@ Screens:
                         "My Requests"
                     )
                   Width: =400
+            - chkParentsOnly_HS:
+                Control: CheckBox@0.0.30
+                Properties:
+                  AlignInContainer: =AlignInContainer.Center
+                  Label: ="Requests only"
+                  OnCheck: =Set(gParentsOnly, true)
+                  OnUncheck: =Set(gParentsOnly, false)
+                  Width: =190
             - btnStatusFilterDropdown_HS:
                 Control: ModernButton@1.0.0
                 Properties:
@@ -174,7 +182,8 @@ Screens:
                               SFU1AssignedToNum = gCurrentEmployee.ID
                           )
                       ),
-                      (IsEmpty(colStatusFilterChecked) || Status.Value in colStatusFilterChecked)
+                      (IsEmpty(colStatusFilterChecked) || Status.Value in colStatusFilterChecked) &&
+                      (Not(gParentsOnly) || RequestType.Value = "Request")
                   ),
                   "GroupKey", SortOrder.Descending,
                   "DeliveryNumber", SortOrder.Ascending
