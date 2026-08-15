@@ -11,7 +11,7 @@ Screens:
                     'RM Procurement Receipt Rounds',
                     RequestIDText = Text(gSelectedRequest.ID)
                 ),
-                {ID: ID, MaterialName: MaterialName, RARound: RoundNumber, RMPKCode: RMPKCode, ReceivedQty: ReceivedQty, NewReceivedQty: Text(ReceivedQty), BatchNumber: BatchNumber, NewBatchNumber: Coalesce(BatchNumber, ""), ExpiryDate: ExpiryDate, NewExpiryDate: ExpiryDate, QCNumber: QCNumber, NewQCNumber: Coalesce(QCNumber, ""), COALink: COALink, NewCOALink: Coalesce(COALink, "")}
+                {ID: ID, MaterialName: MaterialName, RARound: RoundNumber, RMPKCode: RMPKCode, ReceivedQty: ReceivedQty, BatchNumber: BatchNumber, NewBatchNumber: Coalesce(BatchNumber, ""), ExpiryDate: ExpiryDate, NewExpiryDate: ExpiryDate, QCNumber: QCNumber, NewQCNumber: Coalesce(QCNumber, ""), COALink: COALink, NewCOALink: Coalesce(COALink, "")}
             )
         );
         ClearCollect(colLineItemsDetail, Filter('RM Procurement Line Items', RequestIDText = Text(gSelectedRequest.ID)))
@@ -44,19 +44,14 @@ Screens:
             Visible: =gCurrentUser.Role.Value <> "Procurement" && gCurrentUser.Role.Value <> "Admin"
             Width: =Parent.Width
             Y: =60
-      - rowInfoBlock_RA:
+      - conScrollable_RA:
           Control: GroupContainer@1.5.0
           Variant: AutoLayout
           Properties:
             DropShadow: =DropShadow.None
-            Fill: =RGBA(245, 245, 250, 1)
-            Height: =182
+            Height: =Parent.Height - 120
             LayoutDirection: =LayoutDirection.Vertical
-            LayoutGap: =4
-            PaddingBottom: =12
-            PaddingLeft: =20
-            PaddingRight: =20
-            PaddingTop: =12
+            LayoutOverflowY: =LayoutOverflow.Scroll
             RadiusBottomLeft: =0
             RadiusBottomRight: =0
             RadiusTopLeft: =0
@@ -65,454 +60,449 @@ Screens:
             Width: =Parent.Width
             Y: =60
           Children:
-            - rowInfoLine1_RA:
+            - rowInfoBlock_RA:
                 Control: GroupContainer@1.5.0
                 Variant: AutoLayout
                 Properties:
                   DropShadow: =DropShadow.None
+                  Fill: =RGBA(245, 245, 250, 1)
                   FillPortions: =0
-                  Height: =34
-                  LayoutAlignItems: =LayoutAlignItems.Center
-                  LayoutDirection: =LayoutDirection.Horizontal
-                  LayoutGap: =16
-                  LayoutJustifyContent: =LayoutJustifyContent.SpaceBetween
-                  PaddingRight: =1
-                  RadiusBottomLeft: =0
-                  RadiusBottomRight: =0
-                  RadiusTopLeft: =0
-                  RadiusTopRight: =0
-                  Width: =Parent.Width - 40
-                Children:
-                  - lblInfoTitle_RA:
-                      Control: Label@2.5.1
-                      Properties:
-                        FillPortions: =1
-                        FontWeight: =FontWeight.Bold
-                        Height: =24
-                        Size: =14
-                        Text: =gSelectedRequest.Title
-                        Width: =600
-                  - lblStatusBadge_RA:
-                      Control: Label@2.5.1
-                      Properties:
-                        Align: =Align.Center
-                        Color: |-
-                          =Switch(gSelectedRequest.Status.Value,
-                            "Pending Manager", RGBA(146, 84, 14, 1),
-                            "Pending Executive", RGBA(175, 74, 20, 1),
-                            "Pending Procurement", RGBA(122, 108, 10, 1),
-                            "In Delivery", RGBA(83, 74, 183, 1),
-                            "Closed", RGBA(13, 108, 108, 1),
-                            "Rejected", RGBA(163, 45, 45, 1),
-                            "Goods Receipt & Acceptance", RGBA(37, 92, 178, 1),
-                            "Pending Supplier Follow-up", RGBA(11, 105, 132, 1),
-                            "Pending Invoice", RGBA(124, 58, 173, 1),
-                            "Pending Accounting", RGBA(158, 44, 108, 1),
-                            "Completed", RGBA(15, 110, 86, 1),
-                            "Cancelled", RGBA(148, 87, 87, 1),
-                            RGBA(68, 68, 65, 1)
-                          )
-                        Fill: |-
-                          =Switch(gSelectedRequest.Status.Value,
-                            "Pending Manager", RGBA(253, 242, 216, 1),
-                            "Pending Executive", RGBA(253, 234, 222, 1),
-                            "Pending Procurement", RGBA(247, 245, 210, 1),
-                            "In Delivery", RGBA(228, 225, 250, 1),
-                            "Closed", RGBA(219, 243, 243, 1),
-                            "Rejected", RGBA(252, 233, 233, 1),
-                            "Goods Receipt & Acceptance", RGBA(223, 234, 252, 1),
-                            "Pending Supplier Follow-up", RGBA(219, 241, 249, 1),
-                            "Pending Invoice", RGBA(240, 228, 252, 1),
-                            "Pending Accounting", RGBA(252, 230, 242, 1),
-                            "Completed", RGBA(222, 245, 236, 1),
-                            "Cancelled", RGBA(243, 235, 235, 1),
-                            RGBA(241, 239, 232, 1)
-                          )
-                        FontWeight: =FontWeight.Semibold
-                        Height: =32
-                        PaddingLeft: =8
-                        PaddingRight: =8
-                        Size: =10
-                        Text: =gSelectedRequest.Status.Value
-                        Width: =220
-            - lblOutstandingCount_RA:
-                Control: Label@2.5.1
-                Properties:
-                  Color: =RGBA(136, 135, 128, 1)
-                  Height: =20
-                  Size: =11
-                  Text: =CountRows(colReceiptAmend) & " material line item(s) received on this request — review and correct what the receiver entered if needed"
-                  Width: =Parent.Width - 40
-            - rowInfoIdent_RA:
-                Control: GroupContainer@1.5.0
-                Variant: AutoLayout
-                Properties:
-                  DropShadow: =DropShadow.None
-                  FillPortions: =0
-                  Height: =44
-                  LayoutAlignItems: =LayoutAlignItems.Center
-                  LayoutDirection: =LayoutDirection.Horizontal
-                  LayoutGap: =24
-                  LayoutMinHeight: =44
-                  RadiusBottomLeft: =0
-                  RadiusBottomRight: =0
-                  RadiusTopLeft: =0
-                  RadiusTopRight: =0
-                  Width: =Parent.Width - 40
-                Children:
-                  - colIdentProject_RA:
-                      Control: GroupContainer@1.5.0
-                      Variant: AutoLayout
-                      Properties:
-                        DropShadow: =DropShadow.None
-                        LayoutDirection: =LayoutDirection.Vertical
-                        LayoutGap: =2
-                        RadiusBottomLeft: =0
-                        RadiusBottomRight: =0
-                        RadiusTopLeft: =0
-                        RadiusTopRight: =0
-                        Width: =260
-                      Children:
-                        - lblIdentProjectLabel_RA:
-                            Control: Label@2.5.1
-                            Properties:
-                              Color: =RGBA(136, 135, 128, 1)
-                              Height: =18
-                              PaddingLeft: =0
-                              Size: =9
-                              Text: ="Related Project"
-                              Width: =Parent.Width
-                        - lblIdentProjectValue_RA:
-                            Control: Label@2.5.1
-                            Properties:
-                              FontWeight: =FontWeight.Semibold
-                              Height: =20
-                              PaddingLeft: =0
-                              Size: =11
-                              Text: |-
-                                =If(
-                                    IsBlank(gSelectedRequest.ProjectID),
-                                    "—",
-                                    Coalesce(LookUp(Project_List, ProjectID = gSelectedRequest.ProjectID).Title, "—")
-                                )
-                              Width: =Parent.Width
-                              Wrap: =false
-                  - colIdentReqDate_RA:
-                      Control: GroupContainer@1.5.0
-                      Variant: AutoLayout
-                      Properties:
-                        DropShadow: =DropShadow.None
-                        LayoutDirection: =LayoutDirection.Vertical
-                        LayoutGap: =2
-                        RadiusBottomLeft: =0
-                        RadiusBottomRight: =0
-                        RadiusTopLeft: =0
-                        RadiusTopRight: =0
-                        Width: =170
-                      Children:
-                        - lblIdentReqDateLabel_RA:
-                            Control: Label@2.5.1
-                            Properties:
-                              Color: =RGBA(136, 135, 128, 1)
-                              Height: =18
-                              PaddingLeft: =0
-                              Size: =9
-                              Text: ="Required Delivery Date"
-                              Width: =Parent.Width
-                        - lblIdentReqDateValue_RA:
-                            Control: Label@2.5.1
-                            Properties:
-                              FontWeight: =FontWeight.Semibold
-                              Height: =20
-                              PaddingLeft: =0
-                              Size: =11
-                              Text: |-
-                                =If(
-                                    IsBlank(gSelectedRequest.RequiredDeliveryDate),
-                                    "—",
-                                    Text(gSelectedRequest.RequiredDeliveryDate, "dd/mm/yyyy")
-                                )
-                              Width: =Parent.Width
-                              Wrap: =false
-                  - colIdentRequester_RA:
-                      Control: GroupContainer@1.5.0
-                      Variant: AutoLayout
-                      Properties:
-                        DropShadow: =DropShadow.None
-                        LayoutDirection: =LayoutDirection.Vertical
-                        LayoutGap: =2
-                        RadiusBottomLeft: =0
-                        RadiusBottomRight: =0
-                        RadiusTopLeft: =0
-                        RadiusTopRight: =0
-                        Width: =200
-                      Children:
-                        - lblIdentRequesterLabel_RA:
-                            Control: Label@2.5.1
-                            Properties:
-                              Color: =RGBA(136, 135, 128, 1)
-                              Height: =18
-                              PaddingLeft: =0
-                              Size: =9
-                              Text: ="Requested by"
-                              Width: =Parent.Width
-                        - lblIdentRequesterValue_RA:
-                            Control: Label@2.5.1
-                            Properties:
-                              FontWeight: =FontWeight.Semibold
-                              Height: =20
-                              PaddingLeft: =0
-                              Size: =11
-                              Text: =Coalesce(gSelectedRequest.RequesterID.Value, gSelectedRequest.RequesterEmail, "—")
-                              Width: =Parent.Width
-                              Wrap: =false
-            - rowInfoMaterials_RA:
-                Control: GroupContainer@1.5.0
-                Variant: AutoLayout
-                Properties:
-                  DropShadow: =DropShadow.None
-                  FillPortions: =0
-                  Height: =40
                   LayoutDirection: =LayoutDirection.Vertical
-                  LayoutGap: =2
-                  LayoutMinHeight: =40
+                  LayoutGap: =4
+                  LayoutMinHeight: =182
+                  PaddingBottom: =12
+                  PaddingLeft: =20
+                  PaddingRight: =20
+                  PaddingTop: =12
                   RadiusBottomLeft: =0
                   RadiusBottomRight: =0
                   RadiusTopLeft: =0
                   RadiusTopRight: =0
-                  Width: =Parent.Width - 40
+                  Visible: =gCurrentUser.Role.Value = "Procurement" || gCurrentUser.Role.Value = "Admin"
+                  Width: =Parent.Width
                 Children:
-                  - lblInfoMaterialsLabel_RA:
+                  - rowInfoLine1_RA:
+                      Control: GroupContainer@1.5.0
+                      Variant: AutoLayout
+                      Properties:
+                        DropShadow: =DropShadow.None
+                        FillPortions: =0
+                        Height: =34
+                        LayoutAlignItems: =LayoutAlignItems.Center
+                        LayoutDirection: =LayoutDirection.Horizontal
+                        LayoutGap: =16
+                        LayoutJustifyContent: =LayoutJustifyContent.SpaceBetween
+                        PaddingRight: =1
+                        RadiusBottomLeft: =0
+                        RadiusBottomRight: =0
+                        RadiusTopLeft: =0
+                        RadiusTopRight: =0
+                        Width: =Parent.Width - 40
+                      Children:
+                        - lblInfoTitle_RA:
+                            Control: Label@2.5.1
+                            Properties:
+                              FillPortions: =1
+                              FontWeight: =FontWeight.Bold
+                              Height: =24
+                              PaddingLeft: =0
+                              Size: =14
+                              Text: =gSelectedRequest.Title
+                              Width: =600
+                        - lblStatusBadge_RA:
+                            Control: Label@2.5.1
+                            Properties:
+                              Align: =Align.Center
+                              Color: |-
+                                =Switch(gSelectedRequest.Status.Value,
+                                  "Pending Manager", RGBA(146, 84, 14, 1),
+                                  "Pending Executive", RGBA(175, 74, 20, 1),
+                                  "Pending Procurement", RGBA(122, 108, 10, 1),
+                                  "In Delivery", RGBA(83, 74, 183, 1),
+                                  "Closed", RGBA(13, 108, 108, 1),
+                                  "Rejected", RGBA(163, 45, 45, 1),
+                                  "Goods Receipt & Acceptance", RGBA(37, 92, 178, 1),
+                                  "Pending Supplier Follow-up", RGBA(11, 105, 132, 1),
+                                  "Pending Invoice", RGBA(124, 58, 173, 1),
+                                  "Pending Accounting", RGBA(158, 44, 108, 1),
+                                  "Completed", RGBA(15, 110, 86, 1),
+                                  "Cancelled", RGBA(148, 87, 87, 1),
+                                  RGBA(68, 68, 65, 1)
+                                )
+                              Fill: |-
+                                =Switch(gSelectedRequest.Status.Value,
+                                  "Pending Manager", RGBA(253, 242, 216, 1),
+                                  "Pending Executive", RGBA(253, 234, 222, 1),
+                                  "Pending Procurement", RGBA(247, 245, 210, 1),
+                                  "In Delivery", RGBA(228, 225, 250, 1),
+                                  "Closed", RGBA(219, 243, 243, 1),
+                                  "Rejected", RGBA(252, 233, 233, 1),
+                                  "Goods Receipt & Acceptance", RGBA(223, 234, 252, 1),
+                                  "Pending Supplier Follow-up", RGBA(219, 241, 249, 1),
+                                  "Pending Invoice", RGBA(240, 228, 252, 1),
+                                  "Pending Accounting", RGBA(252, 230, 242, 1),
+                                  "Completed", RGBA(222, 245, 236, 1),
+                                  "Cancelled", RGBA(243, 235, 235, 1),
+                                  RGBA(241, 239, 232, 1)
+                                )
+                              FontWeight: =FontWeight.Semibold
+                              Height: =32
+                              PaddingLeft: =8
+                              PaddingRight: =8
+                              Size: =10
+                              Text: =gSelectedRequest.Status.Value
+                              Width: =220
+                  - lblOutstandingCount_RA:
                       Control: Label@2.5.1
                       Properties:
                         Color: =RGBA(136, 135, 128, 1)
-                        Height: =18
-                        PaddingLeft: =0
-                        Size: =9
-                        Text: ="Raw Materials (" & CountRows(colLineItemsDetail) & ")"
-                        Width: =Parent.Width
-                  - lblInfoMaterialsValue_RA:
-                      Control: Label@2.5.1
-                      Properties:
-                        FontWeight: =FontWeight.Semibold
                         Height: =20
                         PaddingLeft: =0
+                        PaddingRight: =0
                         Size: =11
-                        Text: |-
-                          =If(
-                              CountRows(colLineItemsDetail) = 0,
-                              "—",
-                              Concat(
-                                  colLineItemsDetail,
-                                  MaterialName & " (" & Text(Quantity) & " " & Unit & ")",
-                                  "  ·  "
-                              )
-                          )
-                        Tooltip: |-
-                          =Concat(
-                              colLineItemsDetail,
-                              MaterialName & " (" & Text(Quantity) & " " & Unit & ")",
-                              Char(10)
-                          )
-                        Width: =Parent.Width
-                        Wrap: =false
-      - rowTableHeader_RA:
-          Control: GroupContainer@1.5.0
-          Variant: AutoLayout
-          Properties:
-            DropShadow: =DropShadow.None
-            Fill: =RGBA(241, 239, 232, 1)
-            Height: =36
-            LayoutAlignItems: =LayoutAlignItems.Center
-            LayoutDirection: =LayoutDirection.Horizontal
-            LayoutGap: =8
-            PaddingLeft: =20
-            PaddingRight: =20
-            RadiusBottomLeft: =0
-            RadiusBottomRight: =0
-            RadiusTopLeft: =0
-            RadiusTopRight: =0
-            Visible: =gCurrentUser.Role.Value = "Procurement" || gCurrentUser.Role.Value = "Admin"
-            Width: =Parent.Width
-            Y: =242
-          Children:
-            - lblColMaterial_RA:
-                Control: Label@2.5.1
-                Properties:
-                  Color: =RGBA(68, 68, 65, 1)
-                  FontWeight: =FontWeight.Semibold
-                  Height: =32
-                  Size: =9
-                  Text: ="Material"
-                  Width: =Parent.Width * 0.14
-            - lblColRound_RA:
-                Control: Label@2.5.1
-                Properties:
-                  Color: =RGBA(68, 68, 65, 1)
-                  FontWeight: =FontWeight.Semibold
-                  Height: =32
-                  Size: =9
-                  Text: ="Round"
-                  Width: =Parent.Width * 0.05
-            - lblColRMPK_RA:
-                Control: Label@2.5.1
-                Properties:
-                  Color: =RGBA(68, 68, 65, 1)
-                  FontWeight: =FontWeight.Semibold
-                  Height: =32
-                  Size: =9
-                  Text: ="RM Code"
-                  Width: =Parent.Width * 0.08
-            - lblColQty_RA:
-                Control: Label@2.5.1
-                Properties:
-                  Color: =RGBA(68, 68, 65, 1)
-                  FontWeight: =FontWeight.Semibold
-                  Height: =32
-                  Size: =9
-                  Text: ="Received Qty"
-                  Width: =Parent.Width * 0.08
-            - lblColBatch_RA:
-                Control: Label@2.5.1
-                Properties:
-                  Color: =RGBA(68, 68, 65, 1)
-                  FontWeight: =FontWeight.Semibold
-                  Height: =32
-                  Size: =9
-                  Text: ="Batch No"
-                  Width: =Parent.Width * 0.1
-            - lblColExpiry_RA:
-                Control: Label@2.5.1
-                Properties:
-                  Color: =RGBA(68, 68, 65, 1)
-                  FontWeight: =FontWeight.Semibold
-                  Height: =32
-                  Size: =9
-                  Text: ="Expiry Date"
-                  Width: =Parent.Width * 0.1
-            - lblColQC_RA:
-                Control: Label@2.5.1
-                Properties:
-                  Color: =RGBA(68, 68, 65, 1)
-                  FontWeight: =FontWeight.Semibold
-                  Height: =32
-                  Size: =9
-                  Text: ="QC Number"
-                  Width: =Parent.Width * 0.1
-            - lblColCOAInput_RA:
-                Control: Label@2.5.1
-                Properties:
-                  Color: =RGBA(68, 68, 65, 1)
-                  FontWeight: =FontWeight.Semibold
-                  Height: =32
-                  Size: =9
-                  Text: ="Link to COA (URL)"
-                  Width: =Parent.Width * 0.28
-      - galReceiptAmend:
-          Control: Gallery@2.15.0
-          Variant: BrowseLayout_Vertical_TwoTextOneImageVariant_ver5.0
-          Properties:
-            Height: =Parent.Height - 302
-            Items: =colReceiptAmend
-            TemplateSize: =56
-            Visible: =gCurrentUser.Role.Value = "Procurement" || gCurrentUser.Role.Value = "Admin"
-            Width: =Parent.Width
-            Y: =242
-          Children:
-            - rowRAItem:
+                        Text: =CountRows(colReceiptAmend) & " material line item(s) received on this request — review and correct what the receiver entered if needed"
+                        Width: =Parent.Width - 40
+                  - rowInfoIdent_RA:
+                      Control: GroupContainer@1.5.0
+                      Variant: AutoLayout
+                      Properties:
+                        DropShadow: =DropShadow.None
+                        FillPortions: =0
+                        Height: =60
+                        LayoutAlignItems: =LayoutAlignItems.Center
+                        LayoutDirection: =LayoutDirection.Horizontal
+                        LayoutGap: =24
+                        LayoutMinHeight: =44
+                        PaddingTop: =10
+                        RadiusBottomLeft: =0
+                        RadiusBottomRight: =0
+                        RadiusTopLeft: =0
+                        RadiusTopRight: =0
+                        Width: =Parent.Width - 40
+                      Children:
+                        - colIdentProject_RA:
+                            Control: GroupContainer@1.5.0
+                            Variant: AutoLayout
+                            Properties:
+                              DropShadow: =DropShadow.None
+                              LayoutDirection: =LayoutDirection.Vertical
+                              LayoutGap: =2
+                              RadiusBottomLeft: =0
+                              RadiusBottomRight: =0
+                              RadiusTopLeft: =0
+                              RadiusTopRight: =0
+                              Width: =260
+                            Children:
+                              - lblIdentProjectLabel_RA:
+                                  Control: Label@2.5.1
+                                  Properties:
+                                    Color: =RGBA(136, 135, 128, 1)
+                                    Height: =18
+                                    PaddingLeft: =0
+                                    Size: =9
+                                    Text: ="Related Project"
+                                    Width: =Parent.Width
+                              - lblIdentProjectValue_RA:
+                                  Control: Label@2.5.1
+                                  Properties:
+                                    FontWeight: =FontWeight.Semibold
+                                    Height: =20
+                                    PaddingLeft: =0
+                                    Size: =11
+                                    Text: |-
+                                      =If(
+                                          IsBlank(gSelectedRequest.ProjectID),
+                                          "—",
+                                          Coalesce(LookUp(Project_List, ProjectID = gSelectedRequest.ProjectID).Title, "—")
+                                      )
+                                    Width: =Parent.Width
+                                    Wrap: =false
+                        - colIdentReqDate_RA:
+                            Control: GroupContainer@1.5.0
+                            Variant: AutoLayout
+                            Properties:
+                              DropShadow: =DropShadow.None
+                              LayoutDirection: =LayoutDirection.Vertical
+                              LayoutGap: =2
+                              RadiusBottomLeft: =0
+                              RadiusBottomRight: =0
+                              RadiusTopLeft: =0
+                              RadiusTopRight: =0
+                              Width: =170
+                            Children:
+                              - lblIdentReqDateLabel_RA:
+                                  Control: Label@2.5.1
+                                  Properties:
+                                    Color: =RGBA(136, 135, 128, 1)
+                                    Height: =18
+                                    PaddingLeft: =0
+                                    Size: =9
+                                    Text: ="Required Delivery Date"
+                                    Width: =Parent.Width
+                              - lblIdentReqDateValue_RA:
+                                  Control: Label@2.5.1
+                                  Properties:
+                                    FontWeight: =FontWeight.Semibold
+                                    Height: =20
+                                    PaddingLeft: =0
+                                    Size: =11
+                                    Text: |-
+                                      =If(
+                                          IsBlank(gSelectedRequest.RequiredDeliveryDate),
+                                          "—",
+                                          Text(gSelectedRequest.RequiredDeliveryDate, "dd/mm/yyyy")
+                                      )
+                                    Width: =Parent.Width
+                                    Wrap: =false
+                  - rowInfoMaterials_RA:
+                      Control: GroupContainer@1.5.0
+                      Variant: AutoLayout
+                      Properties:
+                        DropShadow: =DropShadow.None
+                        FillPortions: =0
+                        Height: =40
+                        LayoutDirection: =LayoutDirection.Vertical
+                        LayoutGap: =2
+                        LayoutMinHeight: =40
+                        RadiusBottomLeft: =0
+                        RadiusBottomRight: =0
+                        RadiusTopLeft: =0
+                        RadiusTopRight: =0
+                        Width: =Parent.Width - 40
+                      Children:
+                        - lblInfoMaterialsLabel_RA:
+                            Control: Label@2.5.1
+                            Properties:
+                              Color: =RGBA(136, 135, 128, 1)
+                              Height: =18
+                              PaddingLeft: =0
+                              Size: =9
+                              Text: ="Raw Materials (" & CountRows(colLineItemsDetail) & ")"
+                              Width: =Parent.Width
+                        - lblInfoMaterialsValue_RA:
+                            Control: Label@2.5.1
+                            Properties:
+                              FontWeight: =FontWeight.Semibold
+                              Height: =20
+                              PaddingLeft: =0
+                              Size: =11
+                              Text: |-
+                                =If(
+                                    CountRows(colLineItemsDetail) = 0,
+                                    "—",
+                                    Concat(
+                                        colLineItemsDetail,
+                                        MaterialName & " (" & Text(Quantity) & " " & Unit & ")",
+                                        "  ·  "
+                                    )
+                                )
+                              Tooltip: |-
+                                =Concat(
+                                    colLineItemsDetail,
+                                    MaterialName & " (" & Text(Quantity) & " " & Unit & ")",
+                                    Char(10)
+                                )
+                              Width: =Parent.Width
+                              Wrap: =false
+            - rowTableHeader_RA:
                 Control: GroupContainer@1.5.0
                 Variant: AutoLayout
                 Properties:
                   DropShadow: =DropShadow.None
-                  Fill: =If(Mod(ThisItem.ID, 2) = 0, RGBA(248, 247, 243, 1), RGBA(255, 255, 255, 1))
-                  Height: =56
+                  Fill: =RGBA(241, 239, 232, 1)
+                  FillPortions: =0
+                  Height: =36
                   LayoutAlignItems: =LayoutAlignItems.Center
                   LayoutDirection: =LayoutDirection.Horizontal
                   LayoutGap: =8
+                  LayoutMinHeight: =36
                   PaddingLeft: =20
                   PaddingRight: =20
                   RadiusBottomLeft: =0
                   RadiusBottomRight: =0
                   RadiusTopLeft: =0
                   RadiusTopRight: =0
-                  Width: =1358
+                  Visible: =gCurrentUser.Role.Value = "Procurement" || gCurrentUser.Role.Value = "Admin"
+                  Width: =Parent.Width
                 Children:
-                  - lblRAItemMaterial:
+                  - lblColMaterial_RA:
                       Control: Label@2.5.1
                       Properties:
+                        Color: =RGBA(68, 68, 65, 1)
+                        FontWeight: =FontWeight.Semibold
                         Height: =32
-                        Size: =11
-                        Text: =ThisItem.MaterialName
+                        Size: =9
+                        Text: ="Material"
                         Width: =Parent.Width * 0.14
-                        Wrap: =false
-                  - lblRAItemRound:
+                  - lblColRound_RA:
                       Control: Label@2.5.1
                       Properties:
-                        Color: =RGBA(136, 135, 128, 1)
+                        Color: =RGBA(68, 68, 65, 1)
+                        FontWeight: =FontWeight.Semibold
                         Height: =32
-                        Size: =10
-                        Text: ="Round " & ThisItem.RARound
+                        Size: =9
+                        Text: ="Round"
                         Width: =Parent.Width * 0.05
-                  - lblRAItemRMPK:
+                  - lblColRMPK_RA:
                       Control: Label@2.5.1
                       Properties:
-                        Color: =RGBA(136, 135, 128, 1)
+                        Color: =RGBA(68, 68, 65, 1)
+                        FontWeight: =FontWeight.Semibold
                         Height: =32
-                        Size: =10
-                        Text: =ThisItem.RMPKCode
+                        Size: =9
+                        Text: ="RM Code"
                         Width: =Parent.Width * 0.08
-                        Wrap: =false
-                  - txtRAQtyInput:
-                      Control: TextInput@0.0.54
+                  - lblColQty_RA:
+                      Control: Label@2.5.1
                       Properties:
-                        Height: =36
-                        OnChange: |-
-                          =UpdateIf(colReceiptAmend, ID = ThisItem.ID, {NewReceivedQty: Self.Value})
-                        Placeholder: ="Received qty"
-                        Value: =ThisItem.NewReceivedQty
+                        Color: =RGBA(68, 68, 65, 1)
+                        FontWeight: =FontWeight.Semibold
+                        Height: =32
+                        Size: =9
+                        Text: ="Received Qty"
                         Width: =Parent.Width * 0.08
-                  - txtRABatchInput:
-                      Control: TextInput@0.0.54
+                  - lblColBatch_RA:
+                      Control: Label@2.5.1
                       Properties:
-                        Height: =36
-                        OnChange: |-
-                          =UpdateIf(colReceiptAmend, ID = ThisItem.ID, {NewBatchNumber: Self.Value})
-                        Placeholder: ="Batch no."
-                        Value: =ThisItem.NewBatchNumber
+                        Color: =RGBA(68, 68, 65, 1)
+                        FontWeight: =FontWeight.Semibold
+                        Height: =32
+                        Size: =9
+                        Text: ="Batch No"
                         Width: =Parent.Width * 0.1
-                  - dpRAExpiryInput:
-                      Control: ModernDatePicker@1.0.1
+                  - lblColExpiry_RA:
+                      Control: Label@2.5.1
                       Properties:
-                        BorderStyle: =""
-                        DefaultDate: =ThisItem.NewExpiryDate
-                        Font: =""
-                        FontWeight: =""
-                        Format: ="dd/mm/yyyy"
-                        Height: =36
-                        OnChange: |-
-                          =UpdateIf(colReceiptAmend, ID = ThisItem.ID, {NewExpiryDate: Self.SelectedDate})
-                        Placeholder: ="Expiry date"
-                        Size: =0
+                        Color: =RGBA(68, 68, 65, 1)
+                        FontWeight: =FontWeight.Semibold
+                        Height: =32
+                        Size: =9
+                        Text: ="Expiry Date"
                         Width: =Parent.Width * 0.1
-                  - txtRAQCInput:
-                      Control: TextInput@0.0.54
+                  - lblColQC_RA:
+                      Control: Label@2.5.1
                       Properties:
-                        Height: =36
-                        OnChange: |-
-                          =UpdateIf(colReceiptAmend, ID = ThisItem.ID, {NewQCNumber: Self.Value})
-                        Placeholder: ="QC number"
-                        Value: =ThisItem.NewQCNumber
+                        Color: =RGBA(68, 68, 65, 1)
+                        FontWeight: =FontWeight.Semibold
+                        Height: =32
+                        Size: =9
+                        Text: ="QC Number"
                         Width: =Parent.Width * 0.1
-                  - txtRACOALinkInput:
-                      Control: TextInput@0.0.54
+                  - lblColCOAInput_RA:
+                      Control: Label@2.5.1
                       Properties:
-                        FillPortions: =1
-                        Height: =36
-                        OnChange: |-
-                          =UpdateIf(colReceiptAmend, ID = ThisItem.ID, {NewCOALink: Self.Value})
-                        Placeholder: ="Link to COA (URL)"
-                        Value: =ThisItem.NewCOALink
+                        Color: =RGBA(68, 68, 65, 1)
+                        FontWeight: =FontWeight.Semibold
+                        Height: =32
+                        Size: =9
+                        Text: ="Link to COA (URL)"
                         Width: =Parent.Width * 0.28
+            - galReceiptAmend:
+                Control: Gallery@2.15.0
+                Variant: BrowseLayout_Vertical_TwoTextOneImageVariant_ver5.0
+                Properties:
+                  FillPortions: =0
+                  Height: =CountRows(colReceiptAmend) * 56 + 8
+                  Items: =colReceiptAmend
+                  TemplateSize: =56
+                  Visible: =gCurrentUser.Role.Value = "Procurement" || gCurrentUser.Role.Value = "Admin"
+                  Width: =Parent.Width
+                Children:
+                  - rowRAItem:
+                      Control: GroupContainer@1.5.0
+                      Variant: AutoLayout
+                      Properties:
+                        DropShadow: =DropShadow.None
+                        Fill: =If(Mod(ThisItem.ID, 2) = 0, RGBA(248, 247, 243, 1), RGBA(255, 255, 255, 1))
+                        Height: =56
+                        LayoutAlignItems: =LayoutAlignItems.Center
+                        LayoutDirection: =LayoutDirection.Horizontal
+                        LayoutGap: =8
+                        PaddingLeft: =20
+                        PaddingRight: =20
+                        RadiusBottomLeft: =0
+                        RadiusBottomRight: =0
+                        RadiusTopLeft: =0
+                        RadiusTopRight: =0
+                        Width: =Parent.Width
+                      Children:
+                        - lblRAItemMaterial:
+                            Control: Label@2.5.1
+                            Properties:
+                              Height: =32
+                              Size: =11
+                              Text: =ThisItem.MaterialName
+                              Width: =Parent.Width * 0.14
+                              Wrap: =false
+                        - lblRAItemRound:
+                            Control: Label@2.5.1
+                            Properties:
+                              Color: =RGBA(136, 135, 128, 1)
+                              Height: =32
+                              Size: =10
+                              Text: ="Round " & ThisItem.RARound
+                              Width: =Parent.Width * 0.05
+                        - lblRAItemRMPK:
+                            Control: Label@2.5.1
+                            Properties:
+                              Color: =RGBA(136, 135, 128, 1)
+                              Height: =32
+                              Size: =10
+                              Text: =ThisItem.RMPKCode
+                              Width: =Parent.Width * 0.08
+                              Wrap: =false
+                        - lblRAItemQty:
+                            Control: Label@2.5.1
+                            Properties:
+                              Color: =RGBA(68, 68, 65, 1)
+                              FontWeight: =FontWeight.Semibold
+                              Height: =32
+                              Size: =10
+                              Text: =Text(ThisItem.ReceivedQty)
+                              Width: =Parent.Width * 0.08
+                              Wrap: =false
+                        - txtRABatchInput:
+                            Control: TextInput@0.0.54
+                            Properties:
+                              Height: =36
+                              OnChange: |-
+                                =UpdateIf(colReceiptAmend, ID = ThisItem.ID, {NewBatchNumber: Self.Value})
+                              Placeholder: ="Batch no."
+                              Value: =ThisItem.NewBatchNumber
+                              Width: =Parent.Width * 0.1
+                        - dpRAExpiryInput:
+                            Control: ModernDatePicker@1.0.1
+                            Properties:
+                              BorderStyle: =""
+                              DefaultDate: =ThisItem.NewExpiryDate
+                              Font: =""
+                              FontWeight: =""
+                              Format: ="dd/mm/yyyy"
+                              Height: =36
+                              OnChange: |-
+                                =UpdateIf(colReceiptAmend, ID = ThisItem.ID, {NewExpiryDate: Self.SelectedDate})
+                              Placeholder: ="Expiry date"
+                              Size: =0
+                              Width: =Parent.Width * 0.1
+                        - txtRAQCInput:
+                            Control: TextInput@0.0.54
+                            Properties:
+                              Height: =36
+                              OnChange: |-
+                                =UpdateIf(colReceiptAmend, ID = ThisItem.ID, {NewQCNumber: Self.Value})
+                              Placeholder: ="QC number"
+                              Value: =ThisItem.NewQCNumber
+                              Width: =Parent.Width * 0.1
+                        - txtRACOALinkInput:
+                            Control: TextInput@0.0.54
+                            Properties:
+                              FillPortions: =1
+                              Height: =36
+                              OnChange: |-
+                                =UpdateIf(colReceiptAmend, ID = ThisItem.ID, {NewCOALink: Self.Value})
+                              Placeholder: ="Link to COA (URL)"
+                              Value: =ThisItem.NewCOALink
+                              Width: =Parent.Width * 0.28
       - rowFooter_RA:
           Control: GroupContainer@1.5.0
           Variant: AutoLayout
@@ -547,7 +537,6 @@ Screens:
                     =With(
                         {wChanged: Filter(
                             colReceiptAmend,
-                            (Not(IsBlank(NewReceivedQty)) && IsNumeric(NewReceivedQty) && Value(NewReceivedQty) <> Coalesce(ReceivedQty, 0)) ||
                             NewBatchNumber <> Coalesce(BatchNumber, "") ||
                             NewExpiryDate <> ExpiryDate ||
                             NewQCNumber <> Coalesce(QCNumber, "") ||
@@ -562,7 +551,6 @@ Screens:
                                     'RM Procurement Receipt Rounds',
                                     {ID: ra.ID},
                                     {
-                                        ReceivedQty: If(IsNumeric(ra.NewReceivedQty), Value(ra.NewReceivedQty), ra.ReceivedQty),
                                         BatchNumber: ra.NewBatchNumber,
                                         ExpiryDate: ra.NewExpiryDate,
                                         QCNumber: ra.NewQCNumber,
@@ -579,7 +567,7 @@ Screens:
                                         'RM Procurement Receipt Rounds',
                                         RequestIDText = Text(gSelectedRequest.ID)
                                     ),
-                                    {ID: ID, MaterialName: MaterialName, RARound: RoundNumber, RMPKCode: RMPKCode, ReceivedQty: ReceivedQty, NewReceivedQty: Text(ReceivedQty), BatchNumber: BatchNumber, NewBatchNumber: Coalesce(BatchNumber, ""), ExpiryDate: ExpiryDate, NewExpiryDate: ExpiryDate, QCNumber: QCNumber, NewQCNumber: Coalesce(QCNumber, ""), COALink: COALink, NewCOALink: Coalesce(COALink, "")}
+                                    {ID: ID, MaterialName: MaterialName, RARound: RoundNumber, RMPKCode: RMPKCode, ReceivedQty: ReceivedQty, BatchNumber: BatchNumber, NewBatchNumber: Coalesce(BatchNumber, ""), ExpiryDate: ExpiryDate, NewExpiryDate: ExpiryDate, QCNumber: QCNumber, NewQCNumber: Coalesce(QCNumber, ""), COALink: COALink, NewCOALink: Coalesce(COALink, "")}
                                 )
                             )
                         )
