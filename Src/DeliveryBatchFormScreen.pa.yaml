@@ -821,10 +821,10 @@ Screens:
                   DropShadow: =DropShadow.None
                   Fill: =RGBA(255, 255, 255, 1)
                   FillPortions: =0
-                  Height: =246
+                  Height: =272
                   LayoutDirection: =LayoutDirection.Vertical
                   LayoutGap: =4
-                  LayoutMinHeight: =246
+                  LayoutMinHeight: =272
                   PaddingBottom: =12
                   PaddingLeft: =20
                   PaddingRight: =20
@@ -844,16 +844,7 @@ Screens:
                         PaddingLeft: =0
                         PaddingRight: =0
                         Size: =12
-                        Text: ="Invoice Details *"
-                        Width: =Parent.Width - 40
-                  - lblInvoiceFieldsHint_DBF:
-                      Control: Label@2.5.1
-                      Properties:
-                        Color: =RGBA(136, 135, 128, 1)
-                        Height: =20
-                        PaddingLeft: =0
-                        Size: =9
-                        Text: =If(gHasInvoiceResult, "Extracted from the invoice file — correct anything wrong before submitting.", "Filled in automatically once you press Extract, or type them in by hand.")
+                        Text: ="Invoice Data"
                         Width: =Parent.Width - 40
                   - rowFldLine0_DBF:
                       Control: GroupContainer@1.5.0
@@ -998,7 +989,7 @@ Screens:
                                     Height: =20
                                     PaddingLeft: =0
                                     Size: =9
-                                    Text: ="Supplier ABN"
+                                    Text: ="ABN"
                                     Width: =Parent.Width
                               - txtFldSupplierABN_DBF:
                                   Control: TextInput@0.0.54
@@ -1049,6 +1040,32 @@ Screens:
                                     Height: =36
                                     Value: =If(gHasInvoiceResult, gInvoiceResult.attention, "")
                                     Width: =Parent.Width
+                        - colFldInvDescription_DBF:
+                            Control: GroupContainer@1.5.0
+                            Variant: AutoLayout
+                            Properties:
+                              DropShadow: =DropShadow.None
+                              LayoutDirection: =LayoutDirection.Vertical
+                              LayoutGap: =2
+                              RadiusBottomLeft: =0
+                              RadiusBottomRight: =0
+                              RadiusTopLeft: =0
+                              RadiusTopRight: =0
+                            Children:
+                              - lblFldInvDescription_DBF:
+                                  Control: Label@2.5.1
+                                  Properties:
+                                    Color: =RGBA(136, 135, 128, 1)
+                                    Height: =20
+                                    PaddingLeft: =0
+                                    Size: =9
+                                    Text: ="Description *"
+                                    Width: =Parent.Width
+                              - txtFldInvDescription_DBF:
+                                  Control: TextInput@0.0.54
+                                  Properties:
+                                    Height: =36
+                                    Width: =Parent.Width
                         - colFldTotalAmount_DBF:
                             Control: GroupContainer@1.5.0
                             Variant: AutoLayout
@@ -1095,7 +1112,7 @@ Screens:
                                     Height: =20
                                     PaddingLeft: =0
                                     Size: =9
-                                    Text: ="Tax Amount"
+                                    Text: ="GST / Tax"
                                     Width: =Parent.Width
                               - txtFldTaxAmount_DBF:
                                   Control: TextInput@0.0.54
@@ -1130,71 +1147,67 @@ Screens:
                                     Height: =36
                                     Value: =If(gHasInvoiceResult, gInvoiceResult.currency, "")
                                     Width: =Parent.Width
-                        - colFldInvDescription_DBF:
-                            Control: GroupContainer@1.5.0
-                            Variant: AutoLayout
+                  - rowSuggestedFilename_DBF:
+                      Control: GroupContainer@1.5.0
+                      Variant: AutoLayout
+                      Properties:
+                        DropShadow: =DropShadow.None
+                        Fill: =RGBA(219, 234, 254, 1)
+                        FillPortions: =0
+                        Height: =76
+                        LayoutDirection: =LayoutDirection.Vertical
+                        LayoutGap: =4
+                        LayoutMinHeight: =76
+                        PaddingBottom: =12
+                        PaddingLeft: =12
+                        PaddingRight: =12
+                        PaddingTop: =12
+                        RadiusBottomLeft: =0
+                        RadiusBottomRight: =0
+                        RadiusTopLeft: =0
+                        RadiusTopRight: =0
+                        Width: =Parent.Width - 40
+                      Children:
+                        - lblSuggestedFilenameLbl_DBF:
+                            Control: Label@2.5.1
                             Properties:
-                              DropShadow: =DropShadow.None
-                              LayoutDirection: =LayoutDirection.Vertical
-                              LayoutGap: =2
-                              RadiusBottomLeft: =0
-                              RadiusBottomRight: =0
-                              RadiusTopLeft: =0
-                              RadiusTopRight: =0
-                            Children:
-                              - lblFldInvDescription_DBF:
-                                  Control: Label@2.5.1
-                                  Properties:
-                                    Color: =RGBA(136, 135, 128, 1)
-                                    Height: =20
-                                    PaddingLeft: =0
-                                    Size: =9
-                                    Text: ="Description"
-                                    Width: =Parent.Width
-                              - txtFldInvDescription_DBF:
-                                  Control: TextInput@0.0.54
-                                  Properties:
-                                    Height: =36
-                                    Width: =Parent.Width
-                  - lblSuggestedFilenameLbl_DBF:
-                      Control: Label@2.5.1
-                      Properties:
-                        Color: =RGBA(136, 135, 128, 1)
-                        PaddingLeft: =0
-                        PaddingRight: =0
-                        PaddingTop: =15
-                        Size: =9
-                        Text: |-
-                          ="Suggested Filename" & If(gHasInvoiceResult, " (ConfidenceScore: " & gInvoiceResult.confidenceScore & ")", "")
-                        Width: =Parent.Width - 40
-                  - lblSuggestedFilename_DBF:
-                      Control: Label@2.5.1
-                      Properties:
-                        Color: =RGBA(37, 99, 235, 1)
-                        FontWeight: =FontWeight.Bold
-                        PaddingBottom: =15
-                        PaddingLeft: =0
-                        PaddingRight: =0
-                        Size: =9
-                        Text: |-
-                          =If(gHasInvoiceResult,
-                              With(
-                                  {
-                                      wName: If(IsBlank(txtFldInvDate_DBF.Value), "", Substitute(txtFldInvDate_DBF.Value, "-", "")) &
-                                          If(IsBlank(txtFldSupplierName_DBF.Value), "", " - " & txtFldSupplierName_DBF.Value) &
-                                          If(IsBlank(txtFldBilledTo_DBF.Value), "", " - " & txtFldBilledTo_DBF.Value) &
-                                          If(IsBlank(txtFldInvNumber_DBF.Value), "", " - " & txtFldInvNumber_DBF.Value) &
-                                          If(IsBlank(txtFldAttention_DBF.Value), "", " - " & txtFldAttention_DBF.Value) &
-                                          If(IsBlank(txtFldInvDescription_DBF.Value), "", " - " & txtFldInvDescription_DBF.Value) &
-                                          If(IsBlank(txtFldTotalAmount_DBF.Value), "", " - " & txtFldCurrency_DBF.Value & " " & Text(Value(txtFldTotalAmount_DBF.Value), "[$-en-US]#,##0.00")) &
-                                          If(IsBlank(txtFldTaxAmount_DBF.Value), "", " - GST " & txtFldCurrency_DBF.Value & " " & Text(Value(txtFldTaxAmount_DBF.Value), "[$-en-US]#,##0.00"))
-                                  },
-                                  Substitute(Substitute(Substitute(Substitute(Substitute(Substitute(Substitute(Substitute(Substitute(Substitute(wName, "\", ""), "/", ""), ":", ""), "*", ""), "?", ""), """", ""), "<", ""), ">", ""), "#", ""), "%", "") &
-                                  "." & Last(Split(gInvoiceResult.suggestedFilename, ".")).Value
-                              ),
-                              "—"
-                          )
-                        Width: =Parent.Width - 40
+                              Color: =RGBA(37, 99, 235, 1)
+                              FontWeight: =FontWeight.Bold
+                              PaddingLeft: =0
+                              PaddingRight: =0
+                              PaddingTop: =15
+                              Size: =9
+                              Text: |-
+                                ="Suggested Filename" & If(gHasInvoiceResult, " (ConfidenceScore: " & gInvoiceResult.confidenceScore & ")", "")
+                              Width: =Parent.Width - 40
+                        - lblSuggestedFilename_DBF:
+                            Control: Label@2.5.1
+                            Properties:
+                              Color: =RGBA(37, 99, 235, 1)
+                              FontWeight: =FontWeight.Bold
+                              PaddingBottom: =15
+                              PaddingLeft: =0
+                              PaddingRight: =0
+                              Size: =9
+                              Text: |-
+                                =If(gHasInvoiceResult,
+                                    With(
+                                        {
+                                            wName: If(IsBlank(txtFldInvDate_DBF.Value), "", Substitute(txtFldInvDate_DBF.Value, "-", "")) &
+                                                If(IsBlank(txtFldSupplierName_DBF.Value), "", " - " & txtFldSupplierName_DBF.Value) &
+                                                If(IsBlank(txtFldBilledTo_DBF.Value), "", " - " & txtFldBilledTo_DBF.Value) &
+                                                If(IsBlank(txtFldInvNumber_DBF.Value), "", " - " & txtFldInvNumber_DBF.Value) &
+                                                If(IsBlank(txtFldAttention_DBF.Value), "", " - " & txtFldAttention_DBF.Value) &
+                                                If(IsBlank(txtFldInvDescription_DBF.Value), "", " - " & txtFldInvDescription_DBF.Value) &
+                                                If(IsBlank(txtFldTotalAmount_DBF.Value), "", " - " & txtFldCurrency_DBF.Value & " " & Text(Value(txtFldTotalAmount_DBF.Value), "[$-en-US]#,##0.00")) &
+                                                If(IsBlank(txtFldTaxAmount_DBF.Value), "", " - GST " & txtFldCurrency_DBF.Value & " " & Text(Value(txtFldTaxAmount_DBF.Value), "[$-en-US]#,##0.00"))
+                                        },
+                                        Substitute(Substitute(Substitute(Substitute(Substitute(Substitute(Substitute(Substitute(Substitute(Substitute(wName, "\", ""), "/", ""), ":", ""), "*", ""), "?", ""), """", ""), "<", ""), ">", ""), "#", ""), "%", "") &
+                                        "." & Last(Split(gInvoiceResult.suggestedFilename, ".")).Value
+                                    ),
+                                    "—"
+                                )
+                              Width: =Parent.Width - 40
       - conActionBar_DBF:
           Control: GroupContainer@1.5.0
           Variant: AutoLayout

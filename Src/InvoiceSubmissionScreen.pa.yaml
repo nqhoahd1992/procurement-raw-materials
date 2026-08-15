@@ -1016,13 +1016,13 @@ Screens:
                   - lblExistingAttachment_ISS:
                       Control: Label@2.5.1
                       Properties:
-                        Color: =RGBA(133, 79, 11, 1)
+                        Color: =RGBA(136, 135, 128, 1)
                         Height: =40
                         PaddingLeft: =0
                         Size: =9
                         Text: |-
-                          ="⚠ This delivery already has a file attached: " & Concat(gSelectedRequest.Attachments, DisplayName, ", ") &
-                          ". Upload the corrected invoice under a DIFFERENT file name — a same-name upload can resolve back to the old file."
+                          ="This delivery already has a file attached: " & Concat(gSelectedRequest.Attachments, DisplayName, ", ") &
+                          ". Uploading the same file name replaces it; a different name keeps both. Whichever file you extract and submit here becomes the official invoice."
                         Visible: =CountRows(gSelectedRequest.Attachments) > 0
                         Width: =Parent.Width - 40
                   - lblOfficialInvoiceHint_ISS:
