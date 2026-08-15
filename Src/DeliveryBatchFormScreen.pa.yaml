@@ -620,10 +620,9 @@ Screens:
                 Properties:
                   DropShadow: =DropShadow.None
                   Fill: =RGBA(255, 255, 255, 1)
-                  FillPortions: =0
                   LayoutDirection: =LayoutDirection.Vertical
                   LayoutGap: =4
-                  LayoutMinHeight: =266
+                  LayoutMinHeight: =230
                   PaddingBottom: =16
                   PaddingLeft: =20
                   PaddingRight: =20
@@ -660,6 +659,7 @@ Screens:
                       Layout: Vertical
                       Properties:
                         DataSource: ='RM Procurement Requests'
+                        FillPortions: =0
                         Height: =100
                         Item: =gPendingDeliveryBatch
                         LayoutMinHeight: =100
