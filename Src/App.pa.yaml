@@ -53,6 +53,8 @@ App:
       Clear(colRoundEntry);
       ClearCollect(colRoundHistory, {ID: 0, RoundNumber: 0, StepNumber: 0, StepLabel: "", ActorName: "", ActionDate: Today(), ReceiptStatus: "", AcceptanceDecision: "", Notes: ""});
       Clear(colRoundHistory);
+      ClearCollect(colPFUSummary, {LineItemID: 0, MaterialName: "", Unit: "", OrderedQty: 0, TotalReceivedQty: 0, OutstandingQty: 0, RoundsCount: 0});
+      Clear(colPFUSummary);
       ClearCollect(colRoundDetails, {LineItemID: 0, MaterialName: "", Unit: "", OrderedQty: 0, ReceivedQty: 0, BatchNumber: "", ExpiryDate: Today(), QCNumber: "", RMPKCode: "", COALink: ""});
       Clear(colRoundDetails);
       Set(gShowRoundDetails, false);

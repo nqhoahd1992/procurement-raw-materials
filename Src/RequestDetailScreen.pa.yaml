@@ -1025,7 +1025,7 @@ Screens:
                       Properties:
                         DropShadow: =DropShadow.None
                         FillPortions: =0
-                        Height: =60
+                        Height: =70
                         LayoutDirection: =LayoutDirection.Vertical
                         LayoutGap: =2
                         LayoutMinHeight: =70
