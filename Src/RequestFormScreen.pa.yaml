@@ -1122,7 +1122,7 @@ Screens:
                                     PaddingLeft: =8
                                     PaddingRight: =8
                                     Size: =10
-                                    Text: =If(IsBlank(ddMaterial_1.Selected), "—", ddMaterial_1.Selected.Supplier)
+                                    Text: =If(IsBlank(ddMaterial_1.Selected), "—", Coalesce(ddMaterial_1.Selected.Supplier.Value, "—"))
                                     Wrap: =false
                               - ddUnit_1:
                                   Control: ComboBox@0.0.51

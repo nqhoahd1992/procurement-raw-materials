@@ -1301,7 +1301,7 @@ Screens:
                               OnSelect: |-
                                 =Reset(txtBulkReceipt_SFU);
                                 Set(gShowBulkReceipt_SFU, true)
-                              Text: ="+ Quick Fill by Code List"
+                              Text: ="+ Quick Fill"
                               Width: =190
                   - lblLineItemsNote_SFU:
                       Control: Label@2.5.1
@@ -1497,7 +1497,7 @@ Screens:
                                   Properties:
                                     Color: =RGBA(136, 135, 128, 1)
                                     Size: =11
-                                    Text: =Coalesce(LookUp('Raw Materials', ID = ThisItem.MaterialID).Supplier, "")
+                                    Text: =Coalesce(LookUp('Raw Materials', ID = ThisItem.MaterialID).Supplier.Value, "")
                                     Width: =Parent.Width * 0.08
                                     Wrap: =false
                               - colSFUName:
@@ -2463,7 +2463,7 @@ Screens:
           Properties:
             DropShadow: =DropShadow.Bold
             Fill: =RGBA(255, 255, 255, 1)
-            Height: =440
+            Height: =560
             LayoutDirection: =LayoutDirection.Vertical
             LayoutGap: =8
             PaddingBottom: =16
@@ -2477,7 +2477,7 @@ Screens:
             Visible: =gShowBulkReceipt_SFU
             Width: =560
             X: =(Parent.Width - 560) / 2
-            Y: =(Parent.Height - 440) / 2
+            Y: =(Parent.Height - 560) / 2
           Children:
             - lblBulkReceiptDialogTitle_SFU:
                 Control: Label@2.5.1
@@ -2487,7 +2487,7 @@ Screens:
                   Height: =32
                   PaddingLeft: =0
                   Size: =12
-                  Text: ="Quick Fill Receipt Details by Code List"
+                  Text: ="Quick Fill Receipt Details"
                   Width: =Parent.Width - 40
             - rectBulkReceiptDivider_SFU:
                 Control: Rectangle@2.3.0
@@ -2504,7 +2504,25 @@ Screens:
                   PaddingLeft: =0
                   Size: =9
                   Text: |-
-                    ="Paste one material per line as: RM Code · Received Qty · Batch No · Expiry Date (dd/mm/yyyy) · QC Number — separated by a space or a tab. All fields after the code are optional; a blank field leaves that value unchanged. Only materials already in this round are updated — a code that doesn't match any row here is skipped. Link to COA is not covered by this and must still be entered per row."
+                    ="Paste one line per material, in the same order as the list above: QC Number · Batch No · Expiry Date (dd/mm/yyyy) · Received Qty · Link to COA — separated by a space or a tab. The number of lines must match the number of materials, otherwise nothing is applied. Use - for a field to leave unchanged, or a line containing only - to skip that material entirely. The COA link must contain no spaces (a real URL encodes them as %20)."
+                  Width: =Parent.Width - 40
+            - lblBulkReceiptOrder_SFU:
+                Control: Label@2.5.1
+                Properties:
+                  Color: =RGBA(68, 68, 65, 1)
+                  Fill: =RGBA(241, 239, 232, 1)
+                  Height: =104
+                  LayoutMinHeight: =104
+                  Overflow: =Overflow.Scroll
+                  PaddingLeft: =8
+                  PaddingTop: =4
+                  Size: =9
+                  Text: |-
+                    =Concat(
+                        Sequence(CountRows(colRoundEntry)) As s,
+                        Text(s.Value) & ". " & Index(colRoundEntry, s.Value).MaterialName,
+                        Char(10)
+                    )
                   Width: =Parent.Width - 40
             - txtBulkReceipt_SFU:
                 Control: TextInput@0.0.54
@@ -2513,7 +2531,7 @@ Screens:
                   Height: =240
                   LayoutMinHeight: =240
                   Mode: ='TextInputCanvas.Mode'.Multiline
-                  Placeholder: ="RM-001 10 B2026-01 31/12/2026 QC-100" & Char(10) & "RM-002 5 B2026-02 30/06/2027 QC-101"
+                  Placeholder: ="QC-100 B2026-01 31/12/2026 10 https://coa.example.com/COA-100.pdf" & Char(10) & "QC-101 B2026-02 30/06/2027 5 -"
                   Width: =Parent.Width - 40
             - rowBulkReceiptDialogActions_SFU:
                 Control: GroupContainer@1.5.0
@@ -2559,72 +2577,62 @@ Screens:
                                       Not(IsBlank(Line))
                                   )
                               },
-                              With(
-                                  {
-                                      wParsed: ForAll(
-                                          wLines As l,
-                                          With(
-                                              {wTokens: Filter(Split(l.Line, " ") As tk, Not(IsBlank(Trim(tk.Value))))},
-                                              With(
-                                                  {
-                                                      wCode: Trim(Index(wTokens, 1).Value),
-                                                      wQtyRaw: If(CountRows(wTokens) >= 2, Trim(Index(wTokens, 2).Value), ""),
-                                                      wBatchRaw: If(CountRows(wTokens) >= 3, Trim(Index(wTokens, 3).Value), ""),
-                                                      wExpiryRaw: If(CountRows(wTokens) >= 4, Trim(Index(wTokens, 4).Value), ""),
-                                                      wQCRaw: If(CountRows(wTokens) >= 5, Trim(Index(wTokens, 5).Value), "")
-                                                  },
+                              If(
+                                  CountRows(wLines) = 0,
+                                  Notify("Please paste at least one line", NotificationType.Error),
+                                  If(
+                                      CountRows(wLines) <> CountRows(colRoundEntry),
+                                      Notify(
+                                          "Pasted " & CountRows(wLines) & " line(s) but this round has " & CountRows(colRoundEntry) & " material(s). Paste exactly one line per material, in the order listed in the dialog.",
+                                          NotificationType.Error
+                                      ),
+                                      With(
+                                          {
+                                              wParsed: ForAll(
+                                                  Sequence(CountRows(wLines)) As s,
                                                   With(
                                                       {
-                                                          wRow: LookUp(colRoundEntry, Lower(RMPKCode) = Lower(wCode)),
-                                                          wDateTokens: Split(wExpiryRaw, "/")
+                                                          wRow: Index(colRoundEntry, s.Value),
+                                                          wTokens: Filter(Split(Index(wLines, s.Value).Line, " ") As tk, Not(IsBlank(Trim(tk.Value))))
                                                       },
-                                                      {
-                                                          Code: wCode,
-                                                          LineItemID: Coalesce(wRow.LineItemID, 0),
-                                                          FinalQty: If(IsNumeric(wQtyRaw) && Value(wQtyRaw) >= 0, Value(wQtyRaw), wRow.ReceivedQty),
-                                                          FinalBatch: If(IsBlank(wBatchRaw), wRow.BatchNumber, wBatchRaw),
-                                                          FinalExpiry: If(
-                                                              CountRows(wDateTokens) = 3 && IsNumeric(Index(wDateTokens, 1).Value) && IsNumeric(Index(wDateTokens, 2).Value) && IsNumeric(Index(wDateTokens, 3).Value),
-                                                              Date(Value(Index(wDateTokens, 3).Value), Value(Index(wDateTokens, 2).Value), Value(Index(wDateTokens, 1).Value)),
-                                                              wRow.ExpiryDate
-                                                          ),
-                                                          FinalQC: If(IsBlank(wQCRaw), wRow.QCNumber, wQCRaw)
-                                                      }
+                                                      With(
+                                                          {
+                                                              wQCRaw: Trim(Index(wTokens, 1).Value),
+                                                              wBatchRaw: If(CountRows(wTokens) >= 2, Trim(Index(wTokens, 2).Value), ""),
+                                                              wExpiryRaw: If(CountRows(wTokens) >= 3, Trim(Index(wTokens, 3).Value), ""),
+                                                              wQtyRaw: If(CountRows(wTokens) >= 4, Trim(Index(wTokens, 4).Value), ""),
+                                                              wCOARaw: If(CountRows(wTokens) >= 5, Trim(Index(wTokens, 5).Value), "")
+                                                          },
+                                                          With(
+                                                              {wDateTokens: Split(wExpiryRaw, "/")},
+                                                              {
+                                                                  LineItemID: wRow.LineItemID,
+                                                                  FinalQC: If(IsBlank(wQCRaw) || wQCRaw = "-", wRow.QCNumber, wQCRaw),
+                                                                  FinalBatch: If(IsBlank(wBatchRaw) || wBatchRaw = "-", wRow.BatchNumber, wBatchRaw),
+                                                                  FinalExpiry: If(
+                                                                      CountRows(wDateTokens) = 3 && IsNumeric(Index(wDateTokens, 1).Value) && IsNumeric(Index(wDateTokens, 2).Value) && IsNumeric(Index(wDateTokens, 3).Value),
+                                                                      Date(Value(Index(wDateTokens, 3).Value), Value(Index(wDateTokens, 2).Value), Value(Index(wDateTokens, 1).Value)),
+                                                                      wRow.ExpiryDate
+                                                                  ),
+                                                                  FinalQty: If(IsNumeric(wQtyRaw) && Value(wQtyRaw) >= 0, Value(wQtyRaw), wRow.ReceivedQty),
+                                                                  FinalCOA: If(IsBlank(wCOARaw) || wCOARaw = "-", wRow.COALink, wCOARaw)
+                                                              }
+                                                          )
+                                                      )
                                                   )
                                               )
-                                          )
-                                      )
-                                  },
-                                  With(
-                                      {
-                                          wMatched: Filter(wParsed, LineItemID > 0),
-                                          wUnknown: Filter(wParsed, LineItemID = 0)
-                                      },
-                                      If(
-                                          CountRows(wParsed) = 0,
-                                          Notify("Please paste at least one line", NotificationType.Error),
+                                          },
                                           ForAll(
-                                              wMatched As m,
+                                              wParsed As m,
                                               UpdateIf(
                                                   colRoundEntry,
                                                   LineItemID = m.LineItemID,
-                                                  {ReceivedQty: m.FinalQty, BatchNumber: m.FinalBatch, ExpiryDate: m.FinalExpiry, QCNumber: m.FinalQC}
+                                                  {QCNumber: m.FinalQC, BatchNumber: m.FinalBatch, ExpiryDate: m.FinalExpiry, ReceivedQty: m.FinalQty, COALink: m.FinalCOA}
                                               )
                                           );
-                                          If(
-                                              CountRows(wUnknown) > 0,
-                                              Notify(
-                                                  Text(CountRows(wUnknown)) & " code(s) skipped — no matching material in this round: " & Concat(wUnknown, Code, ", "),
-                                                  NotificationType.Warning
-                                              )
-                                          );
-                                          If(
-                                              CountRows(wMatched) = 0,
-                                              Notify("No row was updated. Please check the codes and try again.", NotificationType.Error),
-                                              Notify(Text(CountRows(wMatched)) & " row(s) updated.", NotificationType.Success);
-                                              Reset(txtBulkReceipt_SFU);
-                                              Set(gShowBulkReceipt_SFU, false)
-                                          )
+                                          Notify(Text(CountRows(wParsed)) & " row(s) updated.", NotificationType.Success);
+                                          Reset(txtBulkReceipt_SFU);
+                                          Set(gShowBulkReceipt_SFU, false)
                                       )
                                   )
                               )
