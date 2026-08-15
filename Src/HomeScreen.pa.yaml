@@ -542,7 +542,7 @@ Screens:
                               Align: =Align.Center
                               BasePaletteColor: |-
                                 =If(
-                                  ThisItem.InvoiceMode.Value = "Deferred",
+                                  ThisItem.InvoiceMode.Value = "Deferred" || ThisItem.InvoiceMode.Value = "Direct",
                                   RGBA(83, 74, 183, 1),
                                   If(IsBlank(ThisItem.RequesterInvoiceURL), RGBA(133, 79, 11, 1), RGBA(83, 74, 183, 1))
                                 )
@@ -559,13 +559,14 @@ Screens:
                               RadiusTopRight: =4
                               Text: |-
                                 =If(
-                                  ThisItem.InvoiceMode.Value = "Deferred",
+                                  ThisItem.InvoiceMode.Value = "Deferred" || ThisItem.InvoiceMode.Value = "Direct",
                                   "Submit Invoice",
                                   If(IsBlank(ThisItem.RequesterInvoiceURL), "Remind Requester", "Process Invoice")
                                 )
                               VerticalAlign: =VerticalAlign.Middle
                               Visible: |-
-                                =(ThisItem.InvoiceMode.Value = "ViaRequester" || ThisItem.InvoiceMode.Value = "Deferred") &&
+                                =(ThisItem.InvoiceMode.Value = "ViaRequester" || ThisItem.InvoiceMode.Value = "Deferred" ||
+                                ThisItem.InvoiceMode.Value = "Direct") &&
                                 !ThisItem.InvoiceSubmitted &&
                                 ThisItem.Status.Value <> "Cancelled" &&
                                 (gCurrentUser.Role.Value = "Procurement" || gCurrentUser.Role.Value = "Admin")

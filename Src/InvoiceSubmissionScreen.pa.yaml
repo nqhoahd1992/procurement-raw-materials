@@ -990,10 +990,10 @@ Screens:
                 Properties:
                   DropShadow: =DropShadow.None
                   FillPortions: =0
-                  Height: =210
+                  Height: =254
                   LayoutDirection: =LayoutDirection.Vertical
                   LayoutGap: =4
-                  LayoutMinHeight: =160
+                  LayoutMinHeight: =204
                   PaddingBottom: =8
                   PaddingLeft: =20
                   PaddingRight: =20
@@ -1002,7 +1002,7 @@ Screens:
                   RadiusBottomRight: =0
                   RadiusTopLeft: =0
                   RadiusTopRight: =0
-                  Visible: =gSelectedRequest.InvoiceMode.Value = "Deferred"
+                  Visible: =gSelectedRequest.InvoiceMode.Value = "Deferred" || gSelectedRequest.InvoiceMode.Value = "Direct"
                   Width: =Parent.Width
                 Children:
                   - lblOfficialInvoiceHeader_ISS:
@@ -1012,6 +1012,18 @@ Screens:
                         Height: =24
                         Size: =12
                         Text: ="Upload Supplier Invoice *"
+                        Width: =Parent.Width - 40
+                  - lblExistingAttachment_ISS:
+                      Control: Label@2.5.1
+                      Properties:
+                        Color: =RGBA(133, 79, 11, 1)
+                        Height: =40
+                        PaddingLeft: =0
+                        Size: =9
+                        Text: |-
+                          ="⚠ This delivery already has a file attached: " & Concat(gSelectedRequest.Attachments, DisplayName, ", ") &
+                          ". Upload the corrected invoice under a DIFFERENT file name — a same-name upload can resolve back to the old file."
+                        Visible: =CountRows(gSelectedRequest.Attachments) > 0
                         Width: =Parent.Width - 40
                   - lblOfficialInvoiceHint_ISS:
                       Control: Label@2.5.1
