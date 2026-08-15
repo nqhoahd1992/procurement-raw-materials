@@ -1154,10 +1154,10 @@ Screens:
                         DropShadow: =DropShadow.None
                         Fill: =RGBA(219, 234, 254, 1)
                         FillPortions: =0
-                        Height: =76
+                        Height: =70
                         LayoutDirection: =LayoutDirection.Vertical
                         LayoutGap: =4
-                        LayoutMinHeight: =76
+                        LayoutMinHeight: =80
                         PaddingBottom: =12
                         PaddingLeft: =12
                         PaddingRight: =12
@@ -1173,9 +1173,9 @@ Screens:
                             Properties:
                               Color: =RGBA(37, 99, 235, 1)
                               FontWeight: =FontWeight.Bold
+                              Height: =20
                               PaddingLeft: =0
                               PaddingRight: =0
-                              PaddingTop: =15
                               Size: =9
                               Text: |-
                                 ="Suggested Filename" & If(gHasInvoiceResult, " (ConfidenceScore: " & gInvoiceResult.confidenceScore & ")", "")
@@ -1185,7 +1185,7 @@ Screens:
                             Properties:
                               Color: =RGBA(37, 99, 235, 1)
                               FontWeight: =FontWeight.Bold
-                              PaddingBottom: =15
+                              Height: =20
                               PaddingLeft: =0
                               PaddingRight: =0
                               Size: =9
