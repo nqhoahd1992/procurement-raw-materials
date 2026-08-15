@@ -474,7 +474,7 @@ Screens:
                       Properties:
                         DropShadow: =DropShadow.None
                         FillPortions: =0
-                        Height: =90
+                        Height: =60
                         LayoutDirection: =LayoutDirection.Horizontal
                         LayoutMinHeight: =80
                         PaddingBottom: =4
@@ -493,7 +493,7 @@ Screens:
                               DropShadow: =DropShadow.None
                               LayoutDirection: =LayoutDirection.Vertical
                               LayoutGap: =2
-                              LayoutMinHeight: =60
+                              LayoutMinHeight: =40
                               RadiusBottomLeft: =0
                               RadiusBottomRight: =0
                               RadiusTopLeft: =0
@@ -519,6 +519,7 @@ Screens:
                                     Size: =11
                                     Text: =If(IsBlank(gSelectedRequest.CostCenter.Value), "—", gSelectedRequest.CostCenter.Value)
                                     Width: =Parent.Width - 20
+                                    Wrap: =false
                         - colDeliveryLoc_1:
                             Control: GroupContainer@1.5.0
                             Variant: AutoLayout
@@ -526,6 +527,7 @@ Screens:
                               DropShadow: =DropShadow.None
                               LayoutDirection: =LayoutDirection.Vertical
                               LayoutGap: =2
+                              LayoutMinHeight: =40
                               RadiusBottomLeft: =0
                               RadiusBottomRight: =0
                               RadiusTopLeft: =0
@@ -546,11 +548,12 @@ Screens:
                                   Properties:
                                     AlignInContainer: =AlignInContainer.Stretch
                                     FontWeight: =FontWeight.Semibold
-                                    Height: =48
+                                    Height: =24
                                     Size: =11
                                     Text: =gSelectedRequest.DeliveryLocation.Value
                                     VerticalAlign: =VerticalAlign.Top
                                     Width: =Parent.Width - 20
+                                    Wrap: =false
                   - rowInfo3:
                       Control: GroupContainer@1.5.0
                       Variant: AutoLayout
@@ -685,6 +688,8 @@ Screens:
                                     LayoutAlignItems: =LayoutAlignItems.Center
                                     LayoutDirection: =LayoutDirection.Horizontal
                                     LayoutGap: =8
+                                    PaddingLeft: =5
+                                    PaddingRight: =5
                                     Width: =Parent.Width
                                   Children:
                                     - lblRequirementFileName_RD:

@@ -336,8 +336,7 @@ Screens:
                         Height: =24
                         PaddingLeft: =0
                         Size: =11
-                        Text: |-
-                          ="Raw Materials (" & CountRows(colLineItemsDetail) & ")"
+                        Text: ="Raw Materials (" & CountRows(colLineItemsDetail) & ")"
                         Width: =Parent.Width
                   - lblReqLineItemsValue_PE_1:
                       Control: Label@2.5.1
@@ -372,7 +371,7 @@ Screens:
                   Height: =300
                   LayoutDirection: =LayoutDirection.Vertical
                   LayoutGap: =8
-                  LayoutMinHeight: =300
+                  LayoutMinHeight: =260
                   PaddingBottom: =12
                   PaddingLeft: =20
                   PaddingRight: =20
@@ -398,8 +397,9 @@ Screens:
                       Variant: AutoLayout
                       Properties:
                         DropShadow: =DropShadow.None
+                        Height: =60
                         LayoutDirection: =LayoutDirection.Horizontal
-                        LayoutMinHeight: =60
+                        LayoutMinHeight: =50
                         LayoutWrap: =true
                         RadiusBottomLeft: =0
                         RadiusBottomRight: =0
@@ -414,6 +414,7 @@ Screens:
                               DropShadow: =DropShadow.None
                               LayoutDirection: =LayoutDirection.Vertical
                               LayoutGap: =2
+                              LayoutMinHeight: =40
                               RadiusBottomLeft: =0
                               RadiusBottomRight: =0
                               RadiusTopLeft: =0
@@ -443,6 +444,7 @@ Screens:
                               DropShadow: =DropShadow.None
                               LayoutDirection: =LayoutDirection.Vertical
                               LayoutGap: =2
+                              LayoutMinHeight: =40
                               RadiusBottomLeft: =0
                               RadiusBottomRight: =0
                               RadiusTopLeft: =0
@@ -533,10 +535,10 @@ Screens:
                       Control: Label@2.5.1
                       Properties:
                         FontWeight: =FontWeight.Semibold
-                        Height: =60
                         Overflow: =Overflow.Scroll
                         Size: =11
                         Text: =Coalesce(gProjectInfo.ProjectDescription, "—")
+                        VerticalAlign: =VerticalAlign.Top
                         Width: =Parent.Width - 40
             - rowRemarks:
                 Control: GroupContainer@1.5.0
