@@ -64,7 +64,7 @@ Screens:
                   DropShadow: =DropShadow.None
                   Fill: =RGBA(245, 245, 250, 1)
                   FillPortions: =0
-                  Height: =212
+                  Height: =210
                   LayoutDirection: =LayoutDirection.Vertical
                   LayoutGap: =4
                   LayoutMinHeight: =212
@@ -156,6 +156,8 @@ Screens:
                       Variant: AutoLayout
                       Properties:
                         DropShadow: =DropShadow.None
+                        FillPortions: =0
+                        Height: =50
                         LayoutAlignItems: =LayoutAlignItems.Center
                         LayoutDirection: =LayoutDirection.Horizontal
                         LayoutGap: =24
@@ -377,8 +379,7 @@ Screens:
                               Height: =18
                               PaddingLeft: =0
                               Size: =9
-                              Text: |-
-                                ="Raw Materials (" & CountRows(colLineItemsDetail) & ")"
+                              Text: ="Raw Materials (" & CountRows(colLineItemsDetail) & ")"
                               Width: =Parent.Width
                         - lblInfoMaterialsValue_RIS:
                             Control: Label@2.5.1
@@ -393,14 +394,14 @@ Screens:
                                     "—",
                                     Concat(
                                         colLineItemsDetail,
-                                        MaterialName & " (" & Text(Quantity) & " " & Unit & ")",
+                                        Coalesce(LookUp('Raw Materials', ID = MaterialID.Id).Code, "?") & " — " & MaterialName & " (" & Text(Quantity) & " " & Unit & ")",
                                         "  ·  "
                                     )
                                 )
                               Tooltip: |-
                                 =Concat(
                                     colLineItemsDetail,
-                                    MaterialName & " (" & Text(Quantity) & " " & Unit & ")",
+                                    Coalesce(LookUp('Raw Materials', ID = MaterialID.Id).Code, "?") & " — " & MaterialName & " (" & Text(Quantity) & " " & Unit & ")",
                                     Char(10)
                                 )
                               Width: =Parent.Width

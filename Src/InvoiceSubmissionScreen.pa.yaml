@@ -234,38 +234,6 @@ Screens:
                               RadiusTopRight: =0
                               Width: =Parent.Width
                             Children:
-                              - colReqAccordance_ISS:
-                                  Control: GroupContainer@1.5.0
-                                  Variant: AutoLayout
-                                  Properties:
-                                    DropShadow: =DropShadow.None
-                                    LayoutDirection: =LayoutDirection.Vertical
-                                    LayoutGap: =2
-                                    RadiusBottomLeft: =0
-                                    RadiusBottomRight: =0
-                                    RadiusTopLeft: =0
-                                    RadiusTopRight: =0
-                                    Width: =240
-                                  Children:
-                                    - lblReqAccordanceLabel_ISS:
-                                        Control: Label@2.5.1
-                                        Properties:
-                                          Color: =RGBA(136, 135, 128, 1)
-                                          Height: =20
-                                          PaddingLeft: =0
-                                          Size: =9
-                                          Text: ="Purchase Accordance"
-                                          Width: =240
-                                    - lblReqAccordanceValue_ISS:
-                                        Control: Label@2.5.1
-                                        Properties:
-                                          FontWeight: =FontWeight.Semibold
-                                          Height: =24
-                                          PaddingLeft: =0
-                                          Size: =11
-                                          Text: =Coalesce(gSelectedRequest.PurchaseAccordance.Value, "—")
-                                          Width: =Parent.Width - 20
-                                          Wrap: =false
                               - colReqProcType_ISS:
                                   Control: GroupContainer@1.5.0
                                   Variant: AutoLayout
@@ -383,38 +351,6 @@ Screens:
                                             )
                                           Width: =Parent.Width - 20
                                           Wrap: =false
-                              - colReqCost_ISS:
-                                  Control: GroupContainer@1.5.0
-                                  Variant: AutoLayout
-                                  Properties:
-                                    DropShadow: =DropShadow.None
-                                    LayoutDirection: =LayoutDirection.Vertical
-                                    LayoutGap: =2
-                                    RadiusBottomLeft: =0
-                                    RadiusBottomRight: =0
-                                    RadiusTopLeft: =0
-                                    RadiusTopRight: =0
-                                    Width: =240
-                                  Children:
-                                    - lblReqCostLabel_ISS:
-                                        Control: Label@2.5.1
-                                        Properties:
-                                          Color: =RGBA(136, 135, 128, 1)
-                                          Height: =20
-                                          PaddingLeft: =0
-                                          Size: =9
-                                          Text: ="Estimated Cost"
-                                          Width: =240
-                                    - lblReqCostValue_ISS:
-                                        Control: Label@2.5.1
-                                        Properties:
-                                          FontWeight: =FontWeight.Semibold
-                                          Height: =24
-                                          PaddingLeft: =0
-                                          Size: =11
-                                          Text: =Text(gSelectedRequest.EstimatedCost, "#,###.00") & " " & gSelectedRequest.Currency
-                                          Width: =Parent.Width - 20
-                                          Wrap: =false
                               - colReqDeliveryDate_ISS:
                                   Control: GroupContainer@1.5.0
                                   Variant: AutoLayout
@@ -527,38 +463,6 @@ Screens:
                                           Text: =Coalesce(gSelectedRequest.CostCenter.Value, "—")
                                           Width: =Parent.Width - 20
                                           Wrap: =false
-                              - colReqManager_ISS:
-                                  Control: GroupContainer@1.5.0
-                                  Variant: AutoLayout
-                                  Properties:
-                                    DropShadow: =DropShadow.None
-                                    LayoutDirection: =LayoutDirection.Vertical
-                                    LayoutGap: =2
-                                    RadiusBottomLeft: =0
-                                    RadiusBottomRight: =0
-                                    RadiusTopLeft: =0
-                                    RadiusTopRight: =0
-                                    Width: =300
-                                  Children:
-                                    - lblReqManagerLabel_ISS:
-                                        Control: Label@2.5.1
-                                        Properties:
-                                          Color: =RGBA(136, 135, 128, 1)
-                                          Height: =20
-                                          PaddingLeft: =0
-                                          Size: =9
-                                          Text: ="Manager Approver"
-                                          Width: =300
-                                    - lblReqManagerValue_ISS:
-                                        Control: Label@2.5.1
-                                        Properties:
-                                          FontWeight: =FontWeight.Semibold
-                                          Height: =24
-                                          PaddingLeft: =0
-                                          Size: =11
-                                          Text: =Coalesce(gSelectedRequest.ManagerApproverID.Value, "—")
-                                          Width: =Parent.Width - 20
-                                          Wrap: =false
                         - rowReqDescription_ISS:
                             Control: GroupContainer@1.5.0
                             Variant: AutoLayout
@@ -633,14 +537,14 @@ Screens:
                                           "—",
                                           Concat(
                                               colLineItemsDetail,
-                                              MaterialName & " (" & Text(Quantity) & " " & Unit & ")",
+                                              Coalesce(LookUp('Raw Materials', ID = MaterialID.Id).Code, "?") & " — " & MaterialName & " (" & Text(Quantity) & " " & Unit & ")",
                                               "  ·  "
                                           )
                                       )
                                     Tooltip: |-
                                       =Concat(
                                           colLineItemsDetail,
-                                          MaterialName & " (" & Text(Quantity) & " " & Unit & ")",
+                                          Coalesce(LookUp('Raw Materials', ID = MaterialID.Id).Code, "?") & " — " & MaterialName & " (" & Text(Quantity) & " " & Unit & ")",
                                           Char(10)
                                       )
                                     Width: =Parent.Width
@@ -1017,7 +921,6 @@ Screens:
                       Control: Label@2.5.1
                       Properties:
                         Color: =RGBA(136, 135, 128, 1)
-                        Height: =40
                         PaddingLeft: =0
                         Size: =9
                         Text: |-

@@ -987,6 +987,7 @@ Screens:
                         - lblColMaterial:
                             Control: Label@2.5.1
                             Properties:
+                              FillPortions: =1
                               FontWeight: =FontWeight.Semibold
                               Height: =36
                               PaddingLeft: =12
@@ -1004,16 +1005,6 @@ Screens:
                               Size: =10
                               Text: ="Code"
                               Width: =100
-                        - lblColCategory:
-                            Control: Label@2.5.1
-                            Properties:
-                              FontWeight: =FontWeight.Semibold
-                              Height: =36
-                              PaddingLeft: =8
-                              PaddingRight: =8
-                              Size: =10
-                              Text: ="Category"
-                              Width: =80
                         - lblColSupplier:
                             Control: Label@2.5.1
                             Properties:
@@ -1083,6 +1074,7 @@ Screens:
                                     BorderThickness: =1
                                     DefaultSelectedItems: =Filter(colRawMaterials, ID = ThisItem.MaterialID)
                                     DisplayFields: =["Title","Code"]
+                                    FillPortions: =1
                                     Height: =36
                                     InputTextPlaceholder: ="Search by trade name or code"
                                     Items: =colRawMaterials
@@ -1090,7 +1082,7 @@ Screens:
                                       =UpdateIf(colLineItems, RowID = ThisItem.RowID, {MaterialID: Self.Selected.ID, MaterialName: Self.Selected.Title})
                                     PaddingLeft: =15
                                     PaddingRight: =15
-                                    SearchFields: =["Title","Code"]
+                                    SearchFields: =["{FilenameWithExtension}","Code"]
                                     SelectMultiple: =false
                                     Size: =11
                                     Width: =Parent.Width - 644
@@ -1103,16 +1095,6 @@ Screens:
                                     Size: =10
                                     Text: =If(IsBlank(ddMaterial_1.Selected), "—", ddMaterial_1.Selected.Code)
                                     Width: =100
-                                    Wrap: =false
-                              - lblLineItemCategory_1:
-                                  Control: Label@2.5.1
-                                  Properties:
-                                    Height: =36
-                                    PaddingLeft: =8
-                                    PaddingRight: =8
-                                    Size: =10
-                                    Text: =If(IsBlank(ddMaterial_1.Selected), "—", Coalesce(ddMaterial_1.Selected.Category.Value, "—"))
-                                    Width: =80
                                     Wrap: =false
                               - lblLineItemSupplier_1:
                                   Control: Label@2.5.1

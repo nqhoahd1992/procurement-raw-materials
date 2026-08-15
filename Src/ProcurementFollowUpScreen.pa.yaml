@@ -26,6 +26,7 @@ Screens:
                         LineItemID: li.ID,
                         MaterialName: li.MaterialName,
                         Unit: li.Unit,
+                        RMPKCode: Coalesce(LookUp('Raw Materials', ID = li.MaterialID.Id).Code, ""),
                         OrderedQty: li.Quantity,
                         TotalReceivedQty: Sum(wRows, ReceivedQty),
                         OutstandingQty: li.Quantity - Sum(wRows, ReceivedQty),
@@ -424,14 +425,14 @@ Screens:
                                     "—",
                                     Concat(
                                         colLineItemsDetail,
-                                        MaterialName & " (" & Text(Quantity) & " " & Unit & ")",
+                                        Coalesce(LookUp('Raw Materials', ID = MaterialID.Id).Code, "?") & " — " & MaterialName & " (" & Text(Quantity) & " " & Unit & ")",
                                         "  ·  "
                                     )
                                 )
                               Tooltip: |-
                                 =Concat(
                                     colLineItemsDetail,
-                                    MaterialName & " (" & Text(Quantity) & " " & Unit & ")",
+                                    Coalesce(LookUp('Raw Materials', ID = MaterialID.Id).Code, "?") & " — " & MaterialName & " (" & Text(Quantity) & " " & Unit & ")",
                                     Char(10)
                                 )
                               Width: =Parent.Width

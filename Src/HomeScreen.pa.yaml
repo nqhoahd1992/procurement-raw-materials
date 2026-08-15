@@ -915,7 +915,7 @@ Screens:
                               "—",
                               Concat(
                                   colQuickViewItems,
-                                  MaterialName & " (" & Text(Quantity) & " " & Unit & ")",
+                                  Coalesce(LookUp('Raw Materials', ID = MaterialID.Id).Code, "?") & " — " & MaterialName & " (" & Text(Quantity) & " " & Unit & ")",
                                   "  ·  "
                               )
                           )

@@ -10,7 +10,27 @@ Screens:
         Reset(chk5_AC);
         Reset(txtNotes_AC);
         Set(gSelectedRequest, LookUp('RM Procurement Requests', ID = gSelectedRequest.ID));
-        ClearCollect(colLineItemsDetail, Filter('RM Procurement Line Items', RequestIDText = Text(gSelectedRequest.ID)))
+        ClearCollect(colLineItemsDetail, Filter('RM Procurement Line Items', RequestIDText = Text(gSelectedRequest.ID)));
+        ClearCollect(colReceiptRounds, Filter('RM Procurement Receipt Rounds', RequestIDText = Text(gSelectedRequest.ID)));
+        ClearCollect(
+            colPFUSummary,
+            ForAll(
+                colLineItemsDetail As li,
+                With(
+                    {wRows: Filter(colReceiptRounds, LineItemID = li.ID)},
+                    {
+                        LineItemID: li.ID,
+                        MaterialName: li.MaterialName,
+                        Unit: li.Unit,
+                        RMPKCode: Coalesce(LookUp('Raw Materials', ID = li.MaterialID.Id).Code, ""),
+                        OrderedQty: li.Quantity,
+                        TotalReceivedQty: Coalesce(Sum(wRows, ReceivedQty), 0),
+                        OutstandingQty: li.Quantity - Coalesce(Sum(wRows, ReceivedQty), 0),
+                        RoundsCount: CountRows(wRows)
+                    }
+                )
+            )
+        )
     Children:
       - rectHeader_AC:
           Control: Rectangle@2.3.0
@@ -50,7 +70,7 @@ Screens:
                   DropShadow: =DropShadow.None
                   Fill: =RGBA(245, 245, 250, 1)
                   FillPortions: =0
-                  Height: =212
+                  Height: =230
                   LayoutDirection: =LayoutDirection.Vertical
                   LayoutGap: =4
                   LayoutMinHeight: =212
@@ -140,6 +160,8 @@ Screens:
                       Variant: AutoLayout
                       Properties:
                         DropShadow: =DropShadow.None
+                        FillPortions: =0
+                        Height: =60
                         LayoutAlignItems: =LayoutAlignItems.Center
                         LayoutDirection: =LayoutDirection.Horizontal
                         LayoutGap: =24
@@ -398,8 +420,7 @@ Screens:
                               Height: =18
                               PaddingLeft: =0
                               Size: =9
-                              Text: |-
-                                ="Raw Materials (" & CountRows(colLineItemsDetail) & ")"
+                              Text: ="Raw Materials (" & CountRows(colLineItemsDetail) & ")"
                               Width: =Parent.Width
                         - lblInfoMaterialsValue_AC:
                             Control: Label@2.5.1
@@ -414,18 +435,235 @@ Screens:
                                     "—",
                                     Concat(
                                         colLineItemsDetail,
-                                        MaterialName & " (" & Text(Quantity) & " " & Unit & ")",
+                                        Coalesce(LookUp('Raw Materials', ID = MaterialID.Id).Code, "?") & " — " & MaterialName & " (" & Text(Quantity) & " " & Unit & ")",
                                         "  ·  "
                                     )
                                 )
                               Tooltip: |-
                                 =Concat(
                                     colLineItemsDetail,
-                                    MaterialName & " (" & Text(Quantity) & " " & Unit & ")",
+                                    Coalesce(LookUp('Raw Materials', ID = MaterialID.Id).Code, "?") & " — " & MaterialName & " (" & Text(Quantity) & " " & Unit & ")",
                                     Char(10)
                                 )
                               Width: =Parent.Width
                               Wrap: =false
+            - rowACReceived:
+                Control: GroupContainer@1.5.0
+                Variant: AutoLayout
+                Properties:
+                  DropShadow: =DropShadow.None
+                  Fill: =RGBA(255, 255, 255, 1)
+                  FillPortions: =0
+                  Height: =84 + 32 + CountRows(colPFUSummary) * 40 + 16
+                  LayoutDirection: =LayoutDirection.Vertical
+                  LayoutGap: =4
+                  PaddingBottom: =12
+                  PaddingLeft: =20
+                  PaddingRight: =20
+                  PaddingTop: =16
+                  RadiusBottomLeft: =0
+                  RadiusBottomRight: =0
+                  RadiusTopLeft: =0
+                  RadiusTopRight: =0
+                  Visible: =CountRows(colPFUSummary) > 0
+                  Width: =Parent.Width
+                Children:
+                  - lblACReceivedTitle:
+                      Control: Label@2.5.1
+                      Properties:
+                        FontWeight: =FontWeight.Bold
+                        Height: =24
+                        Size: =11
+                        Text: ="Goods Actually Received On This Delivery"
+                        Width: =Parent.Width - 40
+                  - lblACReceivedNote:
+                      Control: Label@2.5.1
+                      Properties:
+                        Color: =RGBA(136, 135, 128, 1)
+                        Height: =20
+                        Size: =9
+                        Text: |-
+                          =With(
+                              {wShort: CountRows(Filter(colPFUSummary, OutstandingQty > 0))},
+                              If(
+                                  wShort = 0,
+                                  "Every material on this delivery was received in full.",
+                                  Text(wShort) & " of " & CountRows(colPFUSummary) & " material(s) were short-delivered — check this against the invoice amount."
+                              )
+                          )
+                        Width: =Parent.Width - 40
+                  - rowACReceivedHeader:
+                      Control: GroupContainer@1.5.0
+                      Variant: AutoLayout
+                      Properties:
+                        DropShadow: =DropShadow.None
+                        Fill: =RGBA(232, 230, 221, 1)
+                        FillPortions: =0
+                        Height: =32
+                        LayoutAlignItems: =LayoutAlignItems.Center
+                        LayoutDirection: =LayoutDirection.Horizontal
+                        LayoutGap: =8
+                        PaddingLeft: =8
+                        PaddingRight: =8
+                        RadiusBottomLeft: =0
+                        RadiusBottomRight: =0
+                        RadiusTopLeft: =0
+                        RadiusTopRight: =0
+                        Width: =Parent.Width - 40
+                      Children:
+                        - lblACRcvColName:
+                            Control: Label@2.5.1
+                            Properties:
+                              Color: =RGBA(107, 105, 98, 1)
+                              FillPortions: =1
+                              FontWeight: =FontWeight.Semibold
+                              Height: =32
+                              Size: =9
+                              Text: ="Trade Name"
+                              Width: =Parent.Width * 0.24
+                        - lblACRcvColCode:
+                            Control: Label@2.5.1
+                            Properties:
+                              Color: =RGBA(107, 105, 98, 1)
+                              FontWeight: =FontWeight.Semibold
+                              Height: =32
+                              Size: =9
+                              Text: ="RM Code"
+                              Width: =Parent.Width * 0.13
+                        - lblACRcvColUnit:
+                            Control: Label@2.5.1
+                            Properties:
+                              Color: =RGBA(107, 105, 98, 1)
+                              FontWeight: =FontWeight.Semibold
+                              Height: =32
+                              Size: =9
+                              Text: ="Unit"
+                              Width: =Parent.Width * 0.08
+                        - lblACRcvColOrd:
+                            Control: Label@2.5.1
+                            Properties:
+                              Color: =RGBA(107, 105, 98, 1)
+                              FontWeight: =FontWeight.Semibold
+                              Height: =32
+                              Size: =9
+                              Text: ="Ordered"
+                              Width: =Parent.Width * 0.12
+                        - lblACRcvColRec:
+                            Control: Label@2.5.1
+                            Properties:
+                              Color: =RGBA(107, 105, 98, 1)
+                              FontWeight: =FontWeight.Semibold
+                              Height: =32
+                              Size: =9
+                              Text: ="Received"
+                              Width: =Parent.Width * 0.12
+                        - lblACRcvColOut:
+                            Control: Label@2.5.1
+                            Properties:
+                              Color: =RGBA(107, 105, 98, 1)
+                              FontWeight: =FontWeight.Semibold
+                              Height: =32
+                              Size: =9
+                              Text: ="Outstanding"
+                              Width: =Parent.Width * 0.15
+                        - lblACRcvColRnd:
+                            Control: Label@2.5.1
+                            Properties:
+                              Color: =RGBA(107, 105, 98, 1)
+                              FontWeight: =FontWeight.Semibold
+                              Height: =32
+                              Size: =9
+                              Text: ="Rounds"
+                              Width: =Parent.Width * 0.09
+                  - galACReceived:
+                      Control: Gallery@2.15.0
+                      Variant: BrowseLayout_Vertical_TwoTextOneImageVariant_ver5.0
+                      Properties:
+                        FillPortions: =0
+                        Height: =CountRows(colPFUSummary) * 40 + 8
+                        Items: =colPFUSummary
+                        ShowScrollbar: =false
+                        TemplateSize: =40
+                        Width: =Parent.Width - 40
+                      Children:
+                        - rowACReceivedItem:
+                            Control: GroupContainer@1.5.0
+                            Variant: AutoLayout
+                            Properties:
+                              DropShadow: =DropShadow.None
+                              Fill: =RGBA(255, 255, 255, 1)
+                              Height: =40
+                              LayoutAlignItems: =LayoutAlignItems.Center
+                              LayoutDirection: =LayoutDirection.Horizontal
+                              LayoutGap: =8
+                              PaddingLeft: =8
+                              PaddingRight: =8
+                              RadiusBottomLeft: =0
+                              RadiusBottomRight: =0
+                              RadiusTopLeft: =0
+                              RadiusTopRight: =0
+                              Width: =Parent.Width
+                            Children:
+                              - lblACRcvName:
+                                  Control: Label@2.5.1
+                                  Properties:
+                                    FillPortions: =1
+                                    Height: =32
+                                    Size: =11
+                                    Text: =ThisItem.MaterialName
+                                    Width: =Parent.Width * 0.24
+                                    Wrap: =false
+                              - lblACRcvCode:
+                                  Control: Label@2.5.1
+                                  Properties:
+                                    FontWeight: =FontWeight.Semibold
+                                    Height: =32
+                                    Size: =11
+                                    Text: =If(IsBlank(ThisItem.RMPKCode), "—", ThisItem.RMPKCode)
+                                    Width: =Parent.Width * 0.13
+                                    Wrap: =false
+                              - lblACRcvUnit:
+                                  Control: Label@2.5.1
+                                  Properties:
+                                    Height: =32
+                                    Size: =11
+                                    Text: =ThisItem.Unit
+                                    Width: =Parent.Width * 0.08
+                                    Wrap: =false
+                              - lblACRcvOrd:
+                                  Control: Label@2.5.1
+                                  Properties:
+                                    Height: =32
+                                    Size: =11
+                                    Text: =Text(ThisItem.OrderedQty)
+                                    Width: =Parent.Width * 0.12
+                                    Wrap: =false
+                              - lblACRcvRec:
+                                  Control: Label@2.5.1
+                                  Properties:
+                                    Height: =32
+                                    Size: =11
+                                    Text: =Text(ThisItem.TotalReceivedQty)
+                                    Width: =Parent.Width * 0.12
+                                    Wrap: =false
+                              - lblACRcvOut:
+                                  Control: Label@2.5.1
+                                  Properties:
+                                    Color: =If(ThisItem.OutstandingQty <= 0, RGBA(15, 110, 86, 1), RGBA(163, 45, 45, 1))
+                                    FontWeight: =FontWeight.Semibold
+                                    Height: =32
+                                    Size: =11
+                                    Text: =If(ThisItem.OutstandingQty <= 0, "Complete", Text(ThisItem.OutstandingQty) & " short")
+                                    Width: =Parent.Width * 0.15
+                                    Wrap: =false
+                              - lblACRcvRnd:
+                                  Control: Label@2.5.1
+                                  Properties:
+                                    Height: =32
+                                    Size: =11
+                                    Text: =Text(ThisItem.RoundsCount)
+                                    Width: =Parent.Width * 0.09
+                                    Wrap: =false
             - rowOfficialInvoiceRef_AC:
                 Control: GroupContainer@1.5.0
                 Variant: AutoLayout
@@ -498,7 +736,7 @@ Screens:
                 Variant: AutoLayout
                 Properties:
                   DropShadow: =DropShadow.None
-                  Fill: =RGBA(225, 245, 238, 1)
+                  Fill: =RGBA(219, 234, 254, 1)
                   LayoutDirection: =LayoutDirection.Vertical
                   LayoutGap: =4
                   LayoutMinHeight: =90
@@ -516,7 +754,6 @@ Screens:
                   - lblCreditNoteRefTitle_AC:
                       Control: Label@2.5.1
                       Properties:
-                        Color: =RGBA(15, 110, 86, 1)
                         FontWeight: =FontWeight.Bold
                         Height: =24
                         PaddingLeft: =0
@@ -527,7 +764,7 @@ Screens:
                   - lblCreditNoteRefValue_AC:
                       Control: Label@2.5.1
                       Properties:
-                        Color: =RGBA(15, 110, 86, 1)
+                        Color: =RGBA(37, 99, 235, 1)
                         FontWeight: =FontWeight.Semibold
                         OnSelect: =If(Not(IsBlank(gSelectedRequest.CreditNote)), Launch(gSelectedRequest.CreditNote, {}, LaunchTarget.New))
                         Overflow: =Overflow.Scroll

@@ -200,6 +200,8 @@ Screens:
                       Variant: AutoLayout
                       Properties:
                         DropShadow: =DropShadow.None
+                        FillPortions: =0
+                        Height: =50
                         LayoutAlignItems: =LayoutAlignItems.Center
                         LayoutDirection: =LayoutDirection.Horizontal
                         LayoutGap: =24
@@ -401,14 +403,14 @@ Screens:
                                     "—",
                                     Concat(
                                         colLineItemsDetail,
-                                        MaterialName & " (" & Text(Quantity) & " " & Unit & ")",
+                                        Coalesce(LookUp('Raw Materials', ID = MaterialID.Id).Code, "?") & " — " & MaterialName & " (" & Text(Quantity) & " " & Unit & ")",
                                         "  ·  "
                                     )
                                 )
                               Tooltip: |-
                                 =Concat(
                                     colLineItemsDetail,
-                                    MaterialName & " (" & Text(Quantity) & " " & Unit & ")",
+                                    Coalesce(LookUp('Raw Materials', ID = MaterialID.Id).Code, "?") & " — " & MaterialName & " (" & Text(Quantity) & " " & Unit & ")",
                                     Char(10)
                                 )
                               Width: =Parent.Width
@@ -1488,16 +1490,6 @@ Screens:
                                           Height: =20
                                           Size: =11
                                           Text: =ThisItem.MaterialName
-                                          Width: =Parent.Width
-                                          Wrap: =false
-                                    - lblSFUItemSubtitle:
-                                        Control: Label@2.5.1
-                                        Properties:
-                                          Color: =RGBA(136, 135, 128, 1)
-                                          Height: =16
-                                          Size: =8
-                                          Text: |-
-                                            =With({wMat: LookUp('Raw Materials', ID = ThisItem.MaterialID)}, If(IsBlank(wMat), "", wMat.Category.Value))
                                           Width: =Parent.Width
                                           Wrap: =false
                               - lblSFUOrderedQty:

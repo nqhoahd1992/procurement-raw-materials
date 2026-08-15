@@ -292,14 +292,14 @@ Screens:
                                     "—",
                                     Concat(
                                         colLineItemsDetail,
-                                        MaterialName & " (" & Text(Quantity) & " " & Unit & ")",
+                                        Coalesce(LookUp('Raw Materials', ID = MaterialID.Id).Code, "?") & " — " & MaterialName & " (" & Text(Quantity) & " " & Unit & ")",
                                         "  ·  "
                                     )
                                 )
                               Tooltip: |-
                                 =Concat(
                                     colLineItemsDetail,
-                                    MaterialName & " (" & Text(Quantity) & " " & Unit & ")",
+                                    Coalesce(LookUp('Raw Materials', ID = MaterialID.Id).Code, "?") & " — " & MaterialName & " (" & Text(Quantity) & " " & Unit & ")",
                                     Char(10)
                                 )
                               Width: =Parent.Width
