@@ -56,7 +56,7 @@ Screens:
                     MaterialName: li.MaterialName,
                     Unit: li.Unit,
                     OrderedQty: li.Quantity,
-                    PrevReceivedQty: Sum(Filter(colReceiptRounds, LineItemID = li.ID), ReceivedQty),
+                    PrevReceivedQty: Coalesce(Sum(Filter(colReceiptRounds, LineItemID = li.ID), ReceivedQty), 0),
                     ReceivedQty: 0,
                     BatchNumber: "",
                     ExpiryDate: Blank(),

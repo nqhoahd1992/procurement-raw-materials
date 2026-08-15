@@ -21,6 +21,7 @@ Screens:
         Set(gParsingInvoice, false);
         Set(gPendingDeliveryBatch, Blank());
         Set(gPendingNewAttName, "");
+        Set(gPendingDirectAttachments, Blank());
         ClearCollect(colParentLineItems, Filter('RM Procurement Line Items', RequestIDText = Text(gSelectedRequest.ID)));
         ClearCollect(colParentReceived, Filter('RM Procurement Receipt Rounds', ParentRequestID = gSelectedRequest.ID));
         ClearCollect(colSiblingBatches, Filter('RM Procurement Requests', ParentRequestID = gSelectedRequest.ID));
@@ -29,7 +30,7 @@ Screens:
             ForAll(
                 colParentLineItems As li,
                 With(
-                    {wDelivered: Sum(Filter(colParentReceived, ParentLineItemID = li.ID), ReceivedQty)},
+                    {wDelivered: Coalesce(Sum(Filter(colParentReceived, ParentLineItemID = li.ID), ReceivedQty), 0)},
                     {
                         ParentLineItemID: li.ID,
                         MaterialID: li.MaterialID.Id,
@@ -578,16 +579,51 @@ Screens:
                         Underline: =true
                         Width: =Parent.Width - 40
                         Wrap: =false
+            - rowBatchNotes_DBF:
+                Control: GroupContainer@1.5.0
+                Variant: AutoLayout
+                Properties:
+                  DropShadow: =DropShadow.None
+                  FillPortions: =0
+                  Height: =130
+                  LayoutDirection: =LayoutDirection.Vertical
+                  LayoutGap: =4
+                  LayoutMinHeight: =130
+                  PaddingBottom: =20
+                  PaddingLeft: =20
+                  PaddingRight: =20
+                  PaddingTop: =12
+                  RadiusBottomLeft: =0
+                  RadiusBottomRight: =0
+                  RadiusTopLeft: =0
+                  RadiusTopRight: =0
+                  Width: =Parent.Width
+                Children:
+                  - lblBatchNotesLbl_DBF:
+                      Control: Label@2.5.1
+                      Properties:
+                        FontWeight: =FontWeight.Semibold
+                        Height: =24
+                        Size: =11
+                        Text: ="Notes (optional)"
+                        Width: =Parent.Width - 40
+                  - txtBatchNotes:
+                      Control: TextInput@0.0.54
+                      Properties:
+                        Height: =64
+                        Mode: =TextMode.MultiLine
+                        Placeholder: ="Anything the receiver or Accounting should know about this delivery"
+                        Width: =Parent.Width - 40
             - rowDirectInvoice_DBF:
                 Control: GroupContainer@1.5.0
                 Variant: AutoLayout
                 Properties:
                   DropShadow: =DropShadow.None
                   Fill: =RGBA(255, 255, 255, 1)
-                  Height: =230
+                  FillPortions: =0
                   LayoutDirection: =LayoutDirection.Vertical
                   LayoutGap: =4
-                  LayoutMinHeight: =160
+                  LayoutMinHeight: =266
                   PaddingBottom: =16
                   PaddingLeft: =20
                   PaddingRight: =20
@@ -604,8 +640,19 @@ Screens:
                       Properties:
                         FontWeight: =FontWeight.Semibold
                         Height: =24
+                        PaddingRight: =0
                         Size: =11
                         Text: ="Official Invoice *"
+                        Width: =Parent.Width - 40
+                  - lblDirectInvoiceNote_DBF:
+                      Control: Label@2.5.1
+                      Properties:
+                        Color: =RGBA(133, 79, 11, 1)
+                        Height: =36
+                        Size: =9
+                        Text: |-
+                          ="Attach the file, then press Extract Invoice. That press already creates delivery #" & gDeliveryNumber &
+                          " and saves the file onto it — the invoice details below are read from the file, and you can correct any of them before submitting."
                         Width: =Parent.Width - 40
                   - formDirectInvoice_DBF:
                       Control: Form@2.4.4
@@ -615,86 +662,22 @@ Screens:
                         DataSource: ='RM Procurement Requests'
                         Height: =100
                         Item: =gPendingDeliveryBatch
+                        LayoutMinHeight: =100
                         NumberOfColumns: =1
                         OnFailure: |-
-                          =Patch('RM Procurement Requests', {ID: gPendingDeliveryBatch.ID}, {InvoiceMode: {Value: "Deferred"}});
-                          Set(gSelectedRequest, LookUp('RM Procurement Requests', ID = gSelectedRequest.ID));
-                          Notify("Delivery #" & gDeliveryNumber & " created, but its invoice could not be filed. Complete it from Invoice Submission once the delivery reaches Pending Invoice.", NotificationType.Warning);
-                          Navigate(RequestDetailScreen)
+                          =Set(gSelectedRequest, LookUp('RM Procurement Requests', ID = gSelectedRequest.ID));
+                          Notify("Delivery #" & gDeliveryNumber & " was created, but the invoice file could not be attached. Attach it again and press Extract Invoice.", NotificationType.Error)
                         OnSuccess: |-
-                          =With(
-                              {wURL: gInvoiceFileURL},
-                              Set(gParsingInvoice, true);
-                              Set(gHasInvoiceResult, false);
-                              Set(gInvoiceResult, IfError(Parse_Invoice.Run(wURL, gPendingDeliveryBatch.ID), Blank()));
-                              Set(gHasInvoiceResult, true);
-                              Set(gParsingInvoice, false);
-                              If(
-                                  IsBlank(gInvoiceResult.invoiceNumber) ||
-                                  IsBlank(gInvoiceResult.invoiceDate) ||
-                                  IsBlank(gInvoiceResult.supplierName) ||
-                                  IsBlank(gInvoiceResult.billedTo) ||
-                                  IsBlank(gInvoiceResult.totalAmount) ||
-                                  IsBlank(gInvoiceResult.currency),
-                                  Patch('RM Procurement Requests', {ID: gPendingDeliveryBatch.ID}, {InvoiceMode: {Value: "Deferred"}});
-                                  Set(gSelectedRequest, LookUp('RM Procurement Requests', ID = gSelectedRequest.ID));
-                                  Notify("Delivery #" & gDeliveryNumber & " created, but some invoice details could not be extracted automatically. Complete its invoice from Invoice Submission once the delivery reaches Pending Invoice.", NotificationType.Warning);
-                                  Navigate(RequestDetailScreen),
-                                  With(
-                                      {
-                                          wDescription: "Delivery #" & gPendingDeliveryBatch.DeliveryNumber & " of " & gSelectedRequest.Title,
-                                          wNameRaw: Substitute(gInvoiceResult.invoiceDate, "-", "") &
-                                              " - " & gInvoiceResult.supplierName &
-                                              " - " & gInvoiceResult.billedTo &
-                                              " - " & gInvoiceResult.invoiceNumber
-                                      },
-                                      With(
-                                          {wNameClean: Substitute(Substitute(Substitute(Substitute(Substitute(Substitute(Substitute(Substitute(Substitute(Substitute(wNameRaw, "\", ""), "/", ""), ":", ""), "*", ""), "?", ""), """", ""), "<", ""), ">", ""), "#", ""), "%", "")},
-                                          Patch('RM Procurement Requests', {ID: gPendingDeliveryBatch.ID}, {InvoiceSubmitted: true, OfficialInvoiceLink: wURL});
-                                          Patch(
-                                              'RM Procurement Execution Log',
-                                              Defaults('RM Procurement Execution Log'),
-                                              {
-                                                  Title: "Step 6 - Invoice Submission - " & gPendingDeliveryBatch.Title,
-                                                  RequestID: {Id: gPendingDeliveryBatch.ID, Value: gPendingDeliveryBatch.Title},
-                                                  RequestIDText: Text(gPendingDeliveryBatch.ID),
-                                                  StepNumber: 6,
-                                                  StepName: {Value: "Invoice Submission"},
-                                                  ExecutedBy: {Id: gCurrentEmployee.ID, Value: gCurrentEmployee.Title},
-                                                  ExecutedAt: Now()
-                                              }
-                                          );
-                                          Set(gSubmitInvoiceResult,
-                                              Submit_Invoice.Run(
-                                                  wURL,
-                                                  gPendingDeliveryBatch.ID,
-                                                  wNameClean,
-                                                  gInvoiceResult.invoiceDate,
-                                                  gInvoiceResult.supplierName,
-                                                  gInvoiceResult.billedTo,
-                                                  gInvoiceResult.invoiceNumber,
-                                                  gInvoiceResult.totalAmount,
-                                                  Coalesce(gInvoiceResult.taxAmount, 0),
-                                                  gInvoiceResult.currency,
-                                                  gInvoiceResult.jobId,
-                                                  gInvoiceResult.confidenceScore,
-                                                  gInvoiceResult.attention,
-                                                  wDescription,
-                                                  gPendingDeliveryBatch.InvoiceRegion.Value,
-                                                  gInvoiceResult.supplierABN,
-                                                  "Raw Materials Procurement App"
-                                              )
-                                          );
-                                          Set(gSelectedRequest, LookUp('RM Procurement Requests', ID = gSelectedRequest.ID));
-                                          If(
-                                              IsError(gSubmitInvoiceResult),
-                                              Notify("Delivery #" & gDeliveryNumber & " created, but automatic invoice filing failed. Please contact IT with reference: " & gPendingDeliveryBatch.Title, NotificationType.Warning),
-                                              Notify("Delivery #" & gDeliveryNumber & " created and invoice submitted automatically.", NotificationType.Success)
-                                          );
-                                          Navigate(RequestDetailScreen)
-                                      )
-                                  )
-                              )
+                          =Set(gParsingInvoice, true);
+                          Set(gHasInvoiceResult, false);
+                          Set(gInvoiceResult, IfError(Parse_Invoice.Run(gInvoiceFileURL, gPendingDeliveryBatch.ID), Blank()));
+                          Set(gHasInvoiceResult, true);
+                          Set(gParsingInvoice, false);
+                          Set(gSelectedRequest, LookUp('RM Procurement Requests', ID = gSelectedRequest.ID));
+                          If(
+                              IsBlank(gInvoiceResult.invoiceNumber) && IsBlank(gInvoiceResult.supplierName) && IsBlank(gInvoiceResult.totalAmount),
+                              Notify("Delivery #" & gDeliveryNumber & " was created, but nothing could be read from the invoice file. Type the invoice details in below, then submit.", NotificationType.Warning),
+                              Notify("Delivery #" & gDeliveryNumber & " was created. Check the extracted invoice details below, correct anything wrong, then submit.", NotificationType.Success)
                           )
                         Width: =Parent.Width - 40
                       Children:
@@ -726,7 +709,7 @@ Screens:
                                   Control: Attachments@2.3.0
                                   Properties:
                                     Height: =100
-                                    Items: =Parent.Default
+                                    Items: =If(IsBlank(Parent.Default), gPendingDirectAttachments, Parent.Default)
                                     MaxAttachments: =1
                                     Width: =Parent.Width
                   - lblDirectInvoiceStatus_DBF:
@@ -831,40 +814,386 @@ Screens:
                         Text: ="⏳ Extracting and filing the invoice — please wait..."
                         Visible: =gParsingInvoice
                         Width: =Parent.Width - 40
-            - rowBatchNotes_DBF:
+            - rowInvoiceFields_DBF:
                 Control: GroupContainer@1.5.0
                 Variant: AutoLayout
                 Properties:
                   DropShadow: =DropShadow.None
+                  Fill: =RGBA(255, 255, 255, 1)
                   FillPortions: =0
-                  Height: =130
+                  Height: =246
                   LayoutDirection: =LayoutDirection.Vertical
                   LayoutGap: =4
-                  LayoutMinHeight: =130
-                  PaddingBottom: =20
+                  LayoutMinHeight: =246
+                  PaddingBottom: =12
                   PaddingLeft: =20
                   PaddingRight: =20
-                  PaddingTop: =12
+                  PaddingTop: =4
                   RadiusBottomLeft: =0
                   RadiusBottomRight: =0
                   RadiusTopLeft: =0
                   RadiusTopRight: =0
+                  Visible: =gIsViaRequesterBatch || rdoBatchInvoiceMode.Selected.Value = "Direct"
                   Width: =Parent.Width
                 Children:
-                  - lblBatchNotesLbl_DBF:
+                  - lblInvoiceFieldsTitle_DBF:
                       Control: Label@2.5.1
                       Properties:
-                        FontWeight: =FontWeight.Semibold
-                        Height: =24
-                        Size: =11
-                        Text: ="Notes (optional)"
+                        FontWeight: =FontWeight.Bold
+                        Height: =28
+                        PaddingLeft: =0
+                        PaddingRight: =0
+                        Size: =12
+                        Text: ="Invoice Details *"
                         Width: =Parent.Width - 40
-                  - txtBatchNotes:
-                      Control: TextInput@0.0.54
+                  - lblInvoiceFieldsHint_DBF:
+                      Control: Label@2.5.1
                       Properties:
-                        Height: =64
-                        Mode: =TextMode.MultiLine
-                        Placeholder: ="Anything the receiver or Accounting should know about this delivery"
+                        Color: =RGBA(136, 135, 128, 1)
+                        Height: =20
+                        PaddingLeft: =0
+                        Size: =9
+                        Text: =If(gHasInvoiceResult, "Extracted from the invoice file — correct anything wrong before submitting.", "Filled in automatically once you press Extract, or type them in by hand.")
+                        Width: =Parent.Width - 40
+                  - rowFldLine0_DBF:
+                      Control: GroupContainer@1.5.0
+                      Variant: AutoLayout
+                      Properties:
+                        DropShadow: =DropShadow.None
+                        FillPortions: =0
+                        Height: =62
+                        LayoutDirection: =LayoutDirection.Horizontal
+                        LayoutGap: =12
+                        LayoutMinHeight: =62
+                        RadiusBottomLeft: =0
+                        RadiusBottomRight: =0
+                        RadiusTopLeft: =0
+                        RadiusTopRight: =0
+                        Width: =Parent.Width - 40
+                      Children:
+                        - colFldInvDate_DBF:
+                            Control: GroupContainer@1.5.0
+                            Variant: AutoLayout
+                            Properties:
+                              DropShadow: =DropShadow.None
+                              LayoutDirection: =LayoutDirection.Vertical
+                              LayoutGap: =2
+                              RadiusBottomLeft: =0
+                              RadiusBottomRight: =0
+                              RadiusTopLeft: =0
+                              RadiusTopRight: =0
+                            Children:
+                              - lblFldInvDate_DBF:
+                                  Control: Label@2.5.1
+                                  Properties:
+                                    Color: =RGBA(136, 135, 128, 1)
+                                    Height: =20
+                                    PaddingLeft: =0
+                                    Size: =9
+                                    Text: ="Invoice Date *"
+                                    Width: =Parent.Width
+                              - txtFldInvDate_DBF:
+                                  Control: TextInput@0.0.54
+                                  Properties:
+                                    Height: =36
+                                    Value: =If(gHasInvoiceResult, gInvoiceResult.invoiceDate, "")
+                                    Width: =Parent.Width
+                        - colFldSupplierName_DBF:
+                            Control: GroupContainer@1.5.0
+                            Variant: AutoLayout
+                            Properties:
+                              DropShadow: =DropShadow.None
+                              LayoutDirection: =LayoutDirection.Vertical
+                              LayoutGap: =2
+                              RadiusBottomLeft: =0
+                              RadiusBottomRight: =0
+                              RadiusTopLeft: =0
+                              RadiusTopRight: =0
+                            Children:
+                              - lblFldSupplierName_DBF:
+                                  Control: Label@2.5.1
+                                  Properties:
+                                    Color: =RGBA(136, 135, 128, 1)
+                                    Height: =20
+                                    PaddingLeft: =0
+                                    Size: =9
+                                    Text: ="Supplier Name *"
+                                    Width: =Parent.Width
+                              - txtFldSupplierName_DBF:
+                                  Control: TextInput@0.0.54
+                                  Properties:
+                                    Height: =36
+                                    Value: =If(gHasInvoiceResult, gInvoiceResult.supplierName, "")
+                                    Width: =Parent.Width
+                        - colFldBilledTo_DBF:
+                            Control: GroupContainer@1.5.0
+                            Variant: AutoLayout
+                            Properties:
+                              DropShadow: =DropShadow.None
+                              LayoutDirection: =LayoutDirection.Vertical
+                              LayoutGap: =2
+                              RadiusBottomLeft: =0
+                              RadiusBottomRight: =0
+                              RadiusTopLeft: =0
+                              RadiusTopRight: =0
+                            Children:
+                              - lblFldBilledTo_DBF:
+                                  Control: Label@2.5.1
+                                  Properties:
+                                    Color: =RGBA(136, 135, 128, 1)
+                                    Height: =20
+                                    PaddingLeft: =0
+                                    Size: =9
+                                    Text: ="Billed To *"
+                                    Width: =Parent.Width
+                              - txtFldBilledTo_DBF:
+                                  Control: TextInput@0.0.54
+                                  Properties:
+                                    Height: =36
+                                    Value: =If(gHasInvoiceResult, gInvoiceResult.billedTo, "")
+                                    Width: =Parent.Width
+                        - colFldInvNumber_DBF:
+                            Control: GroupContainer@1.5.0
+                            Variant: AutoLayout
+                            Properties:
+                              DropShadow: =DropShadow.None
+                              LayoutDirection: =LayoutDirection.Vertical
+                              LayoutGap: =2
+                              RadiusBottomLeft: =0
+                              RadiusBottomRight: =0
+                              RadiusTopLeft: =0
+                              RadiusTopRight: =0
+                            Children:
+                              - lblFldInvNumber_DBF:
+                                  Control: Label@2.5.1
+                                  Properties:
+                                    Color: =RGBA(136, 135, 128, 1)
+                                    Height: =20
+                                    PaddingLeft: =0
+                                    Size: =9
+                                    Text: ="Invoice Number *"
+                                    Width: =Parent.Width
+                              - txtFldInvNumber_DBF:
+                                  Control: TextInput@0.0.54
+                                  Properties:
+                                    Height: =36
+                                    Value: =If(gHasInvoiceResult, gInvoiceResult.invoiceNumber, "")
+                                    Width: =Parent.Width
+                        - colFldSupplierABN_DBF:
+                            Control: GroupContainer@1.5.0
+                            Variant: AutoLayout
+                            Properties:
+                              DropShadow: =DropShadow.None
+                              LayoutDirection: =LayoutDirection.Vertical
+                              LayoutGap: =2
+                              RadiusBottomLeft: =0
+                              RadiusBottomRight: =0
+                              RadiusTopLeft: =0
+                              RadiusTopRight: =0
+                            Children:
+                              - lblFldSupplierABN_DBF:
+                                  Control: Label@2.5.1
+                                  Properties:
+                                    Color: =RGBA(136, 135, 128, 1)
+                                    Height: =20
+                                    PaddingLeft: =0
+                                    Size: =9
+                                    Text: ="Supplier ABN"
+                                    Width: =Parent.Width
+                              - txtFldSupplierABN_DBF:
+                                  Control: TextInput@0.0.54
+                                  Properties:
+                                    Height: =36
+                                    Value: =If(gHasInvoiceResult, gInvoiceResult.supplierABN, "")
+                                    Width: =Parent.Width
+                  - rowFldLine1_DBF:
+                      Control: GroupContainer@1.5.0
+                      Variant: AutoLayout
+                      Properties:
+                        DropShadow: =DropShadow.None
+                        FillPortions: =0
+                        Height: =62
+                        LayoutDirection: =LayoutDirection.Horizontal
+                        LayoutGap: =12
+                        LayoutMinHeight: =62
+                        RadiusBottomLeft: =0
+                        RadiusBottomRight: =0
+                        RadiusTopLeft: =0
+                        RadiusTopRight: =0
+                        Width: =Parent.Width - 40
+                      Children:
+                        - colFldAttention_DBF:
+                            Control: GroupContainer@1.5.0
+                            Variant: AutoLayout
+                            Properties:
+                              DropShadow: =DropShadow.None
+                              LayoutDirection: =LayoutDirection.Vertical
+                              LayoutGap: =2
+                              RadiusBottomLeft: =0
+                              RadiusBottomRight: =0
+                              RadiusTopLeft: =0
+                              RadiusTopRight: =0
+                            Children:
+                              - lblFldAttention_DBF:
+                                  Control: Label@2.5.1
+                                  Properties:
+                                    Color: =RGBA(136, 135, 128, 1)
+                                    Height: =20
+                                    PaddingLeft: =0
+                                    Size: =9
+                                    Text: ="Attention"
+                                    Width: =Parent.Width
+                              - txtFldAttention_DBF:
+                                  Control: TextInput@0.0.54
+                                  Properties:
+                                    Height: =36
+                                    Value: =If(gHasInvoiceResult, gInvoiceResult.attention, "")
+                                    Width: =Parent.Width
+                        - colFldTotalAmount_DBF:
+                            Control: GroupContainer@1.5.0
+                            Variant: AutoLayout
+                            Properties:
+                              DropShadow: =DropShadow.None
+                              LayoutDirection: =LayoutDirection.Vertical
+                              LayoutGap: =2
+                              RadiusBottomLeft: =0
+                              RadiusBottomRight: =0
+                              RadiusTopLeft: =0
+                              RadiusTopRight: =0
+                            Children:
+                              - lblFldTotalAmount_DBF:
+                                  Control: Label@2.5.1
+                                  Properties:
+                                    Color: =RGBA(136, 135, 128, 1)
+                                    Height: =20
+                                    PaddingLeft: =0
+                                    Size: =9
+                                    Text: ="Total Amount *"
+                                    Width: =Parent.Width
+                              - txtFldTotalAmount_DBF:
+                                  Control: TextInput@0.0.54
+                                  Properties:
+                                    Height: =36
+                                    Value: =If(gHasInvoiceResult, Text(gInvoiceResult.totalAmount, "0.00"), "")
+                                    Width: =Parent.Width
+                        - colFldTaxAmount_DBF:
+                            Control: GroupContainer@1.5.0
+                            Variant: AutoLayout
+                            Properties:
+                              DropShadow: =DropShadow.None
+                              LayoutDirection: =LayoutDirection.Vertical
+                              LayoutGap: =2
+                              RadiusBottomLeft: =0
+                              RadiusBottomRight: =0
+                              RadiusTopLeft: =0
+                              RadiusTopRight: =0
+                            Children:
+                              - lblFldTaxAmount_DBF:
+                                  Control: Label@2.5.1
+                                  Properties:
+                                    Color: =RGBA(136, 135, 128, 1)
+                                    Height: =20
+                                    PaddingLeft: =0
+                                    Size: =9
+                                    Text: ="Tax Amount"
+                                    Width: =Parent.Width
+                              - txtFldTaxAmount_DBF:
+                                  Control: TextInput@0.0.54
+                                  Properties:
+                                    Height: =36
+                                    Value: =If(gHasInvoiceResult, Text(gInvoiceResult.taxAmount, "0.00"), "")
+                                    Width: =Parent.Width
+                        - colFldCurrency_DBF:
+                            Control: GroupContainer@1.5.0
+                            Variant: AutoLayout
+                            Properties:
+                              DropShadow: =DropShadow.None
+                              LayoutDirection: =LayoutDirection.Vertical
+                              LayoutGap: =2
+                              RadiusBottomLeft: =0
+                              RadiusBottomRight: =0
+                              RadiusTopLeft: =0
+                              RadiusTopRight: =0
+                            Children:
+                              - lblFldCurrency_DBF:
+                                  Control: Label@2.5.1
+                                  Properties:
+                                    Color: =RGBA(136, 135, 128, 1)
+                                    Height: =20
+                                    PaddingLeft: =0
+                                    Size: =9
+                                    Text: ="Currency *"
+                                    Width: =Parent.Width
+                              - txtFldCurrency_DBF:
+                                  Control: TextInput@0.0.54
+                                  Properties:
+                                    Height: =36
+                                    Value: =If(gHasInvoiceResult, gInvoiceResult.currency, "")
+                                    Width: =Parent.Width
+                        - colFldInvDescription_DBF:
+                            Control: GroupContainer@1.5.0
+                            Variant: AutoLayout
+                            Properties:
+                              DropShadow: =DropShadow.None
+                              LayoutDirection: =LayoutDirection.Vertical
+                              LayoutGap: =2
+                              RadiusBottomLeft: =0
+                              RadiusBottomRight: =0
+                              RadiusTopLeft: =0
+                              RadiusTopRight: =0
+                            Children:
+                              - lblFldInvDescription_DBF:
+                                  Control: Label@2.5.1
+                                  Properties:
+                                    Color: =RGBA(136, 135, 128, 1)
+                                    Height: =20
+                                    PaddingLeft: =0
+                                    Size: =9
+                                    Text: ="Description"
+                                    Width: =Parent.Width
+                              - txtFldInvDescription_DBF:
+                                  Control: TextInput@0.0.54
+                                  Properties:
+                                    Height: =36
+                                    Width: =Parent.Width
+                  - lblSuggestedFilenameLbl_DBF:
+                      Control: Label@2.5.1
+                      Properties:
+                        Color: =RGBA(136, 135, 128, 1)
+                        PaddingLeft: =0
+                        PaddingRight: =0
+                        PaddingTop: =15
+                        Size: =9
+                        Text: |-
+                          ="Suggested Filename" & If(gHasInvoiceResult, " (ConfidenceScore: " & gInvoiceResult.confidenceScore & ")", "")
+                        Width: =Parent.Width - 40
+                  - lblSuggestedFilename_DBF:
+                      Control: Label@2.5.1
+                      Properties:
+                        Color: =RGBA(37, 99, 235, 1)
+                        FontWeight: =FontWeight.Bold
+                        PaddingBottom: =15
+                        PaddingLeft: =0
+                        PaddingRight: =0
+                        Size: =9
+                        Text: |-
+                          =If(gHasInvoiceResult,
+                              With(
+                                  {
+                                      wName: If(IsBlank(txtFldInvDate_DBF.Value), "", Substitute(txtFldInvDate_DBF.Value, "-", "")) &
+                                          If(IsBlank(txtFldSupplierName_DBF.Value), "", " - " & txtFldSupplierName_DBF.Value) &
+                                          If(IsBlank(txtFldBilledTo_DBF.Value), "", " - " & txtFldBilledTo_DBF.Value) &
+                                          If(IsBlank(txtFldInvNumber_DBF.Value), "", " - " & txtFldInvNumber_DBF.Value) &
+                                          If(IsBlank(txtFldAttention_DBF.Value), "", " - " & txtFldAttention_DBF.Value) &
+                                          If(IsBlank(txtFldInvDescription_DBF.Value), "", " - " & txtFldInvDescription_DBF.Value) &
+                                          If(IsBlank(txtFldTotalAmount_DBF.Value), "", " - " & txtFldCurrency_DBF.Value & " " & Text(Value(txtFldTotalAmount_DBF.Value), "[$-en-US]#,##0.00")) &
+                                          If(IsBlank(txtFldTaxAmount_DBF.Value), "", " - GST " & txtFldCurrency_DBF.Value & " " & Text(Value(txtFldTaxAmount_DBF.Value), "[$-en-US]#,##0.00"))
+                                  },
+                                  Substitute(Substitute(Substitute(Substitute(Substitute(Substitute(Substitute(Substitute(Substitute(Substitute(wName, "\", ""), "/", ""), ":", ""), "*", ""), "?", ""), """", ""), "<", ""), ">", ""), "#", ""), "%", "") &
+                                  "." & Last(Split(gInvoiceResult.suggestedFilename, ".")).Value
+                              ),
+                              "—"
+                          )
                         Width: =Parent.Width - 40
       - conActionBar_DBF:
           Control: GroupContainer@1.5.0
@@ -910,170 +1239,451 @@ Screens:
                   RadiusBottomRight: =0
                   RadiusTopLeft: =0
                   RadiusTopRight: =0
-                  Width: =400
+                  Width: =620
                 Children:
-                  - lblBatchSummary_DBF:
-                      Control: Label@2.5.1
-                      Properties:
-                        Align: =Align.Right
-                        Color: =RGBA(136, 135, 128, 1)
-                        Height: =36
-                        Size: =10
-                        Text: =CountRows(Filter(colBatchEntry, BatchQty > 0)) & " of " & CountRows(colBatchEntry) & " materials selected"
-                        Width: =220
-                        Wrap: =false
-                  - btnCreateBatch_DBF:
+                  - btnExtractSubmit_DBF:
                       Control: Button@0.0.45
                       Properties:
+                        BasePaletteColor: =RGBA(5, 102, 178, 1)
                         Height: =36
                         OnSelect: |-
                           =If(
-                              IsEmpty(Filter(colBatchEntry, BatchQty > 0)),
-                              Notify("Please enter a quantity for at least one material in this delivery", NotificationType.Error),
+                              Not(IsBlank(gPendingDeliveryBatch.ID)) && gHasInvoiceResult,
                               If(
-                                  Not(IsEmpty(Filter(colBatchEntry, BatchQty > RemainingQty))),
-                                  Notify("A quantity exceeds what is still outstanding on the request. Reduce it, or set it to 0 to leave that material out.", NotificationType.Error),
+                                  IsBlank(txtFldInvNumber_DBF.Value) || IsBlank(txtFldInvDate_DBF.Value) ||
+                                  IsBlank(txtFldSupplierName_DBF.Value) || IsBlank(txtFldBilledTo_DBF.Value) ||
+                                  IsBlank(txtFldTotalAmount_DBF.Value) || IsBlank(txtFldCurrency_DBF.Value) ||
+                                  IsBlank(txtFldInvDescription_DBF.Value),
+                                  Notify("Please fill in Invoice Date, Supplier Name, Billed To, Invoice Number, Total Amount, Currency and Description", NotificationType.Error),
+                                  With(
+                                      {
+                                          wDescription: txtFldInvDescription_DBF.Value
+                                      },
+                                          Patch('RM Procurement Requests', {ID: gPendingDeliveryBatch.ID}, {InvoiceSubmitted: true, OfficialInvoiceLink: gInvoiceFileURL});
+                                          Patch(
+                                              'RM Procurement Execution Log',
+                                              Defaults('RM Procurement Execution Log'),
+                                              {
+                                                  Title: "Step 6 - Invoice Submission - " & gPendingDeliveryBatch.Title,
+                                                  RequestID: {Id: gPendingDeliveryBatch.ID, Value: gPendingDeliveryBatch.Title},
+                                                  RequestIDText: Text(gPendingDeliveryBatch.ID),
+                                                  StepNumber: 6,
+                                                  StepName: {Value: "Invoice Submission"},
+                                                  ExecutedBy: {Id: gCurrentEmployee.ID, Value: gCurrentEmployee.Title},
+                                                  ExecutedAt: Now()
+                                              }
+                                          );
+                                          Set(gSubmitInvoiceResult,
+                                              Submit_Invoice.Run(
+                                                  gInvoiceFileURL,
+                                                  gPendingDeliveryBatch.ID,
+                                                  Left(lblSuggestedFilename_DBF.Text, Len(lblSuggestedFilename_DBF.Text) - Len("." & Last(Split(lblSuggestedFilename_DBF.Text, ".")).Value)),
+                                                  txtFldInvDate_DBF.Value,
+                                                  txtFldSupplierName_DBF.Value,
+                                                  txtFldBilledTo_DBF.Value,
+                                                  txtFldInvNumber_DBF.Value,
+                                                  Value(txtFldTotalAmount_DBF.Value),
+                                                  Coalesce(Value(txtFldTaxAmount_DBF.Value), 0),
+                                                  txtFldCurrency_DBF.Value,
+                                                  Coalesce(gInvoiceResult.jobId, ""),
+                                                  Coalesce(gInvoiceResult.confidenceScore, 0),
+                                                  txtFldAttention_DBF.Value,
+                                                  wDescription,
+                                                  gPendingDeliveryBatch.InvoiceRegion.Value,
+                                                  txtFldSupplierABN_DBF.Value,
+                                                  "Raw Materials Procurement App"
+                                              )
+                                          );
+                                          Set(gSelectedRequest, LookUp('RM Procurement Requests', ID = gSelectedRequest.ID));
+                                          If(
+                                              IsError(gSubmitInvoiceResult),
+                                              Notify("Invoice filing failed for delivery #" & gDeliveryNumber & ". The delivery exists — retry from its Submit Invoice button on Home.", NotificationType.Error),
+                                              Notify("Delivery #" & gDeliveryNumber & " completed — invoice submitted.", NotificationType.Success);
+                                              Navigate(RequestDetailScreen)
+                                          )
+                                  )
+                              ),
+                              If(
+                                  IsEmpty(Filter(colBatchEntry, BatchQty > 0)),
+                                  Notify("Please enter a quantity for at least one material in this delivery", NotificationType.Error),
                                   If(
-                                      IsBlank(dpBatchDeliveryDate.SelectedDate),
-                                      Notify("Please pick the expected delivery date", NotificationType.Error),
+                                      Not(IsEmpty(Filter(colBatchEntry, BatchQty > RemainingQty))),
+                                      Notify("A quantity exceeds what is still outstanding on the request. Reduce it, or set it to 0 to leave that material out.", NotificationType.Error),
                                       If(
-                                          Not(gIsViaRequesterBatch) && IsBlank(rdoBatchInvoiceMode.Selected.Value),
-                                          Notify("Please choose how the invoice for this delivery is handled", NotificationType.Error),
+                                          IsBlank(dpBatchDeliveryDate.SelectedDate),
+                                          Notify("Please pick the expected delivery date", NotificationType.Error),
                                           If(
-                                              Not(gIsViaRequesterBatch) && rdoBatchInvoiceMode.Selected.Value = "Direct" && CountRows(attDirectInvoice_DBF.Attachments) = 0,
-                                              Notify("Please attach the invoice file — Direct mode submits it as part of creating this delivery", NotificationType.Error),
-                                          If(
-                                              gIsViaRequesterBatch && IsBlank(rdoViaReqInvoiceOK_DBF.Selected.Value),
-                                              Notify("Please say whether the requester's invoice is correct", NotificationType.Error),
-                                                  With(
-                                                      {wLatest: LookUp('RM Procurement Requests', ID = gSelectedRequest.ID)},
-                                                      If(
-                                                          wLatest.Status.Value <> "In Delivery",
-                                                          Notify("This request is no longer open for new deliveries. Your entry has been cancelled.", NotificationType.Warning);
-                                                          Navigate(HomeScreen),
-                                                      If(
-                                                          wLatest.ProcurementType.Value = "Invoice Supplied" &&
-                                                          wLatest.InvoiceType.Value = "Official Invoice" &&
-                                                          Coalesce(wLatest.DeliveryCount, 0) >= 1,
-                                                          Notify("This request's official invoice covers a single delivery, which already exists. A further shipment under that same invoice is a receipt round, not a new delivery.", NotificationType.Error);
-                                                          Navigate(RequestDetailScreen),
+                                              Not(gIsViaRequesterBatch) && IsBlank(rdoBatchInvoiceMode.Selected.Value),
+                                              Notify("Please choose how the invoice for this delivery is handled", NotificationType.Error),
+                                              If(
+                                                  Not(gIsViaRequesterBatch) && rdoBatchInvoiceMode.Selected.Value = "Direct" && CountRows(attDirectInvoice_DBF.Attachments) = 0,
+                                                  Notify("Please attach the invoice file — Direct mode submits it as part of creating this delivery", NotificationType.Error),
+                                              If(
+                                                  gIsViaRequesterBatch && IsBlank(rdoViaReqInvoiceOK_DBF.Selected.Value),
+                                                  Notify("Please say whether the requester's invoice is correct", NotificationType.Error),
+                                                      With(
+                                                          {wLatest: LookUp('RM Procurement Requests', ID = gSelectedRequest.ID)},
                                                           If(
-                                                              Coalesce(wLatest.DeliveryCount, 0) + 1 <> gDeliveryNumber,
-                                                              Notify("Another delivery has just been created for this request. Please reopen this screen and try again.", NotificationType.Warning);
+                                                              wLatest.Status.Value <> "In Delivery",
+                                                              Notify("This request is no longer open for new deliveries. Your entry has been cancelled.", NotificationType.Warning);
+                                                              Navigate(HomeScreen),
+                                                          If(
+                                                              wLatest.ProcurementType.Value = "Invoice Supplied" &&
+                                                              wLatest.InvoiceType.Value = "Official Invoice" &&
+                                                              Coalesce(wLatest.DeliveryCount, 0) >= 1,
+                                                              Notify("This request's official invoice covers a single delivery, which already exists. A further shipment under that same invoice is a receipt round, not a new delivery.", NotificationType.Error);
                                                               Navigate(RequestDetailScreen),
-                                                              With(
-                                                                  {wBatch: Patch(
-                                                                      'RM Procurement Requests',
-                                                                      Defaults('RM Procurement Requests'),
-                                                                      {
-                                                                          Title: gSelectedRequest.Title & " - #" & gDeliveryNumber,
-                                                                          RequestType: {Value: "Delivery"},
-                                                                          ParentRequestID: gSelectedRequest.ID,
-                                                                          GroupKey: gSelectedRequest.ID,
-                                                                          DeliveryNumber: gDeliveryNumber,
-                                                                          DeliveryCount: 0,
-                                                                          Status: {Value: "Goods Receipt & Acceptance"},
-                                                                          RequesterID: {Id: gSelectedRequest.RequesterID.Id, Value: gSelectedRequest.RequesterID.Value},
-                                                                          RequesterEmail: gSelectedRequest.RequesterEmail,
-                                                                          ManagerApproverID: If(IsBlank(gSelectedRequest.ManagerApproverID), Blank(), {Id: gSelectedRequest.ManagerApproverID.Id, Value: gSelectedRequest.ManagerApproverID.Value}),
-                                                                          ManagerApproverNum: If(IsBlank(gSelectedRequest.ManagerApproverID), Blank(), gSelectedRequest.ManagerApproverID.Id),
-                                                                          ProjectID: gSelectedRequest.ProjectID,
-                                                                          ProcurementType: {Value: gSelectedRequest.ProcurementType.Value},
-                                                                          InvoiceType: If(IsBlank(gSelectedRequest.InvoiceType.Value), Blank(), {Value: gSelectedRequest.InvoiceType.Value}),
-                                                                          ProcurementDescription: "Delivery batch #" & gDeliveryNumber & " of request #" & gSelectedRequest.ID & If(IsBlank(txtBatchNotes.Value), "", Char(10) & txtBatchNotes.Value),
-                                                                          PurchaseAccordance: Blank(),
-                                                                          EstimatedCost: Blank(),
-                                                                          Currency: gSelectedRequest.Currency,
-                                                                          RequiredDeliveryDate: dpBatchDeliveryDate.SelectedDate,
-                                                                          DeliveryLocation: Blank(),
-                                                                          CostCenter: Blank(),
-                                                                          InvoiceRegion: {Value: gSelectedRequest.InvoiceRegion.Value},
-                                                                          InvoiceMode: {Value: If(gIsViaRequesterBatch, "ViaRequester", rdoBatchInvoiceMode.Selected.Value)},
-                                                                          InvoiceSubmitted: false,
-                                                                          RequesterInvoiceURL: If(gIsViaRequesterBatch, gSelectedRequest.RequesterInvoiceURL, ""),
-                                                                          ReceiptRoundCount: 0,
-                                                                          ProcurementExecutedBy: {Id: gCurrentEmployee.ID, Value: gCurrentEmployee.Title},
-                                                                          ProcurementExecutedAt: Now()
-                                                                      }
-                                                                  )},
-                                                                  If(
-                                                                      IsBlank(wBatch.ID),
-                                                                      Notify("Failed to create the delivery. Please try again.", NotificationType.Error),
-                                                                      ForAll(
-                                                                          Filter(colBatchEntry, BatchQty > 0) As be,
-                                                                          Patch(
-                                                                              'RM Procurement Line Items',
-                                                                              Defaults('RM Procurement Line Items'),
-                                                                              {
-                                                                                  RequestID: {Id: wBatch.ID, Value: wBatch.Title},
-                                                                                  RequestIDText: Text(wBatch.ID),
-                                                                                  ParentLineItemID: be.ParentLineItemID,
-                                                                                  MaterialID: {Id: be.MaterialID, Value: be.MaterialName},
-                                                                                  MaterialName: be.MaterialName,
-                                                                                  Unit: be.Unit,
-                                                                                  Quantity: be.BatchQty
-                                                                              }
-                                                                          )
-                                                                      );
-                                                                      Patch('RM Procurement Requests', {ID: gSelectedRequest.ID}, {DeliveryCount: gDeliveryNumber});
-                                                                      Patch(
-                                                                          'RM Procurement Execution Log',
-                                                                          Defaults('RM Procurement Execution Log'),
+                                                              If(
+                                                                  Coalesce(wLatest.DeliveryCount, 0) + 1 <> gDeliveryNumber,
+                                                                  Notify("Another delivery has just been created for this request. Please reopen this screen and try again.", NotificationType.Warning);
+                                                                  Navigate(RequestDetailScreen),
+                                                                  With(
+                                                                      {wBatch: Patch(
+                                                                          'RM Procurement Requests',
+                                                                          Defaults('RM Procurement Requests'),
                                                                           {
-                                                                              Title: "Step 7 - Delivery Batch #" & gDeliveryNumber & " Created - " & gSelectedRequest.Title,
-                                                                              RequestID: {Id: gSelectedRequest.ID, Value: gSelectedRequest.Title},
-                                                                              RequestIDText: Text(gSelectedRequest.ID),
-                                                                              StepNumber: 7,
-                                                                              StepName: {Value: "Delivery Batch Created"},
-                                                                              RoundNumber: gDeliveryNumber,
-                                                                              ExecutedBy: {Id: gCurrentEmployee.ID, Value: gCurrentEmployee.Title},
-                                                                              ExecutedAt: Now(),
-                                                                              Notes: txtBatchNotes.Value
+                                                                              Title: gSelectedRequest.Title & " - #" & gDeliveryNumber,
+                                                                              RequestType: {Value: "Delivery"},
+                                                                              ParentRequestID: gSelectedRequest.ID,
+                                                                              GroupKey: gSelectedRequest.ID,
+                                                                              DeliveryNumber: gDeliveryNumber,
+                                                                              DeliveryCount: 0,
+                                                                              Status: {Value: "Goods Receipt & Acceptance"},
+                                                                              RequesterID: {Id: gSelectedRequest.RequesterID.Id, Value: gSelectedRequest.RequesterID.Value},
+                                                                              RequesterEmail: gSelectedRequest.RequesterEmail,
+                                                                              ManagerApproverID: If(IsBlank(gSelectedRequest.ManagerApproverID), Blank(), {Id: gSelectedRequest.ManagerApproverID.Id, Value: gSelectedRequest.ManagerApproverID.Value}),
+                                                                              ManagerApproverNum: If(IsBlank(gSelectedRequest.ManagerApproverID), Blank(), gSelectedRequest.ManagerApproverID.Id),
+                                                                              ProjectID: gSelectedRequest.ProjectID,
+                                                                              ProcurementType: {Value: gSelectedRequest.ProcurementType.Value},
+                                                                              InvoiceType: If(IsBlank(gSelectedRequest.InvoiceType.Value), Blank(), {Value: gSelectedRequest.InvoiceType.Value}),
+                                                                              ProcurementDescription: "Delivery batch #" & gDeliveryNumber & " of request #" & gSelectedRequest.ID & If(IsBlank(txtBatchNotes.Value), "", Char(10) & txtBatchNotes.Value),
+                                                                              PurchaseAccordance: Blank(),
+                                                                              EstimatedCost: Blank(),
+                                                                              Currency: gSelectedRequest.Currency,
+                                                                              RequiredDeliveryDate: dpBatchDeliveryDate.SelectedDate,
+                                                                              DeliveryLocation: Blank(),
+                                                                              CostCenter: Blank(),
+                                                                              InvoiceRegion: {Value: gSelectedRequest.InvoiceRegion.Value},
+                                                                              InvoiceMode: {Value: If(gIsViaRequesterBatch, "ViaRequester", rdoBatchInvoiceMode.Selected.Value)},
+                                                                              InvoiceSubmitted: false,
+                                                                              RequesterInvoiceURL: If(gIsViaRequesterBatch, gSelectedRequest.RequesterInvoiceURL, ""),
+                                                                              ReceiptRoundCount: 0,
+                                                                              ProcurementExecutedBy: {Id: gCurrentEmployee.ID, Value: gCurrentEmployee.Title},
+                                                                              ProcurementExecutedAt: Now()
                                                                           }
-                                                                      );
-                                                                      Switch(
-                                                                          If(gIsViaRequesterBatch, "ViaRequester", rdoBatchInvoiceMode.Selected.Value),
-                                                                          "Direct",
-                                                                              Set(gPendingDeliveryBatch, wBatch);
-                                                                              Set(gPendingNewAttName, Last(attDirectInvoice_DBF.Attachments).Name);
-                                                                              Set(gInvoiceFileURL, gSharePointAttachmentBase & Text(wBatch.ID) & "/" & EncodeUrl(Last(attDirectInvoice_DBF.Attachments).Name));
-                                                                              EditForm(formDirectInvoice_DBF);
-                                                                              SubmitForm(formDirectInvoice_DBF),
-                                                                          "ViaRequester",
-                                                                              If(
-                                                                                  rdoViaReqInvoiceOK_DBF.Selected.Value = "Yes",
+                                                                      )},
+                                                                      If(
+                                                                          IsBlank(wBatch.ID),
+                                                                          Notify("Failed to create the delivery. Please try again.", NotificationType.Error),
+                                                                          ForAll(
+                                                                              Filter(colBatchEntry, BatchQty > 0) As be,
+                                                                              Patch(
+                                                                                  'RM Procurement Line Items',
+                                                                                  Defaults('RM Procurement Line Items'),
+                                                                                  {
+                                                                                      RequestID: {Id: wBatch.ID, Value: wBatch.Title},
+                                                                                      RequestIDText: Text(wBatch.ID),
+                                                                                      ParentLineItemID: be.ParentLineItemID,
+                                                                                      MaterialID: {Id: be.MaterialID, Value: be.MaterialName},
+                                                                                      MaterialName: be.MaterialName,
+                                                                                      Unit: be.Unit,
+                                                                                      Quantity: be.BatchQty
+                                                                                  }
+                                                                              )
+                                                                          );
+                                                                          Patch('RM Procurement Requests', {ID: gSelectedRequest.ID}, {DeliveryCount: gDeliveryNumber});
+                                                                          Patch(
+                                                                              'RM Procurement Execution Log',
+                                                                              Defaults('RM Procurement Execution Log'),
+                                                                              {
+                                                                                  Title: "Step 7 - Delivery Batch #" & gDeliveryNumber & " Created - " & gSelectedRequest.Title,
+                                                                                  RequestID: {Id: gSelectedRequest.ID, Value: gSelectedRequest.Title},
+                                                                                  RequestIDText: Text(gSelectedRequest.ID),
+                                                                                  StepNumber: 7,
+                                                                                  StepName: {Value: "Delivery Batch Created"},
+                                                                                  RoundNumber: gDeliveryNumber,
+                                                                                  ExecutedBy: {Id: gCurrentEmployee.ID, Value: gCurrentEmployee.Title},
+                                                                                  ExecutedAt: Now(),
+                                                                                  Notes: txtBatchNotes.Value
+                                                                              }
+                                                                          );
+                                                                          Switch(
+                                                                              If(gIsViaRequesterBatch, "ViaRequester", rdoBatchInvoiceMode.Selected.Value),
+                                                                              "Direct",
                                                                                   Set(gPendingDeliveryBatch, wBatch);
-                                                                                  Set(gPendingNewAttName, "");
-                                                                                  Set(gInvoiceFileURL, gSelectedRequest.RequesterInvoiceURL);
+                                                                                  Set(gPendingNewAttName, Last(attDirectInvoice_DBF.Attachments).Name);
+                                                                                  Set(gPendingDirectAttachments, attDirectInvoice_DBF.Attachments);
+                                                                                  Set(gInvoiceFileURL, gSharePointAttachmentBase & Text(wBatch.ID) & "/" & EncodeUrl(Last(attDirectInvoice_DBF.Attachments).Name));
                                                                                   EditForm(formDirectInvoice_DBF);
                                                                                   SubmitForm(formDirectInvoice_DBF),
-                                                                                  Patch('RM Procurement Requests', {ID: wBatch.ID}, {RequesterInvoiceURL: ""});
-                                                                                  Procurement_Notify_Remind_Invoice.Run(
-                                                                                      wBatch.RequesterEmail,
-                                                                                      wBatch.RequesterID.Value,
-                                                                                      wBatch.Title,
-                                                                                      Text(wBatch.ID),
-                                                                                      gCurrentEmployee.Title
-                                                                                  );
-                                                                                  Set(gSelectedRequest, LookUp('RM Procurement Requests', ID = gSelectedRequest.ID));
-                                                                                  Notify("Delivery #" & gDeliveryNumber & " created. The requester has been asked to re-upload the invoice for this delivery.", NotificationType.Warning);
-                                                                                  Navigate(RequestDetailScreen)
-                                                                              ),
-                                                                          Set(gSelectedRequest, LookUp('RM Procurement Requests', ID = gSelectedRequest.ID));
-                                                                          Notify("Delivery #" & gDeliveryNumber & " created with " & CountRows(Filter(colBatchEntry, BatchQty > 0)) & " material(s).", NotificationType.Success);
-                                                                          Navigate(RequestDetailScreen)
+                                                                              "ViaRequester",
+                                                                                  If(
+                                                                                      rdoViaReqInvoiceOK_DBF.Selected.Value = "Yes",
+                                                                                      Set(gPendingDeliveryBatch, wBatch);
+                                                                                      Set(gPendingNewAttName, "");
+                                                                                      Set(gPendingDirectAttachments, Blank());
+                                                                                      Set(gInvoiceFileURL, gSelectedRequest.RequesterInvoiceURL);
+                                                                                      EditForm(formDirectInvoice_DBF);
+                                                                                      SubmitForm(formDirectInvoice_DBF),
+                                                                                      Patch('RM Procurement Requests', {ID: wBatch.ID}, {RequesterInvoiceURL: ""});
+                                                                                      Procurement_Notify_Remind_Invoice.Run(
+                                                                                          wBatch.RequesterEmail,
+                                                                                          wBatch.RequesterID.Value,
+                                                                                          wBatch.Title,
+                                                                                          Text(wBatch.ID),
+                                                                                          gCurrentEmployee.Title
+                                                                                      );
+                                                                                      Set(gSelectedRequest, LookUp('RM Procurement Requests', ID = gSelectedRequest.ID));
+                                                                                      Notify("Delivery #" & gDeliveryNumber & " created. The requester has been asked to re-upload the invoice for this delivery.", NotificationType.Warning);
+                                                                                      Navigate(RequestDetailScreen)
+                                                                                  ),
+                                                                              Set(gSelectedRequest, LookUp('RM Procurement Requests', ID = gSelectedRequest.ID));
+                                                                              Notify("Delivery #" & gDeliveryNumber & " created with " & CountRows(Filter(colBatchEntry, BatchQty > 0)) & " material(s).", NotificationType.Success);
+                                                                              Navigate(RequestDetailScreen)
+                                                                          )
                                                                       )
                                                                   )
                                                               )
                                                           )
-                                                      )
+                                                          )
                                                       )
                                                   )
                                               )
-                                          )
+                                              )
                                           )
                                       )
                                   )
+                          )
+                        Text: |-
+                          =If(
+                              Not(IsBlank(gPendingDeliveryBatch.ID)) && gHasInvoiceResult,
+                              "Submit Invoice →",
+                              "🔍 Create Delivery & Extract Invoice →"
+                          )
+                        Visible: =gIsViaRequesterBatch || rdoBatchInvoiceMode.Selected.Value = "Direct"
+                        Width: =320
+                  - btnCreateBatch_DBF:
+                      Control: Button@0.0.45
+                      Properties:
+                        BasePaletteColor: =RGBA(5, 102, 178, 1)
+                        Height: =36
+                        OnSelect: |-
+                          =If(
+                              Not(IsBlank(gPendingDeliveryBatch.ID)) && gHasInvoiceResult,
+                              If(
+                                  IsBlank(txtFldInvNumber_DBF.Value) || IsBlank(txtFldInvDate_DBF.Value) ||
+                                  IsBlank(txtFldSupplierName_DBF.Value) || IsBlank(txtFldBilledTo_DBF.Value) ||
+                                  IsBlank(txtFldTotalAmount_DBF.Value) || IsBlank(txtFldCurrency_DBF.Value) ||
+                                  IsBlank(txtFldInvDescription_DBF.Value),
+                                  Notify("Please fill in Invoice Date, Supplier Name, Billed To, Invoice Number, Total Amount, Currency and Description", NotificationType.Error),
+                                  With(
+                                      {
+                                          wDescription: txtFldInvDescription_DBF.Value
+                                      },
+                                          Patch('RM Procurement Requests', {ID: gPendingDeliveryBatch.ID}, {InvoiceSubmitted: true, OfficialInvoiceLink: gInvoiceFileURL});
+                                          Patch(
+                                              'RM Procurement Execution Log',
+                                              Defaults('RM Procurement Execution Log'),
+                                              {
+                                                  Title: "Step 6 - Invoice Submission - " & gPendingDeliveryBatch.Title,
+                                                  RequestID: {Id: gPendingDeliveryBatch.ID, Value: gPendingDeliveryBatch.Title},
+                                                  RequestIDText: Text(gPendingDeliveryBatch.ID),
+                                                  StepNumber: 6,
+                                                  StepName: {Value: "Invoice Submission"},
+                                                  ExecutedBy: {Id: gCurrentEmployee.ID, Value: gCurrentEmployee.Title},
+                                                  ExecutedAt: Now()
+                                              }
+                                          );
+                                          Set(gSubmitInvoiceResult,
+                                              Submit_Invoice.Run(
+                                                  gInvoiceFileURL,
+                                                  gPendingDeliveryBatch.ID,
+                                                  Left(lblSuggestedFilename_DBF.Text, Len(lblSuggestedFilename_DBF.Text) - Len("." & Last(Split(lblSuggestedFilename_DBF.Text, ".")).Value)),
+                                                  txtFldInvDate_DBF.Value,
+                                                  txtFldSupplierName_DBF.Value,
+                                                  txtFldBilledTo_DBF.Value,
+                                                  txtFldInvNumber_DBF.Value,
+                                                  Value(txtFldTotalAmount_DBF.Value),
+                                                  Coalesce(Value(txtFldTaxAmount_DBF.Value), 0),
+                                                  txtFldCurrency_DBF.Value,
+                                                  Coalesce(gInvoiceResult.jobId, ""),
+                                                  Coalesce(gInvoiceResult.confidenceScore, 0),
+                                                  txtFldAttention_DBF.Value,
+                                                  wDescription,
+                                                  gPendingDeliveryBatch.InvoiceRegion.Value,
+                                                  txtFldSupplierABN_DBF.Value,
+                                                  "Raw Materials Procurement App"
+                                              )
+                                          );
+                                          Set(gSelectedRequest, LookUp('RM Procurement Requests', ID = gSelectedRequest.ID));
+                                          If(
+                                              IsError(gSubmitInvoiceResult),
+                                              Notify("Invoice filing failed for delivery #" & gDeliveryNumber & ". The delivery exists — retry from its Submit Invoice button on Home.", NotificationType.Error),
+                                              Notify("Delivery #" & gDeliveryNumber & " completed — invoice submitted.", NotificationType.Success);
+                                              Navigate(RequestDetailScreen)
+                                          )
+                                  )
+                              ),
+                              If(
+                                  IsEmpty(Filter(colBatchEntry, BatchQty > 0)),
+                                  Notify("Please enter a quantity for at least one material in this delivery", NotificationType.Error),
+                                  If(
+                                      Not(IsEmpty(Filter(colBatchEntry, BatchQty > RemainingQty))),
+                                      Notify("A quantity exceeds what is still outstanding on the request. Reduce it, or set it to 0 to leave that material out.", NotificationType.Error),
+                                      If(
+                                          IsBlank(dpBatchDeliveryDate.SelectedDate),
+                                          Notify("Please pick the expected delivery date", NotificationType.Error),
+                                          If(
+                                              Not(gIsViaRequesterBatch) && IsBlank(rdoBatchInvoiceMode.Selected.Value),
+                                              Notify("Please choose how the invoice for this delivery is handled", NotificationType.Error),
+                                              If(
+                                                  Not(gIsViaRequesterBatch) && rdoBatchInvoiceMode.Selected.Value = "Direct" && CountRows(attDirectInvoice_DBF.Attachments) = 0,
+                                                  Notify("Please attach the invoice file — Direct mode submits it as part of creating this delivery", NotificationType.Error),
+                                              If(
+                                                  gIsViaRequesterBatch && IsBlank(rdoViaReqInvoiceOK_DBF.Selected.Value),
+                                                  Notify("Please say whether the requester's invoice is correct", NotificationType.Error),
+                                                      With(
+                                                          {wLatest: LookUp('RM Procurement Requests', ID = gSelectedRequest.ID)},
+                                                          If(
+                                                              wLatest.Status.Value <> "In Delivery",
+                                                              Notify("This request is no longer open for new deliveries. Your entry has been cancelled.", NotificationType.Warning);
+                                                              Navigate(HomeScreen),
+                                                          If(
+                                                              wLatest.ProcurementType.Value = "Invoice Supplied" &&
+                                                              wLatest.InvoiceType.Value = "Official Invoice" &&
+                                                              Coalesce(wLatest.DeliveryCount, 0) >= 1,
+                                                              Notify("This request's official invoice covers a single delivery, which already exists. A further shipment under that same invoice is a receipt round, not a new delivery.", NotificationType.Error);
+                                                              Navigate(RequestDetailScreen),
+                                                              If(
+                                                                  Coalesce(wLatest.DeliveryCount, 0) + 1 <> gDeliveryNumber,
+                                                                  Notify("Another delivery has just been created for this request. Please reopen this screen and try again.", NotificationType.Warning);
+                                                                  Navigate(RequestDetailScreen),
+                                                                  With(
+                                                                      {wBatch: Patch(
+                                                                          'RM Procurement Requests',
+                                                                          Defaults('RM Procurement Requests'),
+                                                                          {
+                                                                              Title: gSelectedRequest.Title & " - #" & gDeliveryNumber,
+                                                                              RequestType: {Value: "Delivery"},
+                                                                              ParentRequestID: gSelectedRequest.ID,
+                                                                              GroupKey: gSelectedRequest.ID,
+                                                                              DeliveryNumber: gDeliveryNumber,
+                                                                              DeliveryCount: 0,
+                                                                              Status: {Value: "Goods Receipt & Acceptance"},
+                                                                              RequesterID: {Id: gSelectedRequest.RequesterID.Id, Value: gSelectedRequest.RequesterID.Value},
+                                                                              RequesterEmail: gSelectedRequest.RequesterEmail,
+                                                                              ManagerApproverID: If(IsBlank(gSelectedRequest.ManagerApproverID), Blank(), {Id: gSelectedRequest.ManagerApproverID.Id, Value: gSelectedRequest.ManagerApproverID.Value}),
+                                                                              ManagerApproverNum: If(IsBlank(gSelectedRequest.ManagerApproverID), Blank(), gSelectedRequest.ManagerApproverID.Id),
+                                                                              ProjectID: gSelectedRequest.ProjectID,
+                                                                              ProcurementType: {Value: gSelectedRequest.ProcurementType.Value},
+                                                                              InvoiceType: If(IsBlank(gSelectedRequest.InvoiceType.Value), Blank(), {Value: gSelectedRequest.InvoiceType.Value}),
+                                                                              ProcurementDescription: "Delivery batch #" & gDeliveryNumber & " of request #" & gSelectedRequest.ID & If(IsBlank(txtBatchNotes.Value), "", Char(10) & txtBatchNotes.Value),
+                                                                              PurchaseAccordance: Blank(),
+                                                                              EstimatedCost: Blank(),
+                                                                              Currency: gSelectedRequest.Currency,
+                                                                              RequiredDeliveryDate: dpBatchDeliveryDate.SelectedDate,
+                                                                              DeliveryLocation: Blank(),
+                                                                              CostCenter: Blank(),
+                                                                              InvoiceRegion: {Value: gSelectedRequest.InvoiceRegion.Value},
+                                                                              InvoiceMode: {Value: If(gIsViaRequesterBatch, "ViaRequester", rdoBatchInvoiceMode.Selected.Value)},
+                                                                              InvoiceSubmitted: false,
+                                                                              RequesterInvoiceURL: If(gIsViaRequesterBatch, gSelectedRequest.RequesterInvoiceURL, ""),
+                                                                              ReceiptRoundCount: 0,
+                                                                              ProcurementExecutedBy: {Id: gCurrentEmployee.ID, Value: gCurrentEmployee.Title},
+                                                                              ProcurementExecutedAt: Now()
+                                                                          }
+                                                                      )},
+                                                                      If(
+                                                                          IsBlank(wBatch.ID),
+                                                                          Notify("Failed to create the delivery. Please try again.", NotificationType.Error),
+                                                                          ForAll(
+                                                                              Filter(colBatchEntry, BatchQty > 0) As be,
+                                                                              Patch(
+                                                                                  'RM Procurement Line Items',
+                                                                                  Defaults('RM Procurement Line Items'),
+                                                                                  {
+                                                                                      RequestID: {Id: wBatch.ID, Value: wBatch.Title},
+                                                                                      RequestIDText: Text(wBatch.ID),
+                                                                                      ParentLineItemID: be.ParentLineItemID,
+                                                                                      MaterialID: {Id: be.MaterialID, Value: be.MaterialName},
+                                                                                      MaterialName: be.MaterialName,
+                                                                                      Unit: be.Unit,
+                                                                                      Quantity: be.BatchQty
+                                                                                  }
+                                                                              )
+                                                                          );
+                                                                          Patch('RM Procurement Requests', {ID: gSelectedRequest.ID}, {DeliveryCount: gDeliveryNumber});
+                                                                          Patch(
+                                                                              'RM Procurement Execution Log',
+                                                                              Defaults('RM Procurement Execution Log'),
+                                                                              {
+                                                                                  Title: "Step 7 - Delivery Batch #" & gDeliveryNumber & " Created - " & gSelectedRequest.Title,
+                                                                                  RequestID: {Id: gSelectedRequest.ID, Value: gSelectedRequest.Title},
+                                                                                  RequestIDText: Text(gSelectedRequest.ID),
+                                                                                  StepNumber: 7,
+                                                                                  StepName: {Value: "Delivery Batch Created"},
+                                                                                  RoundNumber: gDeliveryNumber,
+                                                                                  ExecutedBy: {Id: gCurrentEmployee.ID, Value: gCurrentEmployee.Title},
+                                                                                  ExecutedAt: Now(),
+                                                                                  Notes: txtBatchNotes.Value
+                                                                              }
+                                                                          );
+                                                                          Switch(
+                                                                              If(gIsViaRequesterBatch, "ViaRequester", rdoBatchInvoiceMode.Selected.Value),
+                                                                              "Direct",
+                                                                                  Set(gPendingDeliveryBatch, wBatch);
+                                                                                  Set(gPendingNewAttName, Last(attDirectInvoice_DBF.Attachments).Name);
+                                                                                  Set(gPendingDirectAttachments, attDirectInvoice_DBF.Attachments);
+                                                                                  Set(gInvoiceFileURL, gSharePointAttachmentBase & Text(wBatch.ID) & "/" & EncodeUrl(Last(attDirectInvoice_DBF.Attachments).Name));
+                                                                                  EditForm(formDirectInvoice_DBF);
+                                                                                  SubmitForm(formDirectInvoice_DBF),
+                                                                              "ViaRequester",
+                                                                                  If(
+                                                                                      rdoViaReqInvoiceOK_DBF.Selected.Value = "Yes",
+                                                                                      Set(gPendingDeliveryBatch, wBatch);
+                                                                                      Set(gPendingNewAttName, "");
+                                                                                      Set(gPendingDirectAttachments, Blank());
+                                                                                      Set(gInvoiceFileURL, gSelectedRequest.RequesterInvoiceURL);
+                                                                                      EditForm(formDirectInvoice_DBF);
+                                                                                      SubmitForm(formDirectInvoice_DBF),
+                                                                                      Patch('RM Procurement Requests', {ID: wBatch.ID}, {RequesterInvoiceURL: ""});
+                                                                                      Procurement_Notify_Remind_Invoice.Run(
+                                                                                          wBatch.RequesterEmail,
+                                                                                          wBatch.RequesterID.Value,
+                                                                                          wBatch.Title,
+                                                                                          Text(wBatch.ID),
+                                                                                          gCurrentEmployee.Title
+                                                                                      );
+                                                                                      Set(gSelectedRequest, LookUp('RM Procurement Requests', ID = gSelectedRequest.ID));
+                                                                                      Notify("Delivery #" & gDeliveryNumber & " created. The requester has been asked to re-upload the invoice for this delivery.", NotificationType.Warning);
+                                                                                      Navigate(RequestDetailScreen)
+                                                                                  ),
+                                                                              Set(gSelectedRequest, LookUp('RM Procurement Requests', ID = gSelectedRequest.ID));
+                                                                              Notify("Delivery #" & gDeliveryNumber & " created with " & CountRows(Filter(colBatchEntry, BatchQty > 0)) & " material(s).", NotificationType.Success);
+                                                                              Navigate(RequestDetailScreen)
+                                                                          )
+                                                                      )
+                                                                  )
+                                                              )
+                                                          )
+                                                          )
+                                                      )
+                                                  )
+                                              )
+                                              )
+                                          )
+                                      )
+                                  )
+                          )
+                        Text: |-
+                          =If(
+                              Not(IsBlank(gPendingDeliveryBatch.ID)) && gHasInvoiceResult,
+                              "Submit Invoice →",
+                              If(
+                                  Not(gIsViaRequesterBatch) && rdoBatchInvoiceMode.Selected.Value = "Direct",
+                                  "🔍 Create Delivery & Extract Invoice →",
+                                  "Create Delivery →"
                               )
-                        Text: ="Create Delivery →"
-                        Width: =180
+                          )
+                        Visible: =Not(gIsViaRequesterBatch) && Not(rdoBatchInvoiceMode.Selected.Value = "Direct")
+                        Width: =260

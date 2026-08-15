@@ -88,5 +88,6 @@ App:
       ClearCollect(colBatchEntry, {ParentLineItemID: 0, MaterialID: 0, MaterialName: "", Unit: "", OrderedQty: 0, DeliveredQty: 0, RemainingQty: 0, BatchQty: 0});
       Clear(colBatchEntry);
       Set(gPendingDeliveryBatch, Blank());
+      Set(gPendingDirectAttachments, Blank());
       Set(gAppReady, true)
     Theme: =PowerAppsTheme
