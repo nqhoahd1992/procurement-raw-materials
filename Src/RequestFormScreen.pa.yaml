@@ -1116,7 +1116,7 @@ Screens:
                                       =UpdateIf(colLineItems, RowID = ThisItem.RowID, {MaterialID: Self.Selected.ID, MaterialName: Self.Selected.Title, MaterialCode: Coalesce(Self.Selected.Code, "")})
                                     PaddingLeft: =15
                                     PaddingRight: =15
-                                    SearchFields: =["{FilenameWithExtension}","Code"]
+                                    SearchFields: =["Code","Code"]
                                     SelectMultiple: =false
                                     Size: =11
                                     Width: =Parent.Width - 644
