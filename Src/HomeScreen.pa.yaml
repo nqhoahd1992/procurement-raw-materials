@@ -915,7 +915,7 @@ Screens:
                               "—",
                               Concat(
                                   colQuickViewItems,
-                                  RMPKCode & " — " & MaterialName & " (" & Text(Quantity) & " " & Unit & ")",
+                                  Coalesce(MaterialCode, "?") & " — " & MaterialName & " (" & Text(Quantity) & " " & Unit & ")",
                                   "  ·  "
                               )
                           )
