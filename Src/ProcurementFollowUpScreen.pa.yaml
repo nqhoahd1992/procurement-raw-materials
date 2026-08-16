@@ -14,7 +14,7 @@ Screens:
             (Not(gSelectedRequest.InvoiceSubmitted) || IsBlank(gSelectedRequest.OfficialInvoiceLink))
         );
         Set(gInvoiceFromPFU, false);
-        ClearCollect(colLineItemsDetail, Filter('RM Procurement Line Items', RequestIDText = Text(gSelectedRequest.ID)));
+        ClearCollect(colLineItemsDetail, ForAll(Filter('RM Procurement Line Items', RequestIDText = Text(gSelectedRequest.ID)) As li, {ID: li.ID, MaterialID: li.MaterialID, MaterialName: li.MaterialName, Unit: li.Unit, Quantity: li.Quantity, ParentLineItemID: li.ParentLineItemID, RMPKCode: Coalesce(li.MaterialCode, "?")}));
         ClearCollect(colReceiptRounds, Filter('RM Procurement Receipt Rounds', RequestIDText = Text(gSelectedRequest.ID)));
         ClearCollect(
             colPFUSummary,
@@ -26,7 +26,7 @@ Screens:
                         LineItemID: li.ID,
                         MaterialName: li.MaterialName,
                         Unit: li.Unit,
-                        RMPKCode: Coalesce(LookUp('Raw Materials', ID = li.MaterialID.Id).Code, ""),
+                        RMPKCode: li.RMPKCode,
                         OrderedQty: li.Quantity,
                         TotalReceivedQty: Sum(wRows, ReceivedQty),
                         OutstandingQty: li.Quantity - Sum(wRows, ReceivedQty),
@@ -425,14 +425,14 @@ Screens:
                                     "—",
                                     Concat(
                                         colLineItemsDetail,
-                                        Coalesce(LookUp('Raw Materials', ID = MaterialID.Id).Code, "?") & " — " & MaterialName & " (" & Text(Quantity) & " " & Unit & ")",
+                                        RMPKCode & " — " & MaterialName & " (" & Text(Quantity) & " " & Unit & ")",
                                         "  ·  "
                                     )
                                 )
                               Tooltip: |-
                                 =Concat(
                                     colLineItemsDetail,
-                                    Coalesce(LookUp('Raw Materials', ID = MaterialID.Id).Code, "?") & " — " & MaterialName & " (" & Text(Quantity) & " " & Unit & ")",
+                                    RMPKCode & " — " & MaterialName & " (" & Text(Quantity) & " " & Unit & ")",
                                     Char(10)
                                 )
                               Width: =Parent.Width

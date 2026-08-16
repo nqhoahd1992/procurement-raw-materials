@@ -35,9 +35,9 @@ App:
       Set(gSharePointAttachmentBase, "https://maxbiocare.sharepoint.com/sites/Powerapps/Lists/Raw_Material_Procurement_Requests/Attachments/");
       ClearCollect(colRawMaterials, FirstN('Raw Materials', 1));
       ClearCollect(colProjects, FirstN(Project_List, 1));
-      ClearCollect(colLineItems, {RowID: 0, MaterialID: 0, MaterialName: "", Unit: "", Quantity: 1});
+      ClearCollect(colLineItems, {RowID: 0, MaterialID: 0, MaterialName: "", MaterialCode: "", Unit: "", Quantity: 1});
       Clear(colLineItems);
-      ClearCollect(colLineItemsDetail, {ID: 0, MaterialName: "", Unit: "", Quantity: 0});
+      ClearCollect(colLineItemsDetail, {ID: 0, MaterialName: "", Unit: "", Quantity: 0, ParentLineItemID: 0, RMPKCode: ""});
       Clear(colLineItemsDetail);
       ClearCollect(colRequirementFiles, {FileName: "", FileURL: ""});
       Clear(colRequirementFiles);
@@ -86,7 +86,7 @@ App:
       Clear(colParentLineItems);
       ClearCollect(colParentReceived, FirstN('RM Procurement Receipt Rounds', 1));
       Clear(colParentReceived);
-      ClearCollect(colBatchEntry, {ParentLineItemID: 0, MaterialID: 0, MaterialName: "", Unit: "", OrderedQty: 0, DeliveredQty: 0, RemainingQty: 0, BatchQty: 0});
+      ClearCollect(colBatchEntry, {ParentLineItemID: 0, MaterialID: 0, MaterialName: "", MaterialCode: "", Unit: "", OrderedQty: 0, DeliveredQty: 0, RemainingQty: 0, BatchQty: 0});
       Clear(colBatchEntry);
       Set(gPendingDeliveryBatch, Blank());
       Set(gPendingDirectAttachments, Blank());

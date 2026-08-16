@@ -231,15 +231,48 @@ Screens:
                                                                                                       Last(DataCardValue15.Attachments).Name
                                                                                                   )
                                                                                               );
-                                                                                              Set(
-                                                                                                  gSelectedRequest,
-                                                                                                  Patch(
-                                                                                                      'RM Procurement Requests',
-                                                                                                      {ID: wNewRequest.ID},
-                                                                                                      {
-                                                                                                          GroupKey: wNewRequest.ID,
-                                                                                                          Title: "ID - " & Text(wNewRequest.ID) & " - " & gCurrentEmployee.Title & " - " & Text(Today(), "dd/mm/yyyy")
-                                                                                                      }
+                                                                                              With(
+                                                                                                  {wYear: Value(Text(Now(), "yy"))},
+                                                                                                  With(
+                                                                                                      {wSeq: Coalesce(First(SortByColumns(Filter('RM Procurement Requests', RequestType.Value = "Request" && RequestYear = wYear), "RequestSeq", SortOrder.Descending)).RequestSeq, 0) + 1},
+                                                                                                      With(
+                                                                                                          {wCode: "RMRQ-" & Text(wYear, "00") & "-" & Text(wSeq, "0000")},
+                                                                                                          Set(
+                                                                                                              gSelectedRequest,
+                                                                                                              Patch(
+                                                                                                                  'RM Procurement Requests',
+                                                                                                                  {ID: wNewRequest.ID},
+                                                                                                                  {
+                                                                                                                      GroupKey: wNewRequest.ID,
+                                                                                                                      RequestYear: wYear,
+                                                                                                                      RequestSeq: wSeq,
+                                                                                                                      DisplayID: wCode,
+                                                                                                                      Title: wCode & " - " & gCurrentEmployee.Title & " - " & Text(Today(), "dd/mm/yyyy")
+                                                                                                                  }
+                                                                                                              )
+                                                                                                          )
+                                                                                                      )
+                                                                                                  )
+                                                                                              );
+                                                                                              With(
+                                                                                                  {wFirst: First(SortByColumns(Filter('RM Procurement Requests', RequestType.Value = "Request" && RequestYear = gSelectedRequest.RequestYear && RequestSeq = gSelectedRequest.RequestSeq), "ID", SortOrder.Ascending))},
+                                                                                                  If(
+                                                                                                      wFirst.ID <> gSelectedRequest.ID,
+                                                                                                      With(
+                                                                                                          {wCode2: "RMRQ-" & Text(gSelectedRequest.RequestYear, "00") & "-" & Text(gSelectedRequest.RequestSeq + 1, "0000")},
+                                                                                                          Set(
+                                                                                                              gSelectedRequest,
+                                                                                                              Patch(
+                                                                                                                  'RM Procurement Requests',
+                                                                                                                  {ID: gSelectedRequest.ID},
+                                                                                                                  {
+                                                                                                                      RequestSeq: gSelectedRequest.RequestSeq + 1,
+                                                                                                                      DisplayID: wCode2,
+                                                                                                                      Title: wCode2 & " - " & gCurrentEmployee.Title & " - " & Text(Today(), "dd/mm/yyyy")
+                                                                                                                  }
+                                                                                                              )
+                                                                                                          )
+                                                                                                      )
                                                                                                   )
                                                                                               );
                                                                                               ForAll(
@@ -252,6 +285,7 @@ Screens:
                                                                                                           RequestIDText: Text(wNewRequest.ID),
                                                                                                           ParentLineItemID: 0,
                                                                                                           MaterialID: {Id: MaterialID, Value: MaterialName},
+                                                                                                          MaterialCode: Coalesce(MaterialCode, ""),
                                                                                                           MaterialName: MaterialName,
                                                                                                           Unit: Unit,
                                                                                                           Quantity: Quantity
@@ -965,7 +999,7 @@ Screens:
                                   Properties:
                                     Height: =36
                                     OnSelect: |-
-                                      =Collect(colLineItems, {RowID: Coalesce(Max(colLineItems, RowID), 0) + 1, MaterialID: 0, MaterialName: "", Unit: "", Quantity: 1})
+                                      =Collect(colLineItems, {RowID: Coalesce(Max(colLineItems, RowID), 0) + 1, MaterialID: 0, MaterialName: "", MaterialCode: "", Unit: "", Quantity: 1})
                                     Text: ="+ Add Material"
                                     Width: =160
                   - rowLineItemsColumnHeader:
@@ -1079,7 +1113,7 @@ Screens:
                                     InputTextPlaceholder: ="Search by trade name or code"
                                     Items: =colRawMaterials
                                     OnChange: |-
-                                      =UpdateIf(colLineItems, RowID = ThisItem.RowID, {MaterialID: Self.Selected.ID, MaterialName: Self.Selected.Title})
+                                      =UpdateIf(colLineItems, RowID = ThisItem.RowID, {MaterialID: Self.Selected.ID, MaterialName: Self.Selected.Title, MaterialCode: Coalesce(Self.Selected.Code, "")})
                                     PaddingLeft: =15
                                     PaddingRight: =15
                                     SearchFields: =["{FilenameWithExtension}","Code"]
@@ -1462,6 +1496,7 @@ Screens:
                                               RowID: wBase + s.Value,
                                               MaterialID: Index(wMatched, s.Value).MaterialID,
                                               MaterialName: Index(wMatched, s.Value).MaterialName,
+                                              MaterialCode: Index(wMatched, s.Value).Code,
                                               Unit: Index(wMatched, s.Value).Unit,
                                               Quantity: Index(wMatched, s.Value).Quantity
                                           }

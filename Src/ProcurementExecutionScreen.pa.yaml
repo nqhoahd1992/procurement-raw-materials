@@ -20,7 +20,7 @@ Screens:
                 }
             )
         );
-        ClearCollect(colLineItemsDetail, Filter('RM Procurement Line Items', RequestIDText = Text(gSelectedRequest.ID)))
+        ClearCollect(colLineItemsDetail, ForAll(Filter('RM Procurement Line Items', RequestIDText = Text(gSelectedRequest.ID)) As li, {ID: li.ID, MaterialID: li.MaterialID, MaterialName: li.MaterialName, Unit: li.Unit, Quantity: li.Quantity, ParentLineItemID: li.ParentLineItemID, RMPKCode: Coalesce(li.MaterialCode, "?")}))
     Children:
       - rectHeader_PE:
           Control: Rectangle@2.3.0
@@ -517,14 +517,14 @@ Screens:
                                           "—",
                                           Concat(
                                               colLineItemsDetail,
-                                              Coalesce(LookUp('Raw Materials', ID = MaterialID.Id).Code, "?") & " — " & MaterialName & " (" & Text(Quantity) & " " & Unit & ")",
+                                              RMPKCode & " — " & MaterialName & " (" & Text(Quantity) & " " & Unit & ")",
                                               "  ·  "
                                           )
                                       )
                                     Tooltip: |-
                                       =Concat(
                                           colLineItemsDetail,
-                                          Coalesce(LookUp('Raw Materials', ID = MaterialID.Id).Code, "?") & " — " & MaterialName & " (" & Text(Quantity) & " " & Unit & ")",
+                                          RMPKCode & " — " & MaterialName & " (" & Text(Quantity) & " " & Unit & ")",
                                           Char(10)
                                       )
                                     Width: =Parent.Width

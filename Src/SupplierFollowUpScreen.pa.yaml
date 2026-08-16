@@ -22,7 +22,7 @@ Screens:
         Set(gLatestDecision, gSelectedRequest.LatestReceiptDecision);
         Set(gCurrentRound, gRoundsDone + 1);
         Set(gSFURoundOpen, gSelectedRequest.Status.Value = "Pending Supplier Follow-up" && gLatestDecision = "Requires Supplier Follow-up");
-        ClearCollect(colLineItemsDetail, Filter('RM Procurement Line Items', RequestIDText = Text(gSelectedRequest.ID)));
+        ClearCollect(colLineItemsDetail, ForAll(Filter('RM Procurement Line Items', RequestIDText = Text(gSelectedRequest.ID)) As li, {ID: li.ID, MaterialID: li.MaterialID, MaterialName: li.MaterialName, Unit: li.Unit, Quantity: li.Quantity, ParentLineItemID: li.ParentLineItemID, RMPKCode: Coalesce(li.MaterialCode, "?")}));
         ClearCollect(colReceiptRounds, Filter('RM Procurement Receipt Rounds', RequestIDText = Text(gSelectedRequest.ID)));
         ClearCollect(
             colRoundHistory,
@@ -61,7 +61,7 @@ Screens:
                     BatchNumber: "",
                     ExpiryDate: Blank(),
                     QCNumber: "",
-                    RMPKCode: With({wMatID: li.MaterialID.Id}, Coalesce(LookUp('Raw Materials', ID = wMatID).Code, "")),
+                    RMPKCode: li.RMPKCode,
                     COALink: ""
                 }
             )
@@ -403,14 +403,14 @@ Screens:
                                     "—",
                                     Concat(
                                         colLineItemsDetail,
-                                        Coalesce(LookUp('Raw Materials', ID = MaterialID.Id).Code, "?") & " — " & MaterialName & " (" & Text(Quantity) & " " & Unit & ")",
+                                        RMPKCode & " — " & MaterialName & " (" & Text(Quantity) & " " & Unit & ")",
                                         "  ·  "
                                     )
                                 )
                               Tooltip: |-
                                 =Concat(
                                     colLineItemsDetail,
-                                    Coalesce(LookUp('Raw Materials', ID = MaterialID.Id).Code, "?") & " — " & MaterialName & " (" & Text(Quantity) & " " & Unit & ")",
+                                    RMPKCode & " — " & MaterialName & " (" & Text(Quantity) & " " & Unit & ")",
                                     Char(10)
                                 )
                               Width: =Parent.Width
@@ -846,7 +846,8 @@ Screens:
                                     "Unassigned",
                                     Text(gSelectedRequest.RequiredDeliveryDate, "dd/mm/yyyy"),
                                     "",
-                                    "Max Biocare · Raw Materials Procurement"
+                                    "Max Biocare · Raw Materials Procurement",
+                                    Coalesce(gSelectedRequest.DisplayID, Text(gSelectedRequest.ID))
                                     )
                                 );
                                 Set(gSFU1DelegationMode, "I will receive");
@@ -1740,7 +1741,8 @@ Screens:
                                   "Unassigned",
                                   Text(gSelectedRequest.RequiredDeliveryDate, "dd/mm/yyyy"),
                                   "",
-                                  "Max Biocare · Raw Materials Procurement"
+                                  "Max Biocare · Raw Materials Procurement",
+                                  Coalesce(gSelectedRequest.DisplayID, Text(gSelectedRequest.ID))
                               )
                             );
                             With(
@@ -1757,7 +1759,8 @@ Screens:
                                   "SupplierFollowUp",
                                   Text(gSelectedRequest.RequiredDeliveryDate, "dd/mm/yyyy"),
                                   "",
-                                  "Max Biocare · Raw Materials Procurement"
+                                  "Max Biocare · Raw Materials Procurement",
+                                  Coalesce(gSelectedRequest.DisplayID, Text(gSelectedRequest.ID))
                                 );
                                 Notify("Assignment saved to " & ddAssignReceiver_SFU.Selected.Title, NotificationType.Success)
                               )

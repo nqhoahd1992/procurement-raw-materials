@@ -256,7 +256,7 @@ Screens:
                               Text: |-
                                 =If(
                                   ThisItem.RequestType.Value = "Delivery",
-                                  "↳ Delivery #" & ThisItem.DeliveryNumber & "  ·  ID: " & ThisItem.ID & "  ·  of Request #" & ThisItem.ParentRequestID,
+                                  "↳ " & Coalesce(ThisItem.DisplayID, "Delivery #" & ThisItem.DeliveryNumber),
                                   ThisItem.Title
                                 )
                               Width: =Parent.Width - 300
@@ -679,7 +679,7 @@ Screens:
                   PaddingLeft: =0
                   Size: =12
                   Text: |-
-                    ="Quick View — Request #" & Text(gQuickViewRequest.ID)
+                    ="Quick View — " & Coalesce(gQuickViewRequest.DisplayID, "Request #" & Text(gQuickViewRequest.ID))
                   Width: =Parent.Width - 40
                   Wrap: =false
             - rectQuickViewDivider_HS:
@@ -915,7 +915,7 @@ Screens:
                               "—",
                               Concat(
                                   colQuickViewItems,
-                                  Coalesce(LookUp('Raw Materials', ID = MaterialID.Id).Code, "?") & " — " & MaterialName & " (" & Text(Quantity) & " " & Unit & ")",
+                                  RMPKCode & " — " & MaterialName & " (" & Text(Quantity) & " " & Unit & ")",
                                   "  ·  "
                               )
                           )

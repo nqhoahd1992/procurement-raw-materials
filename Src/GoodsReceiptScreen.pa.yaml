@@ -18,7 +18,7 @@ Screens:
         Reset(ddAssignReceiver_GR);
         Set(gShowBulkReceiptGR, false);
         Set(gSelectedRequest, LookUp('RM Procurement Requests', ID = gSelectedRequest.ID));
-        ClearCollect(colLineItemsDetail, Filter('RM Procurement Line Items', RequestIDText = Text(gSelectedRequest.ID)));
+        ClearCollect(colLineItemsDetail, ForAll(Filter('RM Procurement Line Items', RequestIDText = Text(gSelectedRequest.ID)) As li, {ID: li.ID, MaterialID: li.MaterialID, MaterialName: li.MaterialName, Unit: li.Unit, Quantity: li.Quantity, ParentLineItemID: li.ParentLineItemID, RMPKCode: Coalesce(li.MaterialCode, "?")}));
         ClearCollect(
             colRoundEntry,
             ForAll(
@@ -35,7 +35,7 @@ Screens:
                     BatchNumber: "",
                     ExpiryDate: Blank(),
                     QCNumber: "",
-                    RMPKCode: With({wMatID: li.MaterialID.Id}, Coalesce(LookUp('Raw Materials', ID = wMatID).Code, "")),
+                    RMPKCode: li.RMPKCode,
                     COALink: ""
                 }
             )
@@ -296,14 +296,14 @@ Screens:
                                     "—",
                                     Concat(
                                         colLineItemsDetail,
-                                        Coalesce(LookUp('Raw Materials', ID = MaterialID.Id).Code, "?") & " — " & MaterialName & " (" & Text(Quantity) & " " & Unit & ")",
+                                        RMPKCode & " — " & MaterialName & " (" & Text(Quantity) & " " & Unit & ")",
                                         "  ·  "
                                     )
                                 )
                               Tooltip: |-
                                 =Concat(
                                     colLineItemsDetail,
-                                    Coalesce(LookUp('Raw Materials', ID = MaterialID.Id).Code, "?") & " — " & MaterialName & " (" & Text(Quantity) & " " & Unit & ")",
+                                    RMPKCode & " — " & MaterialName & " (" & Text(Quantity) & " " & Unit & ")",
                                     Char(10)
                                 )
                               Width: =Parent.Width
@@ -371,7 +371,8 @@ Screens:
                                     "Unassigned",
                                     Text(gSelectedRequest.RequiredDeliveryDate, "dd/mm/yyyy"),
                                     "",
-                                    "Max Biocare · Raw Materials Procurement"
+                                    "Max Biocare · Raw Materials Procurement",
+                                    Coalesce(gSelectedRequest.DisplayID, Text(gSelectedRequest.ID))
                                     )
                                 );
                                 Set(gGRDelegationMode, "I will receive");
@@ -1260,7 +1261,8 @@ Screens:
                                       "Unassigned",
                                       Text(gSelectedRequest.RequiredDeliveryDate, "dd/mm/yyyy"),
                                       "",
-                                      "Max Biocare · Raw Materials Procurement"
+                                      "Max Biocare · Raw Materials Procurement",
+                                      Coalesce(gSelectedRequest.DisplayID, Text(gSelectedRequest.ID))
                                   )
                               );
                               With(
@@ -1277,7 +1279,8 @@ Screens:
                                           "GoodsReceipt",
                                           Text(gSelectedRequest.RequiredDeliveryDate, "dd/mm/yyyy"),
                                           "",
-                                          "Max Biocare · Raw Materials Procurement"
+                                          "Max Biocare · Raw Materials Procurement",
+                                          Coalesce(gSelectedRequest.DisplayID, Text(gSelectedRequest.ID))
                                       );
                                       Notify("Assignment saved to " & ddAssignReceiver_GR.Selected.Title, NotificationType.Success)
                                   )

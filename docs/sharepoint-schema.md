@@ -35,6 +35,9 @@ Does **not** have a `Category`, `PreferredSupplier`, or `Department` column (all
 | Column | Type | Notes |
 |---|---|---|
 | `Title` (Title) | Text | Parent: `ID: <own ID> - <employee> - <dd/mm/yyyy> - <project Title>`, written by the **same second `Patch`** as `GroupKey` below, since the `ID` prefix isn't knowable until the row exists (the create `Patch` writes the same string minus that prefix). Child: `<parent Title> - #<DeliveryNumber>`, so a child inherits the parent's `ID:` prefix. **Not unique and not a key** — nothing prevents two children with the same number except the `DeliveryCount` allocation guard below |
+| `RequestYear` ⬅ new | Number | 2 chữ số năm tạo request gốc (vd `26`). Delivery copy của cha. Chỉ dùng để cấp số và nhóm theo năm |
+| `RequestSeq` ⬅ new | Number | Số thứ tự **trong năm đó**, chỉ cấp cho request gốc; delivery copy của cha. Cấp bằng `First(SortByColumns(Filter(…RequestType="Request" && RequestYear=…), "RequestSeq", Descending))+1` — mẫu delegable, không dùng `Max()` |
+| `DisplayID` ⬅ new | Text | Mã hiển thị: `RMRQ-26-0001` (cha) · `RMRQ-26-0001-D1` (con). **Chỉ để người đọc** — không bao giờ dùng làm khoá tra cứu. `ID` thật vẫn là khoá duy nhất cho mọi `LookUp`/`Filter`/URL/tham số flow |
 | `RequestType` ⬅ **new** | Choice | `Request` (parent) · `Delivery` (child). **Existing rows must be back-filled to `Request`** — a SharePoint column default applies only to new items, and `RequestType.Value = "Request"` does not match blank, so an un-backfilled row disappears from `HomeScreen` for every role. Do **not** use `IsBlank(ParentRequestID)` as a substitute discriminator: `IsBlank()` on a Number is not delegable (same reason `COAMissing` exists) |
 | `ParentRequestID` ⬅ **new** | Number | Blank/0 on a parent; the parent's `ID` on a child. Plain **Number**, not a Lookup, so `=` delegates |
 | `DeliveryNumber` ⬅ **new** | Number | `0` on a parent, `1..n` on a child. **Named `DeliveryNumber`, not `BatchNumber`** — `'RM Procurement Receipt Rounds'.BatchNumber` already means the *material's lot number*, and reusing the word across the two lists made every formula ambiguous |
@@ -174,6 +177,7 @@ Required ⚠: none enforced by schema, but the app always writes `RequestID`, `R
 | `RequestID` | Lookup→'RM Procurement Requests' | `{Id: wNewRequest.ID, Value: wNewRequest.Title}`, written once per line item via `ForAll` on `RequestFormScreen` submit |
 | `RequestIDText` | Text | join key — `Filter('RM Procurement Line Items', RequestIDText = Text(gSelectedRequest.ID))` on every downstream screen. **May point at either a parent or a delivery** (see below) |
 | `ParentLineItemID` ⬅ **new** | Number | `0` on a parent's rows; on a delivery's rows, the `ID` of the parent line item it draws down. This is what lets the parent roll up "delivered so far per material" across all its deliveries |
+| `MaterialCode` ⬅ new | Text | the raw material's `Code`, denormalised onto the line item at creation. Read as `RMPKCode` by every screen's `colLineItemsDetail` projection. Exists so no screen has to `LookUp('Raw Materials', …)` inside a `ForAll` — that is client-side per row and always raises a delegation warning |
 | `MaterialID` | Lookup→'Raw Materials' | `{Id: MaterialID, Value: MaterialName}` |
 | `MaterialName` | Text | copy of the raw material's `Title` at the time the line item was added |
 | `Unit` | Text | one of `pcs`, `kg`, `box`, `set`, `liter`, `meter` (hardcoded list on `RequestFormScreen`, not a Choice column) |

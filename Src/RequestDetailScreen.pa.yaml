@@ -19,7 +19,7 @@ Screens:
                 }
             )
         );
-        ClearCollect(colLineItemsDetail, Filter('RM Procurement Line Items', RequestIDText = Text(gSelectedRequest.ID)));
+        ClearCollect(colLineItemsDetail, ForAll(Filter('RM Procurement Line Items', RequestIDText = Text(gSelectedRequest.ID)) As li, {ID: li.ID, MaterialID: li.MaterialID, MaterialName: li.MaterialName, Unit: li.Unit, Quantity: li.Quantity, ParentLineItemID: li.ParentLineItemID, RMPKCode: Coalesce(li.MaterialCode, "?")}));
         ClearCollect(colExecutionLog, Sort(Filter('RM Procurement Execution Log', RequestIDText = Text(gSelectedRequest.ID)), ID, SortOrder.Ascending));
         ClearCollect(colApprovalLog, Sort(Filter('RM Procurement Approval Log', RequestIDText = Text(gRootRequestID)), ID, SortOrder.Ascending));
         If(
@@ -239,7 +239,7 @@ Screens:
                               Height: =48
                               Size: =10
                               Text: |-
-                                ="⚠ This is Delivery #" & gSelectedRequest.DeliveryNumber & " of Request #" & gSelectedRequest.ParentRequestID & ". The approval, cost and manager fields below belong to the parent request, not to this delivery — only the raw materials, receipt rounds and invoice on this page are this delivery's own."
+                                ="⚠ This is " & Coalesce(gSelectedRequest.DisplayID, "Delivery #" & gSelectedRequest.DeliveryNumber) & " of " & Coalesce(gParentRequest.DisplayID, "Request #" & gSelectedRequest.ParentRequestID) & ". The approval, cost and manager fields below belong to the parent request, not to this delivery — only the raw materials, receipt rounds and invoice on this page are this delivery's own."
                               Width: =Parent.Width - 240
                         - btnOpenParent_RD:
                             Control: Button@0.0.45
@@ -1378,7 +1378,7 @@ Screens:
                                           Height: =24
                                           PaddingLeft: =0
                                           Size: =10
-                                          Text: =Text(ThisItem.ID)
+                                          Text: =Coalesce(ThisItem.DisplayID, Text(ThisItem.ID))
                                           Width: =70
                                           Wrap: =false
                                     - lblBatchStatus_RD:

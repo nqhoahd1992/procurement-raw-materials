@@ -31,7 +31,7 @@ Screens:
                 }
             )
         );
-        ClearCollect(colLineItemsDetail, Filter('RM Procurement Line Items', RequestIDText = Text(gSelectedRequest.ID)))
+        ClearCollect(colLineItemsDetail, ForAll(Filter('RM Procurement Line Items', RequestIDText = Text(gSelectedRequest.ID)) As li, {ID: li.ID, MaterialID: li.MaterialID, MaterialName: li.MaterialName, Unit: li.Unit, Quantity: li.Quantity, ParentLineItemID: li.ParentLineItemID, RMPKCode: Coalesce(li.MaterialCode, "?")}))
     Children:
       - rectHeader_ISS:
           Control: Rectangle@2.3.0
@@ -537,14 +537,14 @@ Screens:
                                           "—",
                                           Concat(
                                               colLineItemsDetail,
-                                              Coalesce(LookUp('Raw Materials', ID = MaterialID.Id).Code, "?") & " — " & MaterialName & " (" & Text(Quantity) & " " & Unit & ")",
+                                              RMPKCode & " — " & MaterialName & " (" & Text(Quantity) & " " & Unit & ")",
                                               "  ·  "
                                           )
                                       )
                                     Tooltip: |-
                                       =Concat(
                                           colLineItemsDetail,
-                                          Coalesce(LookUp('Raw Materials', ID = MaterialID.Id).Code, "?") & " — " & MaterialName & " (" & Text(Quantity) & " " & Unit & ")",
+                                          RMPKCode & " — " & MaterialName & " (" & Text(Quantity) & " " & Unit & ")",
                                           Char(10)
                                       )
                                     Width: =Parent.Width
@@ -717,7 +717,7 @@ Screens:
                               gSelectedRequest.RequesterEmail,
                               gSelectedRequest.RequesterID.Value,
                               gSelectedRequest.Title,
-                              Text(gSelectedRequest.ID),
+                              Coalesce(gSelectedRequest.DisplayID, Text(gSelectedRequest.ID)),
                               ""
                           );
                           Notify("Reminder sent to " & gSelectedRequest.RequesterID.Value & ".", NotificationType.Success)
@@ -878,7 +878,7 @@ Screens:
                                       gSelectedRequest.RequesterEmail,
                                       gSelectedRequest.RequesterID.Value,
                                       gSelectedRequest.Title,
-                                      Text(gSelectedRequest.ID),
+                                      Coalesce(gSelectedRequest.DisplayID, Text(gSelectedRequest.ID)),
                                       gCurrentEmployee.Title
                                   );
                                   Set(gSelectedRequest, LookUp('RM Procurement Requests', ID = gSelectedRequest.ID));

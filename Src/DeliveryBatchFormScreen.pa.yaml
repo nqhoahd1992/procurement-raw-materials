@@ -35,6 +35,7 @@ Screens:
                         ParentLineItemID: li.ID,
                         MaterialID: li.MaterialID.Id,
                         MaterialName: li.MaterialName,
+                        MaterialCode: Coalesce(li.MaterialCode, ""),
                         Unit: li.Unit,
                         OrderedQty: li.Quantity,
                         DeliveredQty: wDelivered,
@@ -1355,7 +1356,10 @@ Screens:
                                                                           'RM Procurement Requests',
                                                                           Defaults('RM Procurement Requests'),
                                                                           {
-                                                                              Title: gSelectedRequest.Title & " - #" & gDeliveryNumber,
+                                                                              Title: Substitute(gSelectedRequest.Title, gSelectedRequest.DisplayID, gSelectedRequest.DisplayID & "-D" & gDeliveryNumber),
+                                                                              RequestYear: gSelectedRequest.RequestYear,
+                                                                              RequestSeq: gSelectedRequest.RequestSeq,
+                                                                              DisplayID: gSelectedRequest.DisplayID & "-D" & gDeliveryNumber,
                                                                               RequestType: {Value: "Delivery"},
                                                                               ParentRequestID: gSelectedRequest.ID,
                                                                               GroupKey: gSelectedRequest.ID,
@@ -1398,6 +1402,7 @@ Screens:
                                                                                       RequestIDText: Text(wBatch.ID),
                                                                                       ParentLineItemID: be.ParentLineItemID,
                                                                                       MaterialID: {Id: be.MaterialID, Value: be.MaterialName},
+                                                                                      MaterialCode: Coalesce(be.MaterialCode, ""),
                                                                                       MaterialName: be.MaterialName,
                                                                                       Unit: be.Unit,
                                                                                       Quantity: be.BatchQty
@@ -1443,7 +1448,7 @@ Screens:
                                                                                           wBatch.RequesterEmail,
                                                                                           wBatch.RequesterID.Value,
                                                                                           wBatch.Title,
-                                                                                          Text(wBatch.ID),
+                                                                                          Coalesce(wBatch.DisplayID, Text(wBatch.ID)),
                                                                                           gCurrentEmployee.Title
                                                                                       );
                                                                                       Set(gSelectedRequest, LookUp('RM Procurement Requests', ID = gSelectedRequest.ID));
@@ -1576,7 +1581,10 @@ Screens:
                                                                           'RM Procurement Requests',
                                                                           Defaults('RM Procurement Requests'),
                                                                           {
-                                                                              Title: gSelectedRequest.Title & " - #" & gDeliveryNumber,
+                                                                              Title: Substitute(gSelectedRequest.Title, gSelectedRequest.DisplayID, gSelectedRequest.DisplayID & "-D" & gDeliveryNumber),
+                                                                              RequestYear: gSelectedRequest.RequestYear,
+                                                                              RequestSeq: gSelectedRequest.RequestSeq,
+                                                                              DisplayID: gSelectedRequest.DisplayID & "-D" & gDeliveryNumber,
                                                                               RequestType: {Value: "Delivery"},
                                                                               ParentRequestID: gSelectedRequest.ID,
                                                                               GroupKey: gSelectedRequest.ID,
@@ -1619,6 +1627,7 @@ Screens:
                                                                                       RequestIDText: Text(wBatch.ID),
                                                                                       ParentLineItemID: be.ParentLineItemID,
                                                                                       MaterialID: {Id: be.MaterialID, Value: be.MaterialName},
+                                                                                      MaterialCode: Coalesce(be.MaterialCode, ""),
                                                                                       MaterialName: be.MaterialName,
                                                                                       Unit: be.Unit,
                                                                                       Quantity: be.BatchQty
@@ -1664,7 +1673,7 @@ Screens:
                                                                                           wBatch.RequesterEmail,
                                                                                           wBatch.RequesterID.Value,
                                                                                           wBatch.Title,
-                                                                                          Text(wBatch.ID),
+                                                                                          Coalesce(wBatch.DisplayID, Text(wBatch.ID)),
                                                                                           gCurrentEmployee.Title
                                                                                       );
                                                                                       Set(gSelectedRequest, LookUp('RM Procurement Requests', ID = gSelectedRequest.ID));

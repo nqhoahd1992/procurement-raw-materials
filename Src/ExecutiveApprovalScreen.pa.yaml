@@ -15,7 +15,7 @@ Screens:
                 ProjectID = gSelectedRequest.ProjectID
             )
         );
-        ClearCollect(colLineItemsDetail, Filter('RM Procurement Line Items', RequestIDText = Text(gSelectedRequest.ID)))
+        ClearCollect(colLineItemsDetail, ForAll(Filter('RM Procurement Line Items', RequestIDText = Text(gSelectedRequest.ID)) As li, {ID: li.ID, MaterialID: li.MaterialID, MaterialName: li.MaterialName, Unit: li.Unit, Quantity: li.Quantity, ParentLineItemID: li.ParentLineItemID, RMPKCode: Coalesce(li.MaterialCode, "?")}))
     Children:
       - rectHeader_3:
           Control: Rectangle@2.3.0
@@ -352,14 +352,14 @@ Screens:
                               "—",
                               Concat(
                                   colLineItemsDetail,
-                                  Coalesce(LookUp('Raw Materials', ID = MaterialID.Id).Code, "?") & " — " & MaterialName & " (" & Text(Quantity) & " " & Unit & ")",
+                                  RMPKCode & " — " & MaterialName & " (" & Text(Quantity) & " " & Unit & ")",
                                   "  ·  "
                               )
                           )
                         Tooltip: |-
                           =Concat(
                               colLineItemsDetail,
-                              Coalesce(LookUp('Raw Materials', ID = MaterialID.Id).Code, "?") & " — " & MaterialName & " (" & Text(Quantity) & " " & Unit & ")",
+                              RMPKCode & " — " & MaterialName & " (" & Text(Quantity) & " " & Unit & ")",
                               Char(10)
                           )
                         Width: =Parent.Width - 40
@@ -845,7 +845,8 @@ Screens:
                                                           "ExecutivePayment",
                                                           Text(wReq.RequiredDeliveryDate, "dd/mm/yyyy"),
                                                           "",
-                                                          "Max Biocare · Raw Materials Procurement"
+                                                          "Max Biocare · Raw Materials Procurement",
+                                                          Coalesce(wReq.DisplayID, Text(wReq.ID))
                                                       );
                                                       Navigate(ExecutivePaymentScreen),
                                                       Navigate(HomeScreen)
