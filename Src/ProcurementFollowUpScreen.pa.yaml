@@ -660,7 +660,7 @@ Screens:
                                       =If(
                                           ThisItem.OutstandingQty <= 0,
                                           "Complete",
-                                          Text(ThisItem.OutstandingQty) & " short"
+                                          Text(ThisItem.OutstandingQty)
                                       )
                                     Width: =Parent.Width * 0.13
                                     Wrap: =false

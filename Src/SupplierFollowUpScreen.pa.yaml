@@ -1343,19 +1343,11 @@ Screens:
                               Size: =9
                               Text: ="Expiry Date *"
                               Width: =Parent.Width * 0.1
-                        - lblGRColSupplier_1:
-                            Control: Label@2.5.1
-                            Properties:
-                              Color: =RGBA(68, 68, 65, 1)
-                              FontWeight: =FontWeight.Semibold
-                              Height: =36
-                              Size: =9
-                              Text: ="Supplier"
-                              Width: =Parent.Width * 0.08
                         - lblGRColName_1:
                             Control: Label@2.5.1
                             Properties:
                               Color: =RGBA(68, 68, 65, 1)
+                              FillPortions: =1
                               FontWeight: =FontWeight.Semibold
                               Height: =36
                               Size: =9
@@ -1480,20 +1472,11 @@ Screens:
                                     Placeholder: ="Expiry date"
                                     Size: =0
                                     Width: =Parent.Width * 0.1
-                              - lblSFUItemSupplier:
-                                  Control: Label@2.5.1
-                                  Properties:
-                                    Color: =RGBA(136, 135, 128, 1)
-                                    Size: =11
-                                    Text: =Coalesce(LookUp('Raw Materials', ID = ThisItem.MaterialID).Supplier.Value, "")
-                                    Width: =Parent.Width * 0.08
-                                    Wrap: =false
                               - colSFUName:
                                   Control: GroupContainer@1.5.0
                                   Variant: AutoLayout
                                   Properties:
                                     DropShadow: =DropShadow.None
-                                    FillPortions: =0
                                     LayoutDirection: =LayoutDirection.Vertical
                                     LayoutGap: =2
                                     RadiusBottomLeft: =0

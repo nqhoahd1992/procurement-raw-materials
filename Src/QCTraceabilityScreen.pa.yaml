@@ -87,6 +87,7 @@ Screens:
                       Variant: AutoLayout
                       Properties:
                         DropShadow: =DropShadow.None
+                        FillPortions: =0
                         Height: =40
                         LayoutAlignItems: =LayoutAlignItems.Center
                         LayoutDirection: =LayoutDirection.Horizontal
@@ -102,7 +103,6 @@ Screens:
                             Properties:
                               Height: =40
                               Placeholder: ="Enter QC Number..."
-                              Width: =320
                         - btnQCSearch_QC:
                             Control: Button@0.0.45
                             Properties:
@@ -142,10 +142,6 @@ Screens:
                   LayoutDirection: =LayoutDirection.Horizontal
                   PaddingLeft: =20
                   PaddingRight: =20
-                  RadiusBottomLeft: =4
-                  RadiusBottomRight: =4
-                  RadiusTopLeft: =4
-                  RadiusTopRight: =4
                   Visible: =gQCSearched && Not(gQCFound)
                   Width: =Parent.Width
                 Children:

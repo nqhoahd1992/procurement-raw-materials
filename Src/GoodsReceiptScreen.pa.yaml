@@ -745,19 +745,11 @@ Screens:
                               Size: =9
                               Text: ="Expiry Date *"
                               Width: =Parent.Width * 0.11
-                        - lblGRColSupplier:
-                            Control: Label@2.5.1
-                            Properties:
-                              Color: =RGBA(68, 68, 65, 1)
-                              FontWeight: =FontWeight.Semibold
-                              Height: =36
-                              Size: =9
-                              Text: ="Supplier"
-                              Width: =Parent.Width * 0.09
                         - lblGRColName:
                             Control: Label@2.5.1
                             Properties:
                               Color: =RGBA(68, 68, 65, 1)
+                              FillPortions: =1
                               FontWeight: =FontWeight.Semibold
                               Height: =36
                               Size: =9
@@ -872,21 +864,11 @@ Screens:
                                     Placeholder: ="Expiry date"
                                     Size: =0
                                     Width: =Parent.Width * 0.11
-                              - lblGRItemSupplier:
-                                  Control: Label@2.5.1
-                                  Properties:
-                                    Color: =RGBA(136, 135, 128, 1)
-                                    Size: =11
-                                    Text: =Coalesce(LookUp('Raw Materials', ID = ThisItem.MaterialID).Supplier.Value, "")
-                                    Tooltip: =Coalesce(LookUp('Raw Materials', ID = ThisItem.MaterialID).Supplier.Value, "")
-                                    Width: =Parent.Width * 0.09
-                                    Wrap: =false
                               - colGRName:
                                   Control: GroupContainer@1.5.0
                                   Variant: AutoLayout
                                   Properties:
                                     DropShadow: =DropShadow.None
-                                    FillPortions: =0
                                     LayoutDirection: =LayoutDirection.Vertical
                                     LayoutGap: =2
                                     LayoutJustifyContent: =LayoutJustifyContent.Center
