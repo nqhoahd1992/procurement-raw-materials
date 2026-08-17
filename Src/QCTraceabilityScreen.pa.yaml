@@ -5,10 +5,37 @@ Screens:
       OnVisible: |-
         =Set(gQCSearched, false);
         Set(gQCFound, false);
-        Set(gQCOriginRequest, Blank());
-        Set(gQCMatchParentID, Blank());
-        Clear(colQCAllForOrigin);
-        Reset(txtQCSearch_QC)
+        Clear(colQCResults);
+        Reset(txtQCSearch_QC);
+        ClearCollect(colQCAllRounds, FirstN(Sort('RM Procurement Receipt Rounds', ID, SortOrder.Descending), 1000));
+        ClearCollect(colQCRequestsIndex, Filter('RM Procurement Requests', RequestType.Value = "Request"));
+        ClearCollect(colQCStep1Index, Filter('RM Procurement Execution Log', StepNumber = 1));
+        With(
+            {wFlatRounds: FirstN(colQCAllRounds, 50)},
+            With(
+                {wAnchors: ForAll(
+                    wFlatRounds As r,
+                    {
+                        OriginID: r.ParentRequestID,
+                        IsAnchor: r.ID = Min(Filter(wFlatRounds, ParentRequestID = r.ParentRequestID), ID)
+                    }
+                )},
+                ClearCollect(
+                    colQCResults,
+                    ForAll(
+                        Filter(wAnchors, IsAnchor) As a,
+                        {
+                            OriginID: a.OriginID,
+                            DisplayID: Coalesce(LookUp(colQCRequestsIndex, ID = a.OriginID).DisplayID, "Request #" & a.OriginID),
+                            SupplierSummary: Coalesce(LookUp(colQCStep1Index, RequestIDText = Text(a.OriginID)).SupplierSummary, "—"),
+                            QCNumbers: Concat(Filter(wFlatRounds, ParentRequestID = a.OriginID), Coalesce(QCNumber, "—"), ", ")
+                        }
+                    )
+                )
+            )
+        );
+        Set(gQCFound, CountRows(colQCResults) > 0);
+        Set(gQCSearched, true)
     Children:
       - rectHeader_QC:
           Control: Rectangle@2.3.0
@@ -60,11 +87,13 @@ Screens:
                 Variant: AutoLayout
                 Properties:
                   DropShadow: =DropShadow.None
+                  Fill: =RGBA(238, 236, 250, 1)
                   FillPortions: =0
-                  Height: =92
+                  Height: =120
+                  LayoutAlignItems: =LayoutAlignItems.Center
                   LayoutDirection: =LayoutDirection.Vertical
                   LayoutGap: =8
-                  PaddingBottom: =16
+                  PaddingBottom: =20
                   PaddingLeft: =20
                   PaddingRight: =20
                   PaddingTop: =20
@@ -77,11 +106,12 @@ Screens:
                   - lblSearchTitle_QC:
                       Control: Label@2.5.1
                       Properties:
+                        Align: =Align.Center
                         FontWeight: =FontWeight.Bold
                         Height: =24
                         Size: =12
                         Text: ="Find the origin request by QC Number"
-                        Width: =Parent.Width - 40
+                        Width: =400
                   - rowSearchInput_QC:
                       Control: GroupContainer@1.5.0
                       Variant: AutoLayout
@@ -92,76 +122,102 @@ Screens:
                         LayoutAlignItems: =LayoutAlignItems.Center
                         LayoutDirection: =LayoutDirection.Horizontal
                         LayoutGap: =10
+                        LayoutJustifyContent: =LayoutJustifyContent.Center
                         RadiusBottomLeft: =0
                         RadiusBottomRight: =0
                         RadiusTopLeft: =0
                         RadiusTopRight: =0
-                        Width: =Parent.Width - 40
+                        Width: =430
                       Children:
                         - txtQCSearch_QC:
                             Control: TextInput@0.0.54
                             Properties:
                               Height: =40
+                              OnChange: |-
+                                =With(
+                                    {wSearch: Trim(Self.Value)},
+                                    With(
+                                        {wFlatRounds: If(
+                                            IsBlank(wSearch),
+                                            FirstN(colQCAllRounds, 50),
+                                            FirstN(Filter(colQCAllRounds, Not(IsBlank(Find(Lower(wSearch), Lower(QCNumber))))), 50)
+                                        )},
+                                        With(
+                                            {wAnchors: ForAll(
+                                                wFlatRounds As r,
+                                                {
+                                                    OriginID: r.ParentRequestID,
+                                                    IsAnchor: r.ID = Min(Filter(wFlatRounds, ParentRequestID = r.ParentRequestID), ID)
+                                                }
+                                            )},
+                                            ClearCollect(
+                                                colQCResults,
+                                                ForAll(
+                                                    Filter(wAnchors, IsAnchor) As a,
+                                                    {
+                                                        OriginID: a.OriginID,
+                                                        DisplayID: Coalesce(LookUp(colQCRequestsIndex, ID = a.OriginID).DisplayID, "Request #" & a.OriginID),
+                                                        SupplierSummary: Coalesce(LookUp(colQCStep1Index, RequestIDText = Text(a.OriginID)).SupplierSummary, "—"),
+                                                        QCNumbers: Concat(Filter(wFlatRounds, ParentRequestID = a.OriginID), Coalesce(QCNumber, "—"), ", ")
+                                                    }
+                                                )
+                                            )
+                                        )
+                                    )
+                                );
+                                Set(gQCFound, CountRows(colQCResults) > 0);
+                                Set(gQCSearched, true)
                               Placeholder: ="Enter QC Number..."
                         - btnQCSearch_QC:
                             Control: Button@0.0.45
                             Properties:
                               Height: =40
                               OnSelect: |-
-                                =Set(gQCSearched, true);
-                                With(
-                                    {wMatch: LookUp('RM Procurement Receipt Rounds', QCNumber = Trim(txtQCSearch_QC.Value))},
-                                    Set(gQCMatchParentID, If(IsBlank(wMatch), Blank(), wMatch.ParentRequestID))
-                                );
-                                If(
-                                    IsBlank(txtQCSearch_QC.Value) || IsBlank(gQCMatchParentID),
-                                    Set(gQCFound, false);
-                                    Set(gQCOriginRequest, Blank());
-                                    Clear(colQCAllForOrigin),
-                                    Set(gQCFound, true);
-                                    Set(gQCOriginRequest, LookUp('RM Procurement Requests', ID = gQCMatchParentID));
-                                    ClearCollect(
-                                        colQCAllForOrigin,
-                                        Sort(
-                                            Filter('RM Procurement Receipt Rounds', ParentRequestID = gQCMatchParentID),
-                                            RoundNumber,
-                                            SortOrder.Ascending
+                                =With(
+                                    {wSearch: Trim(txtQCSearch_QC.Value)},
+                                    With(
+                                        {wFlatRounds: If(
+                                            IsBlank(wSearch),
+                                            FirstN(colQCAllRounds, 50),
+                                            FirstN(Filter(colQCAllRounds, Not(IsBlank(Find(Lower(wSearch), Lower(QCNumber))))), 50)
+                                        )},
+                                        With(
+                                            {wAnchors: ForAll(
+                                                wFlatRounds As r,
+                                                {
+                                                    OriginID: r.ParentRequestID,
+                                                    IsAnchor: r.ID = Min(Filter(wFlatRounds, ParentRequestID = r.ParentRequestID), ID)
+                                                }
+                                            )},
+                                            ClearCollect(
+                                                colQCResults,
+                                                ForAll(
+                                                    Filter(wAnchors, IsAnchor) As a,
+                                                    {
+                                                        OriginID: a.OriginID,
+                                                        DisplayID: Coalesce(LookUp(colQCRequestsIndex, ID = a.OriginID).DisplayID, "Request #" & a.OriginID),
+                                                        SupplierSummary: Coalesce(LookUp(colQCStep1Index, RequestIDText = Text(a.OriginID)).SupplierSummary, "—"),
+                                                        QCNumbers: Concat(Filter(wFlatRounds, ParentRequestID = a.OriginID), Coalesce(QCNumber, "—"), ", ")
+                                                    }
+                                                )
+                                            )
                                         )
                                     )
-                                )
+                                );
+                                Set(gQCFound, CountRows(colQCResults) > 0);
+                                Set(gQCSearched, true)
                               Text: ="Search"
-                              Width: =120
-            - rowNotFound_QC:
+                              Width: =100
+            - rowResultsSection_QC:
                 Control: GroupContainer@1.5.0
                 Variant: AutoLayout
                 Properties:
                   DropShadow: =DropShadow.None
-                  Fill: =RGBA(252, 235, 235, 1)
-                  Height: =56
-                  LayoutAlignItems: =LayoutAlignItems.Center
-                  LayoutDirection: =LayoutDirection.Horizontal
-                  PaddingLeft: =20
-                  PaddingRight: =20
-                  Visible: =gQCSearched && Not(gQCFound)
-                  Width: =Parent.Width
-                Children:
-                  - lblNotFound_QC:
-                      Control: Label@2.5.1
-                      Properties:
-                        Color: =RGBA(163, 45, 45, 1)
-                        Height: =32
-                        Size: =11
-                        Text: ="No receipt round was found for this QC Number."
-                        Width: =Parent.Width - 40
-            - rowOriginInfo_QC:
-                Control: GroupContainer@1.5.0
-                Variant: AutoLayout
-                Properties:
-                  DropShadow: =DropShadow.None
-                  Fill: =RGBA(241, 239, 232, 1)
-                  Height: =108
+                  Height: |-
+                    =32 +
+                        If(gQCSearched && Not(gQCFound), 56, 0) +
+                        If(gQCSearched && gQCFound, 32 + CountRows(colQCResults) * 32, 0)
                   LayoutDirection: =LayoutDirection.Vertical
-                  LayoutGap: =8
                   PaddingBottom: =16
                   PaddingLeft: =20
                   PaddingRight: =20
@@ -170,224 +226,138 @@ Screens:
                   RadiusBottomRight: =0
                   RadiusTopLeft: =0
                   RadiusTopRight: =0
-                  Visible: =gQCSearched && gQCFound
                   Width: =Parent.Width
                 Children:
-                  - lblOriginTitle_QC:
-                      Control: Label@2.5.1
-                      Properties:
-                        FontWeight: =FontWeight.Bold
-                        Height: =24
-                        Size: =12
-                        Text: ="Relationship found"
-                        Width: =Parent.Width - 40
-                  - rowOriginFields_QC:
+                  - rowNotFound_QC:
                       Control: GroupContainer@1.5.0
                       Variant: AutoLayout
                       Properties:
                         DropShadow: =DropShadow.None
-                        Height: =44
+                        Fill: =RGBA(252, 235, 235, 1)
+                        FillPortions: =0
+                        Height: =56
+                        LayoutAlignItems: =LayoutAlignItems.Center
                         LayoutDirection: =LayoutDirection.Horizontal
-                        LayoutGap: =40
+                        PaddingLeft: =20
+                        PaddingRight: =20
+                        Visible: =gQCSearched && Not(gQCFound)
+                        Width: =Parent.Width - 40
+                      Children:
+                        - lblNotFound_QC:
+                            Control: Label@2.5.1
+                            Properties:
+                              Color: =RGBA(163, 45, 45, 1)
+                              Height: =32
+                              Size: =11
+                              Text: ="No receipt round was found for this QC Number."
+                              Width: =Parent.Width - 40
+                  - rowQCResultHeader_QC:
+                      Control: GroupContainer@1.5.0
+                      Variant: AutoLayout
+                      Properties:
+                        DropShadow: =DropShadow.None
+                        Fill: =RGBA(232, 230, 221, 1)
+                        FillPortions: =0
+                        Height: =32
+                        LayoutAlignItems: =LayoutAlignItems.Center
+                        LayoutDirection: =LayoutDirection.Horizontal
+                        LayoutGap: =20
+                        PaddingLeft: =20
+                        PaddingRight: =20
                         RadiusBottomLeft: =0
                         RadiusBottomRight: =0
                         RadiusTopLeft: =0
                         RadiusTopRight: =0
+                        Visible: =gQCSearched && gQCFound
                         Width: =Parent.Width - 40
                       Children:
-                        - colOriginID_QC:
+                        - lblQCColOrigin_QC:
+                            Control: Label@2.5.1
+                            Properties:
+                              Color: =RGBA(107, 105, 98, 1)
+                              FontWeight: =FontWeight.Semibold
+                              Height: =32
+                              Size: =9
+                              Text: ="Origin Request"
+                              Wrap: =false
+                        - lblQCColSOPO_QC:
+                            Control: Label@2.5.1
+                            Properties:
+                              Color: =RGBA(107, 105, 98, 1)
+                              FontWeight: =FontWeight.Semibold
+                              Height: =32
+                              Size: =9
+                              Text: ="SO/PO/INV"
+                              Wrap: =false
+                        - lblQCColNumbers_QC:
+                            Control: Label@2.5.1
+                            Properties:
+                              Color: =RGBA(107, 105, 98, 1)
+                              FillPortions: =1
+                              FontWeight: =FontWeight.Semibold
+                              Height: =32
+                              Size: =9
+                              Text: ="QC Numbers"
+                              Wrap: =false
+                  - galQCResults_QC:
+                      Control: Gallery@2.15.0
+                      Variant: BrowseLayout_Vertical_TwoTextOneImageVariant_ver5.0
+                      Properties:
+                        BorderColor: =RGBA(232, 230, 221, 1)
+                        FillPortions: =0
+                        Height: =CountRows(colQCResults) * 32
+                        Items: =colQCResults
+                        ShowScrollbar: =false
+                        TemplateSize: =32
+                        Visible: =gQCSearched && gQCFound
+                        Width: =Parent.Width - 40
+                      Children:
+                        - rowQCResultItem_QC:
                             Control: GroupContainer@1.5.0
                             Variant: AutoLayout
                             Properties:
                               DropShadow: =DropShadow.None
-                              LayoutDirection: =LayoutDirection.Vertical
-                              LayoutGap: =2
+                              Fill: =RGBA(255, 255, 255, 1)
+                              Height: =32
+                              LayoutAlignItems: =LayoutAlignItems.Center
+                              LayoutDirection: =LayoutDirection.Horizontal
+                              LayoutGap: =20
+                              PaddingLeft: =20
+                              PaddingRight: =20
                               RadiusBottomLeft: =0
                               RadiusBottomRight: =0
                               RadiusTopLeft: =0
                               RadiusTopRight: =0
-                              Width: =280
+                              Width: =Parent.Width
                             Children:
-                              - lblOriginIDLabel_QC:
-                                  Control: Label@2.5.1
-                                  Properties:
-                                    Color: =RGBA(136, 135, 128, 1)
-                                    Height: =18
-                                    Size: =9
-                                    Text: ="Origin Request"
-                                    Width: =280
-                              - lblOriginIDValue_QC:
+                              - lblQCItemOrigin_QC:
                                   Control: Label@2.5.1
                                   Properties:
                                     Color: =RGBA(56, 96, 178, 1)
                                     FontWeight: =FontWeight.Semibold
                                     Height: =24
-                                    OnSelect: =Set(gSelectedRequest, gQCOriginRequest); Navigate(RequestDetailScreen)
-                                    Size: =12
-                                    Text: |-
-                                      =Coalesce(gQCOriginRequest.DisplayID, "Request #" & gQCOriginRequest.ID)
+                                    OnSelect: =Set(gSelectedRequest, LookUp('RM Procurement Requests', ID = ThisItem.OriginID)); Navigate(RequestDetailScreen)
+                                    Size: =10
+                                    Text: =ThisItem.DisplayID
                                     Underline: =true
-                                    Width: =280
                                     Wrap: =false
-                        - colOriginSOPO_QC:
-                            Control: GroupContainer@1.5.0
-                            Variant: AutoLayout
-                            Properties:
-                              DropShadow: =DropShadow.None
-                              LayoutDirection: =LayoutDirection.Vertical
-                              LayoutGap: =2
-                              RadiusBottomLeft: =0
-                              RadiusBottomRight: =0
-                              RadiusTopLeft: =0
-                              RadiusTopRight: =0
-                              Width: =280
-                            Children:
-                              - lblOriginSOPOLabel_QC:
-                                  Control: Label@2.5.1
-                                  Properties:
-                                    Color: =RGBA(136, 135, 128, 1)
-                                    Height: =18
-                                    Size: =9
-                                    Text: ="SO/PO/INV"
-                                    Width: =280
-                              - lblOriginSOPOValue_QC:
+                              - lblQCItemSOPO_QC:
                                   Control: Label@2.5.1
                                   Properties:
                                     FontWeight: =FontWeight.Semibold
                                     Height: =24
-                                    Size: =12
-                                    Text: |-
-                                      =Coalesce(
-                                          LookUp('RM Procurement Execution Log', RequestIDText = Text(gQCOriginRequest.ID) && StepNumber = 1).SupplierSummary,
-                                          "—"
-                                      )
-                                    Width: =280
+                                    Size: =10
+                                    Text: =ThisItem.SupplierSummary
                                     Wrap: =false
-            - rowQCListHeader_QC:
-                Control: GroupContainer@1.5.0
-                Variant: AutoLayout
-                Properties:
-                  DropShadow: =DropShadow.None
-                  Fill: =RGBA(232, 230, 221, 1)
-                  Height: =32
-                  LayoutAlignItems: =LayoutAlignItems.Center
-                  LayoutDirection: =LayoutDirection.Horizontal
-                  LayoutGap: =10
-                  PaddingLeft: =28
-                  PaddingRight: =28
-                  RadiusBottomLeft: =0
-                  RadiusBottomRight: =0
-                  RadiusTopLeft: =0
-                  RadiusTopRight: =0
-                  Visible: =gQCSearched && gQCFound
-                  Width: =Parent.Width
-                Children:
-                  - lblQCColRound_QC:
-                      Control: Label@2.5.1
-                      Properties:
-                        Color: =RGBA(107, 105, 98, 1)
-                        FontWeight: =FontWeight.Semibold
-                        Height: =32
-                        Size: =9
-                        Text: ="Round"
-                        Width: =70
-                        Wrap: =false
-                  - lblQCColMaterial_QC:
-                      Control: Label@2.5.1
-                      Properties:
-                        Color: =RGBA(107, 105, 98, 1)
-                        FillPortions: =1
-                        FontWeight: =FontWeight.Semibold
-                        Height: =32
-                        Size: =9
-                        Text: ="Material"
-                        Width: =Parent.Width * 0.35
-                        Wrap: =false
-                  - lblQCColQCNumber_QC:
-                      Control: Label@2.5.1
-                      Properties:
-                        Color: =RGBA(107, 105, 98, 1)
-                        FontWeight: =FontWeight.Semibold
-                        Height: =32
-                        Size: =9
-                        Text: ="QC Number"
-                        Width: =200
-                        Wrap: =false
-                  - lblQCColBatch_QC:
-                      Control: Label@2.5.1
-                      Properties:
-                        Color: =RGBA(107, 105, 98, 1)
-                        FontWeight: =FontWeight.Semibold
-                        Height: =32
-                        Size: =9
-                        Text: ="Batch Number"
-                        Width: =160
-                        Wrap: =false
-            - galQCList_QC:
-                Control: Gallery@2.15.0
-                Variant: BrowseLayout_Vertical_TwoTextOneImageVariant_ver5.0
-                Properties:
-                  BorderColor: =RGBA(232, 230, 221, 1)
-                  FillPortions: =0
-                  Height: =CountRows(colQCAllForOrigin) * 44
-                  Items: =colQCAllForOrigin
-                  ShowScrollbar: =false
-                  TemplateSize: =44
-                  Visible: =gQCSearched && gQCFound
-                  Width: =Parent.Width
-                Children:
-                  - rowQCListItem_QC:
-                      Control: GroupContainer@1.5.0
-                      Variant: AutoLayout
-                      Properties:
-                        DropShadow: =DropShadow.None
-                        Fill: =If(ThisItem.QCNumber = Trim(txtQCSearch_QC.Value), RGBA(228, 225, 250, 1), RGBA(255, 255, 255, 1))
-                        Height: =44
-                        LayoutAlignItems: =LayoutAlignItems.Center
-                        LayoutDirection: =LayoutDirection.Horizontal
-                        LayoutGap: =10
-                        PaddingLeft: =28
-                        PaddingRight: =28
-                        RadiusBottomLeft: =0
-                        RadiusBottomRight: =0
-                        RadiusTopLeft: =0
-                        RadiusTopRight: =0
-                        Width: =Parent.Width
-                      Children:
-                        - lblQCItemRound_QC:
-                            Control: Label@2.5.1
-                            Properties:
-                              Height: =24
-                              Size: =10
-                              Text: ="R" & ThisItem.RoundNumber
-                              Width: =70
-                              Wrap: =false
-                        - lblQCItemMaterial_QC:
-                            Control: Label@2.5.1
-                            Properties:
-                              FillPortions: =1
-                              Height: =24
-                              Size: =10
-                              Text: =ThisItem.MaterialName
-                              Width: =Parent.Width * 0.35
-                              Wrap: =false
-                        - lblQCItemNumber_QC:
-                            Control: Label@2.5.1
-                            Properties:
-                              FontWeight: =If(ThisItem.QCNumber = Trim(txtQCSearch_QC.Value), FontWeight.Bold, FontWeight.Normal)
-                              Height: =24
-                              Size: =10
-                              Text: =Coalesce(ThisItem.QCNumber, "—")
-                              Width: =200
-                              Wrap: =false
-                        - lblQCItemBatch_QC:
-                            Control: Label@2.5.1
-                            Properties:
-                              Height: =24
-                              Size: =10
-                              Text: =Coalesce(ThisItem.BatchNumber, "—")
-                              Width: =160
-                              Wrap: =false
+                              - lblQCItemNumbers_QC:
+                                  Control: Label@2.5.1
+                                  Properties:
+                                    FillPortions: =1
+                                    Height: =24
+                                    Size: =10
+                                    Text: =ThisItem.QCNumbers
+                                    Width: =Parent.Width
+                                    Wrap: =false
       - rowFooter_QC:
           Control: GroupContainer@1.5.0
           Variant: AutoLayout
@@ -397,6 +367,7 @@ Screens:
             Height: =60
             LayoutAlignItems: =LayoutAlignItems.Center
             LayoutDirection: =LayoutDirection.Horizontal
+            LayoutJustifyContent: =LayoutJustifyContent.Center
             PaddingLeft: =20
             PaddingRight: =20
             RadiusBottomLeft: =0
@@ -410,6 +381,6 @@ Screens:
                 Control: Button@0.0.45
                 Properties:
                   Height: =36
-                  OnSelect: =Back()
-                  Text: ="Back"
-                  Width: =120
+                  OnSelect: =Navigate(HomeScreen)
+                  Text: ="Back to Home Screen"
+                  Width: =200

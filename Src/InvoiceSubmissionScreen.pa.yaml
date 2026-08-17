@@ -529,6 +529,7 @@ Screens:
                                   Control: Label@2.5.1
                                   Properties:
                                     FillPortions: =1
+                                    FontWeight: =FontWeight.Semibold
                                     Height: =68
                                     PaddingLeft: =0
                                     Size: =11
@@ -555,15 +556,16 @@ Screens:
                               - lblReqLineItemsTitle_ISS:
                                   Control: Label@2.5.1
                                   Properties:
-                                    FontWeight: =FontWeight.Bold
+                                    Color: =RGBA(136, 135, 128, 1)
                                     Height: =24
                                     PaddingLeft: =0
-                                    Size: =11
+                                    Size: =9
                                     Text: ="Raw Materials (" & CountRows(colLineItemsDetail) & ")"
                                     Width: =Parent.Width
                               - lblReqLineItemsValue_ISS:
                                   Control: Label@2.5.1
                                   Properties:
+                                    FontWeight: =FontWeight.Semibold
                                     Height: =20
                                     PaddingLeft: =0
                                     Size: =11

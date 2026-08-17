@@ -413,7 +413,7 @@ Screens:
                       Variant: AutoLayout
                       Properties:
                         DropShadow: =DropShadow.None
-                        Fill: =If(Mod(ThisItem.ID, 2) = 0, RGBA(248, 247, 243, 1), RGBA(255, 255, 255, 1))
+                        Fill: =RGBA(255, 255, 255, 1)
                         Height: =56
                         LayoutAlignItems: =LayoutAlignItems.Center
                         LayoutDirection: =LayoutDirection.Horizontal

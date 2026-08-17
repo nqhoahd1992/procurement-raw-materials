@@ -92,9 +92,13 @@ App:
       Set(gPendingDirectAttachments, Blank());
       Set(gQCSearched, false);
       Set(gQCFound, false);
-      Set(gQCOriginRequest, Blank());
-      Set(gQCMatchParentID, Blank());
-      ClearCollect(colQCAllForOrigin, FirstN('RM Procurement Receipt Rounds', 1));
-      Clear(colQCAllForOrigin);
+      ClearCollect(colQCResults, {OriginID: 0, DisplayID: "", SupplierSummary: "", QCNumbers: ""});
+      Clear(colQCResults);
+      ClearCollect(colQCAllRounds, FirstN('RM Procurement Receipt Rounds', 1));
+      Clear(colQCAllRounds);
+      ClearCollect(colQCRequestsIndex, FirstN('RM Procurement Requests', 1));
+      Clear(colQCRequestsIndex);
+      ClearCollect(colQCStep1Index, FirstN('RM Procurement Execution Log', 1));
+      Clear(colQCStep1Index);
       Set(gAppReady, true)
     Theme: =PowerAppsTheme
