@@ -121,7 +121,7 @@ Both live in `'RM Procurement Requests'`; `RequestType` tells them apart.
 | Line items | all materials requested | only the materials in this delivery, with that delivery's quantity, each carrying `ParentLineItemID` |
 | Invoice columns | **unused** — the parent never carries an invoice any more | its own `InvoiceMode` / `InvoiceSubmitted` / `OfficialInvoiceLink`. **This is what makes one request able to have many invoices** |
 | Receipt rounds | none of its own; rolls up its children's via `ParentRequestID` | its own, `RequestIDText` = the child's ID |
-| Legal `Status` | `Pending Manager`, `Pending Executive`, `Pending Procurement`, `In Delivery`, `Closed`, `Rejected` | `Goods Receipt & Acceptance`, `Pending Supplier Follow-up`, `Pending Invoice`, `Pending Accounting`, `Completed`, `Cancelled` |
+| Legal `Status` | `Pending Manager`, `Pending Executive`, `Pending Procurement`, `In Delivery`, `Delivered`, `Rejected` | `Goods Receipt`, `Supplier Follow-up`, `Pending Invoice`, `Pending Accounting`, `Completed`, `Cancelled` |
 
 Because the two sets are disjoint, every existing `Status` gate on the downstream screens is **already type-safe** and needed no `RequestType` check added. `RequestType` is only consulted by `HomeScreen`'s Manager branch and by presentation logic.
 
@@ -149,11 +149,11 @@ Non-required but deliberate on a child:
 
 ### `Status` choice values and routing (exact strings — used as literals across all screens)
 
-`Pending Manager`, `Pending Executive`, `Pending Procurement`, **`In Delivery`**, **`Closed`**, `Goods Receipt & Acceptance`, `Pending Supplier Follow-up`, `Pending Invoice`, `Pending Accounting`, `Completed`, **`Cancelled`**, `Rejected`.
+`Pending Manager`, `Pending Executive`, `Pending Procurement`, **`In Delivery`**, **`Delivered`**, `Goods Receipt`, `Supplier Follow-up`, `Pending Invoice`, `Pending Accounting`, `Completed`, **`Cancelled`**, `Rejected`.
 
 The three new values:
-- **`In Delivery`** (parent) — set by `ProcurementExecutionScreen` on Proceed. The parent's lifecycle ends here; it is now an open container that Procurement adds deliveries to. **This breaks the invariant both reminder flows rest on** ("being in a status means the work on *this row* is incomplete") — an `In Delivery` parent is waiting on its children, not on anyone acting on itself. `Closed` is what drains it.
-- **`Closed`** (parent, terminal) — set manually by Procurement/Admin via `RequestDetailScreen`'s Close Request dialog. Requires `CloseRemarks`, and is blocked while any child is neither `Completed` nor `Cancelled`. **Deliberately allowed when the delivered quantity is short of ordered** — the supplier may never deliver in full, so a short close is a normal outcome that just needs a written reason. There is no auto-close.
+- **`In Delivery`** (parent) — set by `ProcurementExecutionScreen` on Proceed. The parent's lifecycle ends here; it is now an open container that Procurement adds deliveries to. **This breaks the invariant both reminder flows rest on** ("being in a status means the work on *this row* is incomplete") — an `In Delivery` parent is waiting on its children, not on anyone acting on itself. `Delivered` is what drains it.
+- **`Delivered`** (parent, terminal) — set manually by Procurement/Admin via `RequestDetailScreen`'s Close Request dialog. Requires `CloseRemarks`, and is blocked while any child is neither `Completed` nor `Cancelled`. **Deliberately allowed when the delivered quantity is short of ordered** — the supplier may never deliver in full, so a short close is a normal outcome that just needs a written reason. There is no auto-close.
 - **`Cancelled`** (child, terminal) — a delivery created in error. Blocked once `ReceiptRoundCount > 0`. Without it a mistaken delivery would be immortal (round 1 deliberately has no `Rejected`, and a child passes no approval screen), and it would block the parent from ever being closable.
 
 `Rejected` on a parent is reachable from exactly two places, both terminal: Executive Reject (`ExecutiveApprovalScreen`) and Procurement Reject (`ProcurementExecutionScreen`). A request rejected at Procurement never has any delivery — which is why the "+ Add Delivery" button gates on `Status = "In Delivery"` rather than on "has passed Procurement Execution".
@@ -411,7 +411,7 @@ SharePoint flow name: **`Procurement Notify`** (renamed from `Procurement_Notify
 | `"ExecutivePayment"` | `ExecutiveApprovalScreen` (over-threshold approval) | `gCurrentEmployee.Email` — the Executive notifies themselves | email + Teams card |
 | `"RMProcurementExecution"` | `ExecutivePaymentScreen` (after remittance upload) | hardcoded `"procurement@maxbiocare.com"` — **not** resolved from `'RM User'` | email + Teams card |
 
-- The `GoodsReceipt` and `SupplierFollowUp` branches now render **identical** content (both say "Goods Receipt & Acceptance", no round number), so they can be collapsed into one branch. A Power Automate `Switch` case accepts only one value, so collapse by switching on a normalized Compose rather than by listing two values in one case.
+- The `GoodsReceipt` and `SupplierFollowUp` branches now render **identical** content (both say "Goods Receipt", no round number), so they can be collapsed into one branch. A Power Automate `Switch` case accepts only one value, so collapse by switching on a normalized Compose rather than by listing two values in one case.
 - `category` (arg 7) is **reserved for the request-level Category** and is `""` at every call site, because request-level Category no longer exists (it moved per raw-material). Keep it `""` — do **not** repurpose the slot (e.g. to smuggle a round number through). If the notification ever needs the round, add a **9th** arg and update all 8 call sites in the same edit; Power Fx requires exact arity.
 - `sourceApp` (arg 8) is always the literal `"Max Biocare · Raw Materials Procurement"`; the flow prints it in the email header/footer and the card header.
 - Connection: `app.admin@maxbiocare.com` pinned in "Run only users" — not invoker-provided.

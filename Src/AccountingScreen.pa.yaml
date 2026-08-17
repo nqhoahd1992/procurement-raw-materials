@@ -70,10 +70,10 @@ Screens:
                   DropShadow: =DropShadow.None
                   Fill: =RGBA(245, 245, 250, 1)
                   FillPortions: =0
-                  Height: =212
+                  Height: =192 + Max(1, CountRows(colLineItemsDetail)) * 30
                   LayoutDirection: =LayoutDirection.Vertical
                   LayoutGap: =4
-                  LayoutMinHeight: =212
+                  LayoutMinHeight: =192 + Max(1, CountRows(colLineItemsDetail)) * 30
                   PaddingBottom: =12
                   PaddingLeft: =20
                   PaddingRight: =20
@@ -122,10 +122,10 @@ Screens:
                                   "Pending Executive", RGBA(175, 74, 20, 1),
                                   "Pending Procurement", RGBA(122, 108, 10, 1),
                                   "In Delivery", RGBA(83, 74, 183, 1),
-                                  "Closed", RGBA(13, 108, 108, 1),
+                                  "Delivered", RGBA(13, 108, 108, 1),
                                   "Rejected", RGBA(163, 45, 45, 1),
-                                  "Goods Receipt & Acceptance", RGBA(37, 92, 178, 1),
-                                  "Pending Supplier Follow-up", RGBA(11, 105, 132, 1),
+                                  "Goods Receipt", RGBA(37, 92, 178, 1),
+                                  "Supplier Follow-up", RGBA(11, 105, 132, 1),
                                   "Pending Invoice", RGBA(124, 58, 173, 1),
                                   "Pending Accounting", RGBA(158, 44, 108, 1),
                                   "Completed", RGBA(15, 110, 86, 1),
@@ -138,10 +138,10 @@ Screens:
                                   "Pending Executive", RGBA(253, 234, 222, 1),
                                   "Pending Procurement", RGBA(247, 245, 210, 1),
                                   "In Delivery", RGBA(228, 225, 250, 1),
-                                  "Closed", RGBA(219, 243, 243, 1),
+                                  "Delivered", RGBA(219, 243, 243, 1),
                                   "Rejected", RGBA(252, 233, 233, 1),
-                                  "Goods Receipt & Acceptance", RGBA(223, 234, 252, 1),
-                                  "Pending Supplier Follow-up", RGBA(219, 241, 249, 1),
+                                  "Goods Receipt", RGBA(223, 234, 252, 1),
+                                  "Supplier Follow-up", RGBA(219, 241, 249, 1),
                                   "Pending Invoice", RGBA(240, 228, 252, 1),
                                   "Pending Accounting", RGBA(252, 230, 242, 1),
                                   "Completed", RGBA(222, 245, 236, 1),
@@ -403,10 +403,10 @@ Screens:
                       Properties:
                         DropShadow: =DropShadow.None
                         FillPortions: =0
-                        Height: =40
+                        Height: =18 + 2 + Max(1, CountRows(colLineItemsDetail)) * 30
                         LayoutDirection: =LayoutDirection.Vertical
                         LayoutGap: =2
-                        LayoutMinHeight: =40
+                        LayoutMinHeight: =18 + 2 + Max(1, CountRows(colLineItemsDetail)) * 30
                         RadiusBottomLeft: =0
                         RadiusBottomRight: =0
                         RadiusTopLeft: =0
@@ -422,31 +422,48 @@ Screens:
                               Size: =9
                               Text: ="Raw Materials (" & CountRows(colLineItemsDetail) & ")"
                               Width: =Parent.Width
-                        - lblInfoMaterialsValue_AC:
+                        - lblInfoMaterialsEmpty_AC:
                             Control: Label@2.5.1
                             Properties:
                               FontWeight: =FontWeight.Semibold
                               Height: =20
                               PaddingLeft: =0
                               Size: =11
-                              Text: |-
-                                =If(
-                                    CountRows(colLineItemsDetail) = 0,
-                                    "—",
-                                    Concat(
-                                        colLineItemsDetail,
-                                        RMPKCode & " — " & MaterialName & " (" & Text(Quantity) & " " & Unit & ")",
-                                        "  ·  "
-                                    )
-                                )
-                              Tooltip: |-
-                                =Concat(
-                                    colLineItemsDetail,
-                                    RMPKCode & " — " & MaterialName & " (" & Text(Quantity) & " " & Unit & ")",
-                                    Char(10)
-                                )
+                              Text: ="—"
+                              Visible: =CountRows(colLineItemsDetail) = 0
                               Width: =Parent.Width
-                              Wrap: =false
+                        - galInfoMaterials_AC:
+                            Control: Gallery@2.15.0
+                            Variant: BrowseLayout_Vertical_TwoTextOneImageVariant_ver5.0
+                            Properties:
+                              FillPortions: =0
+                              Height: =CountRows(colLineItemsDetail) * 30
+                              Items: =colLineItemsDetail
+                              ShowScrollbar: =false
+                              TemplateSize: =30
+                              Visible: =CountRows(colLineItemsDetail) > 0
+                              Width: =Parent.Width
+                            Children:
+                              - rowInfoMaterialItem_AC:
+                                  Control: GroupContainer@1.5.0
+                                  Variant: AutoLayout
+                                  Properties:
+                                    DropShadow: =DropShadow.None
+                                    Height: =30
+                                    LayoutDirection: =LayoutDirection.Horizontal
+                                    Width: =Parent.Width
+                                  Children:
+                                    - lblInfoMaterialItemText_AC:
+                                        Control: Label@2.5.1
+                                        Properties:
+                                          FontWeight: =FontWeight.Semibold
+                                          Height: =30
+                                          PaddingLeft: =0
+                                          Size: =11
+                                          Text: =ThisItem.RMPKCode & " — " & ThisItem.MaterialName & " (" & Text(ThisItem.Quantity) & " " & ThisItem.Unit & ")"
+                                          Tooltip: =ThisItem.RMPKCode & " — " & ThisItem.MaterialName & " (" & Text(ThisItem.Quantity) & " " & ThisItem.Unit & ")"
+                                          Width: =Parent.Width
+                                          Wrap: =false
             - rowACReceived:
                 Control: GroupContainer@1.5.0
                 Variant: AutoLayout
@@ -653,7 +670,7 @@ Screens:
                                     FontWeight: =FontWeight.Semibold
                                     Height: =32
                                     Size: =11
-                                    Text: =If(ThisItem.OutstandingQty <= 0, "Complete", Text(ThisItem.OutstandingQty) & " short")
+                                    Text: =If(ThisItem.OutstandingQty <= 0, "Complete", Text(ThisItem.OutstandingQty))
                                     Width: =Parent.Width * 0.15
                                     Wrap: =false
                               - lblACRcvRnd:
@@ -672,7 +689,7 @@ Screens:
                   Fill: =RGBA(219, 234, 254, 1)
                   LayoutDirection: =LayoutDirection.Vertical
                   LayoutGap: =4
-                  LayoutMinHeight: =160
+                  LayoutMinHeight: =140
                   PaddingBottom: =12
                   PaddingLeft: =20
                   PaddingRight: =20
@@ -697,7 +714,7 @@ Screens:
                       Properties:
                         Color: =RGBA(37, 99, 235, 1)
                         FontWeight: =FontWeight.Semibold
-                        Height: =50
+                        Height: =24
                         PaddingLeft: =0
                         Size: =11
                         Text: =If(IsBlank(gSelectedRequest.OfficialInvoiceLink), "—", "Open official invoice ↗")
@@ -708,10 +725,9 @@ Screens:
                   - lblSupplierSummaryRefTitle_AC:
                       Control: Label@2.5.1
                       Properties:
-                        Height: =24
                         PaddingLeft: =0
                         PaddingRight: =0
-                        PaddingTop: =4
+                        PaddingTop: =20
                         Size: =11
                         Text: ="SO/PO/INV"
                         Width: =Parent.Width - 40
@@ -1120,6 +1136,30 @@ Screens:
                                               If(
                                                   IsBlank(wLog.ID),
                                                   Notify("Failed to save execution log. Please try again.", NotificationType.Error),
+                                                  With(
+                                                      {wParentID: Coalesce(gSelectedRequest.ParentRequestID, 0)},
+                                                      With(
+                                                          {wParent: If(wParentID > 0, LookUp('RM Procurement Requests', ID = wParentID), Blank())},
+                                                          If(
+                                                              Not(IsBlank(wParent)) && wParent.Status.Value = "Delivered" && IsEmpty(Filter('RM Procurement Requests', ParentRequestID = wParentID && Status.Value <> "Completed")),
+                                                              Patch('RM Procurement Requests', wParent, {Status: {Value: "Completed"}});
+                                                              Patch(
+                                                                  'RM Procurement Execution Log',
+                                                                  Defaults('RM Procurement Execution Log'),
+                                                                  {
+                                                                      Title: "Step 9 - Request Completed - " & wParent.Title,
+                                                                      RequestID: {Id: wParent.ID, Value: wParent.Title},
+                                                                      RequestIDText: Text(wParent.ID),
+                                                                      StepNumber: 9,
+                                                                      StepName: {Value: "Request Completed"},
+                                                                      ExecutedBy: {Id: gCurrentEmployee.ID, Value: gCurrentEmployee.Title},
+                                                                      ExecutedAt: Now(),
+                                                                      Notes: "All deliveries completed after the request was closed."
+                                                                  }
+                                                              )
+                                                          )
+                                                      )
+                                                  );
                                                   Notify("Accounting handover completed. Request is now Completed.", NotificationType.Success);
                                                   Navigate(HomeScreen)
                                               )

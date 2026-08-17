@@ -23,3 +23,4 @@ EditorState:
     - RequesterInvoiceScreen
     - SupplierFollowUpScreen
     - ProcurementFollowUpScreen
+    - QCTraceabilityScreen

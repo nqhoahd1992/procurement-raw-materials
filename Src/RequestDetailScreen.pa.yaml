@@ -127,10 +127,10 @@ Screens:
                       "Pending Executive", RGBA(175, 74, 20, 1),
                       "Pending Procurement", RGBA(122, 108, 10, 1),
                       "In Delivery", RGBA(83, 74, 183, 1),
-                      "Closed", RGBA(13, 108, 108, 1),
+                      "Delivered", RGBA(13, 108, 108, 1),
                       "Rejected", RGBA(163, 45, 45, 1),
-                      "Goods Receipt & Acceptance", RGBA(37, 92, 178, 1),
-                      "Pending Supplier Follow-up", RGBA(11, 105, 132, 1),
+                      "Goods Receipt", RGBA(37, 92, 178, 1),
+                      "Supplier Follow-up", RGBA(11, 105, 132, 1),
                       "Pending Invoice", RGBA(124, 58, 173, 1),
                       "Pending Accounting", RGBA(158, 44, 108, 1),
                       "Completed", RGBA(15, 110, 86, 1),
@@ -143,10 +143,10 @@ Screens:
                       "Pending Executive", RGBA(253, 234, 222, 1),
                       "Pending Procurement", RGBA(247, 245, 210, 1),
                       "In Delivery", RGBA(228, 225, 250, 1),
-                      "Closed", RGBA(219, 243, 243, 1),
+                      "Delivered", RGBA(219, 243, 243, 1),
                       "Rejected", RGBA(252, 233, 233, 1),
-                      "Goods Receipt & Acceptance", RGBA(223, 234, 252, 1),
-                      "Pending Supplier Follow-up", RGBA(219, 241, 249, 1),
+                      "Goods Receipt", RGBA(223, 234, 252, 1),
+                      "Supplier Follow-up", RGBA(219, 241, 249, 1),
                       "Pending Invoice", RGBA(240, 228, 252, 1),
                       "Pending Accounting", RGBA(252, 230, 242, 1),
                       "Completed", RGBA(222, 245, 236, 1),
@@ -1359,8 +1359,8 @@ Screens:
                                           Align: =Align.Center
                                           Color: |-
                                             =Switch(ThisItem.Status.Value,
-                                              "Goods Receipt & Acceptance", RGBA(37, 92, 178, 1),
-                                              "Pending Supplier Follow-up", RGBA(11, 105, 132, 1),
+                                              "Goods Receipt", RGBA(37, 92, 178, 1),
+                                              "Supplier Follow-up", RGBA(11, 105, 132, 1),
                                               "Pending Invoice", RGBA(124, 58, 173, 1),
                                               "Pending Accounting", RGBA(158, 44, 108, 1),
                                               "Completed", RGBA(15, 110, 86, 1),
@@ -1369,8 +1369,8 @@ Screens:
                                             )
                                           Fill: |-
                                             =Switch(ThisItem.Status.Value,
-                                              "Goods Receipt & Acceptance", RGBA(223, 234, 252, 1),
-                                              "Pending Supplier Follow-up", RGBA(219, 241, 249, 1),
+                                              "Goods Receipt", RGBA(223, 234, 252, 1),
+                                              "Supplier Follow-up", RGBA(219, 241, 249, 1),
                                               "Pending Invoice", RGBA(240, 228, 252, 1),
                                               "Pending Accounting", RGBA(252, 230, 242, 1),
                                               "Completed", RGBA(222, 245, 236, 1),
@@ -1382,7 +1382,7 @@ Screens:
                                           Size: =9
                                           Text: |-
                                             =If(
-                                                ThisItem.Status.Value = "Pending Supplier Follow-up",
+                                                ThisItem.Status.Value = "Supplier Follow-up",
                                                 If(
                                                     ThisItem.LatestReceiptDecision = "Accepted with Adjustment",
                                                     If(ThisItem.InvoiceSubmitted, "Procurement Close-out (Credit Note)", "Submit Invoice"),
@@ -1480,7 +1480,7 @@ Screens:
                                                 VerticalAlign: =VerticalAlign.Middle
                                                 Visible: |-
                                                   =Coalesce(ThisItem.ReceiptRoundCount, 0) = 0 &&
-                                                  ThisItem.Status.Value = "Goods Receipt & Acceptance" &&
+                                                  ThisItem.Status.Value = "Goods Receipt" &&
                                                   (gCurrentUser.Role.Value = "Procurement" || gCurrentUser.Role.Value = "Admin")
                                                 Width: =80
                                           - btnOpenBatch_RD:
@@ -1529,8 +1529,8 @@ Screens:
                   RadiusTopLeft: =0
                   RadiusTopRight: =0
                   Visible: |-
-                    =gSelectedRequest.Status.Value = "Goods Receipt & Acceptance" ||
-                    gSelectedRequest.Status.Value = "Pending Supplier Follow-up" ||
+                    =gSelectedRequest.Status.Value = "Goods Receipt" ||
+                    gSelectedRequest.Status.Value = "Supplier Follow-up" ||
                     gSelectedRequest.Status.Value = "Pending Invoice" ||
                     gSelectedRequest.Status.Value = "Pending Accounting" ||
                     gSelectedRequest.Status.Value = "Completed" ||
@@ -1544,7 +1544,7 @@ Screens:
                         Height: =28
                         PaddingLeft: =0
                         Size: =11
-                        Text: ="Goods Receipt & Acceptance"
+                        Text: ="Goods Receipt"
                         Width: =Parent.Width
                   - lblGRSectionSummary:
                       Control: Label@2.5.1
@@ -2789,9 +2789,9 @@ Screens:
                       Properties:
                         Height: =36
                         OnSelect: =Navigate(GoodsReceiptScreen)
-                        Text: ="Goods Receipt & Acceptance →"
+                        Text: ="Goods Receipt →"
                         Visible: |-
-                          =gSelectedRequest.Status.Value = "Goods Receipt & Acceptance" &&
+                          =gSelectedRequest.Status.Value = "Goods Receipt" &&
                           (gSelectedRequest.RequesterEmail = gCurrentEmployee.Email ||
                           gSelectedRequest.GRAssignedToID.Id = gCurrentEmployee.ID)
                         Width: =260
@@ -2804,7 +2804,7 @@ Screens:
                         OnSelect: =Navigate(SupplierFollowUpScreen)
                         Text: ="Goods Receipt — Round " & (gRoundsDone + 1) & " →"
                         Visible: |-
-                          =gSelectedRequest.Status.Value = "Pending Supplier Follow-up" &&
+                          =gSelectedRequest.Status.Value = "Supplier Follow-up" &&
                           gSelectedRequest.LatestReceiptDecision = "Requires Supplier Follow-up" &&
                           (gSelectedRequest.RequesterEmail = gCurrentEmployee.Email ||
                           gSelectedRequest.SFU1AssignedToID.Id = gCurrentEmployee.ID)
@@ -2818,7 +2818,7 @@ Screens:
                         OnSelect: =Navigate(ProcurementFollowUpScreen)
                         Text: ="Upload Credit Note →"
                         Visible: |-
-                          =gSelectedRequest.Status.Value = "Pending Supplier Follow-up" &&
+                          =gSelectedRequest.Status.Value = "Supplier Follow-up" &&
                           gSelectedRequest.LatestReceiptDecision = "Accepted with Adjustment" &&
                           gSelectedRequest.InvoiceSubmitted &&
                           (gCurrentUser.Role.Value = "Procurement" || gCurrentUser.Role.Value = "Admin")
@@ -3606,36 +3606,62 @@ Screens:
                                           Notify("This request is no longer open. Nothing was changed.", NotificationType.Warning);
                                           Set(gShowCloseRequest, false),
                                           With(
-                                              {wClosed: Patch(
-                                                  'RM Procurement Requests',
-                                                  gSelectedRequest,
-                                                  {
-                                                      Status: {Value: "Closed"},
-                                                      ClosedByID: {Id: gCurrentEmployee.ID, Value: gCurrentEmployee.Title},
-                                                      ClosedAt: Now(),
-                                                      CloseRemarks: txtCloseRemarks_RD.Value
-                                                  }
-                                              )},
-                                              If(
-                                                  IsBlank(wClosed.ID),
-                                                  Notify("Failed to close the request. Please try again.", NotificationType.Error),
-                                                  Patch(
-                                                      'RM Procurement Execution Log',
-                                                      Defaults('RM Procurement Execution Log'),
-                                                      {
-                                                          Title: "Step 8 - Request Closed - " & gSelectedRequest.Title,
-                                                          RequestID: {Id: gSelectedRequest.ID, Value: gSelectedRequest.Title},
-                                                          RequestIDText: Text(gSelectedRequest.ID),
-                                                          StepNumber: 8,
-                                                          StepName: {Value: "Request Closed"},
-                                                          ExecutedBy: {Id: gCurrentEmployee.ID, Value: gCurrentEmployee.Title},
-                                                          ExecutedAt: Now(),
-                                                          Notes: txtCloseRemarks_RD.Value
-                                                      }
-                                                  );
-                                                  Set(gShowCloseRequest, false);
-                                                  Notify("Request closed. No further deliveries can be created against it.", NotificationType.Success);
-                                                  Navigate(HomeScreen)
+                                              {wHasDeliveries: Not(IsEmpty(Filter('RM Procurement Requests', ParentRequestID = gSelectedRequest.ID)))},
+                                              With(
+                                                  {wAllDelivered: wHasDeliveries && IsEmpty(Filter('RM Procurement Requests', ParentRequestID = gSelectedRequest.ID && Status.Value <> "Completed"))},
+                                                  With(
+                                                      {wClosed: Patch(
+                                                          'RM Procurement Requests',
+                                                          gSelectedRequest,
+                                                          {
+                                                              Status: {Value: If(wAllDelivered, "Completed", "Delivered")},
+                                                              ClosedByID: {Id: gCurrentEmployee.ID, Value: gCurrentEmployee.Title},
+                                                              ClosedAt: Now(),
+                                                              CloseRemarks: txtCloseRemarks_RD.Value
+                                                          }
+                                                      )},
+                                                      If(
+                                                          IsBlank(wClosed.ID),
+                                                          Notify("Failed to close the request. Please try again.", NotificationType.Error),
+                                                          Patch(
+                                                              'RM Procurement Execution Log',
+                                                              Defaults('RM Procurement Execution Log'),
+                                                              {
+                                                                  Title: "Step 8 - Request Closed - " & gSelectedRequest.Title,
+                                                                  RequestID: {Id: gSelectedRequest.ID, Value: gSelectedRequest.Title},
+                                                                  RequestIDText: Text(gSelectedRequest.ID),
+                                                                  StepNumber: 8,
+                                                                  StepName: {Value: "Request Closed"},
+                                                                  ExecutedBy: {Id: gCurrentEmployee.ID, Value: gCurrentEmployee.Title},
+                                                                  ExecutedAt: Now(),
+                                                                  Notes: txtCloseRemarks_RD.Value
+                                                              }
+                                                          );
+                                                          If(
+                                                              wAllDelivered,
+                                                              Patch(
+                                                                  'RM Procurement Execution Log',
+                                                                  Defaults('RM Procurement Execution Log'),
+                                                                  {
+                                                                      Title: "Step 9 - Request Completed - " & gSelectedRequest.Title,
+                                                                      RequestID: {Id: gSelectedRequest.ID, Value: gSelectedRequest.Title},
+                                                                      RequestIDText: Text(gSelectedRequest.ID),
+                                                                      StepNumber: 9,
+                                                                      StepName: {Value: "Request Completed"},
+                                                                      ExecutedBy: {Id: gCurrentEmployee.ID, Value: gCurrentEmployee.Title},
+                                                                      ExecutedAt: Now(),
+                                                                      Notes: "All deliveries were already completed at close time."
+                                                                  }
+                                                              )
+                                                          );
+                                                          Set(gShowCloseRequest, false);
+                                                          Notify(
+                                                              If(wAllDelivered, "Request closed — all deliveries were already completed, so it moved straight to Completed.", "Request closed. No further deliveries can be created against it."),
+                                                              NotificationType.Success
+                                                          );
+                                                          Navigate(HomeScreen)
+                                                      )
+                                                  )
                                               )
                                           )
                                       )

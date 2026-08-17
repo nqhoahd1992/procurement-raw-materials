@@ -2,7 +2,7 @@ Screens:
   HomeScreen:
     Properties:
       LoadingSpinnerColor: =RGBA(56, 96, 178, 1)
-      OnVisible: =Set(gShowQuickView, false); Set(gInvoiceFromPFU, false); Set(gShowStatusFilter, false); Set(gParentsOnly, false); Clear(colStatusFilterChecked); Clear(colStatusFilterDraft); ClearCollect(colStatusFilterOptions_HS, ["Pending Manager", "Pending Executive", "Pending Procurement", "In Delivery", "Pending Accounting", "Pending Invoice", "Goods Receipt & Acceptance", "Pending Supplier Follow-up", "Completed", "Closed", "Cancelled", "Rejected"])
+      OnVisible: =Set(gShowQuickView, false); Set(gInvoiceFromPFU, false); Set(gShowStatusFilter, false); Set(gParentsOnly, false); Clear(colStatusFilterChecked); Clear(colStatusFilterDraft); ClearCollect(colStatusFilterOptions_HS, ["Pending Manager", "Pending Executive", "Pending Procurement", "In Delivery", "Pending Accounting", "Pending Invoice", "Goods Receipt", "Supplier Follow-up", "Completed", "Delivered", "Cancelled", "Rejected"])
     Children:
       - lblNoRole:
           Control: Label@2.5.1
@@ -131,6 +131,25 @@ Screens:
                   Text: ="New Request"
                   VerticalAlign: =VerticalAlign.Middle
                   Width: =150
+            - btnQCTraceability_HS:
+                Control: ModernButton@1.0.0
+                Properties:
+                  Align: =Align.Center
+                  FontWeight: =""
+                  Height: =36
+                  Icon: ="Search"
+                  OnSelect: =Navigate(QCTraceabilityScreen)
+                  PaddingBottom: =5
+                  PaddingLeft: =12
+                  PaddingRight: =12
+                  PaddingTop: =5
+                  RadiusBottomLeft: =4
+                  RadiusBottomRight: =4
+                  RadiusTopLeft: =4
+                  RadiusTopRight: =4
+                  Text: ="QC Traceability"
+                  VerticalAlign: =VerticalAlign.Middle
+                  Width: =170
       - rectFilterBarBorder:
           Control: Rectangle@2.3.0
           Properties:
@@ -157,11 +176,11 @@ Screens:
                           "Procurement", Filter('RM Procurement Requests',
                               Status.Value = "Pending Procurement" ||
                               Status.Value = "In Delivery" ||
-                              Status.Value = "Closed" ||
+                              Status.Value = "Delivered" ||
                               Status.Value = "Pending Invoice" ||
                               Status.Value = "Pending Accounting" ||
-                              Status.Value = "Goods Receipt & Acceptance" ||
-                              Status.Value = "Pending Supplier Follow-up" ||
+                              Status.Value = "Goods Receipt" ||
+                              Status.Value = "Supplier Follow-up" ||
                               Status.Value = "Completed" ||
                               Status.Value = "Cancelled" ||
                               Status.Value = "Rejected" ||
@@ -169,8 +188,8 @@ Screens:
                           ),
                           "Accounting", Filter('RM Procurement Requests',
                               Status.Value = "Pending Accounting" ||
-                              Status.Value = "Goods Receipt & Acceptance" ||
-                              Status.Value = "Pending Supplier Follow-up" ||
+                              Status.Value = "Goods Receipt" ||
+                              Status.Value = "Supplier Follow-up" ||
                               Status.Value = "Completed" ||
                               RequesterEmail = User().Email
                           ),
@@ -271,10 +290,10 @@ Screens:
                                   "Pending Executive", RGBA(175, 74, 20, 1),
                                   "Pending Procurement", RGBA(122, 108, 10, 1),
                                   "In Delivery", RGBA(83, 74, 183, 1),
-                                  "Closed", RGBA(13, 108, 108, 1),
+                                  "Delivered", RGBA(13, 108, 108, 1),
                                   "Rejected", RGBA(163, 45, 45, 1),
-                                  "Goods Receipt & Acceptance", RGBA(37, 92, 178, 1),
-                                  "Pending Supplier Follow-up", RGBA(11, 105, 132, 1),
+                                  "Goods Receipt", RGBA(37, 92, 178, 1),
+                                  "Supplier Follow-up", RGBA(11, 105, 132, 1),
                                   "Pending Invoice", RGBA(124, 58, 173, 1),
                                   "Pending Accounting", RGBA(158, 44, 108, 1),
                                   "Completed", RGBA(15, 110, 86, 1),
@@ -287,10 +306,10 @@ Screens:
                                   "Pending Executive", RGBA(253, 234, 222, 1),
                                   "Pending Procurement", RGBA(247, 245, 210, 1),
                                   "In Delivery", RGBA(228, 225, 250, 1),
-                                  "Closed", RGBA(219, 243, 243, 1),
+                                  "Delivered", RGBA(219, 243, 243, 1),
                                   "Rejected", RGBA(252, 233, 233, 1),
-                                  "Goods Receipt & Acceptance", RGBA(223, 234, 252, 1),
-                                  "Pending Supplier Follow-up", RGBA(219, 241, 249, 1),
+                                  "Goods Receipt", RGBA(223, 234, 252, 1),
+                                  "Supplier Follow-up", RGBA(219, 241, 249, 1),
                                   "Pending Invoice", RGBA(240, 228, 252, 1),
                                   "Pending Accounting", RGBA(252, 230, 242, 1),
                                   "Completed", RGBA(222, 245, 236, 1),
@@ -302,7 +321,7 @@ Screens:
                               Size: =11
                               Text: |-
                                 =If(
-                                  ThisItem.Status.Value = "Pending Supplier Follow-up",
+                                  ThisItem.Status.Value = "Supplier Follow-up",
                                   If(
                                     ThisItem.LatestReceiptDecision = "Accepted with Adjustment",
                                     If(ThisItem.InvoiceSubmitted, "Procurement Close-out (Credit Note)", "Submit Invoice"),
@@ -350,20 +369,20 @@ Screens:
                                 =If(
                                   ThisItem.RequestType.Value = "Delivery",
                                   If(
-                                    ThisItem.Status.Value = "Goods Receipt & Acceptance" && Not(IsBlank(ThisItem.GRAssignedToID)),
+                                    ThisItem.Status.Value = "Goods Receipt" && Not(IsBlank(ThisItem.GRAssignedToID)),
                                     "Receiver: " & ThisItem.GRAssignedToID.Value,
                                     If(
-                                      ThisItem.Status.Value = "Pending Supplier Follow-up" && Not(IsBlank(ThisItem.SFU1AssignedToID)) && ThisItem.LatestReceiptDecision = "Requires Supplier Follow-up",
+                                      ThisItem.Status.Value = "Supplier Follow-up" && Not(IsBlank(ThisItem.SFU1AssignedToID)) && ThisItem.LatestReceiptDecision = "Requires Supplier Follow-up",
                                       "Receiver: " & ThisItem.SFU1AssignedToID.Value,
                                       ""
                                     )
                                   ),
                                   "Requester: " & ThisItem.RequesterID.Value &
                                   If(
-                                    ThisItem.Status.Value = "Goods Receipt & Acceptance" && Not(IsBlank(ThisItem.GRAssignedToID)),
+                                    ThisItem.Status.Value = "Goods Receipt" && Not(IsBlank(ThisItem.GRAssignedToID)),
                                     " | Receiver: " & ThisItem.GRAssignedToID.Value,
                                     If(
-                                      ThisItem.Status.Value = "Pending Supplier Follow-up" && Not(IsBlank(ThisItem.SFU1AssignedToID)) && ThisItem.LatestReceiptDecision = "Requires Supplier Follow-up",
+                                      ThisItem.Status.Value = "Supplier Follow-up" && Not(IsBlank(ThisItem.SFU1AssignedToID)) && ThisItem.LatestReceiptDecision = "Requires Supplier Follow-up",
                                       " | Receiver: " & ThisItem.SFU1AssignedToID.Value,
                                       ""
                                     )
@@ -386,51 +405,6 @@ Screens:
                         RadiusTopRight: =0
                         Width: =Parent.Width
                       Children:
-                        - btnQuickView:
-                            Control: ModernButton@1.0.0
-                            Properties:
-                              Align: =Align.Center
-                              BasePaletteColor: =RGBA(83, 74, 183, 1)
-                              FontWeight: =FontWeight.Semibold
-                              Height: =28
-                              Icon: ="Info"
-                              OnSelect: |-
-                                =Set(gQuickViewRequest, ThisItem);
-                                ClearCollect(
-                                    colQuickViewItems,
-                                    Filter('RM Procurement Line Items', RequestIDText = Text(ThisItem.ID))
-                                );
-                                Set(gShowQuickView, true)
-                              PaddingBottom: =5
-                              PaddingLeft: =12
-                              PaddingRight: =12
-                              PaddingTop: =5
-                              RadiusBottomLeft: =4
-                              RadiusBottomRight: =4
-                              RadiusTopLeft: =4
-                              RadiusTopRight: =4
-                              Text: ="Quick View"
-                              VerticalAlign: =VerticalAlign.Middle
-                              Width: =140
-                        - btnFullDetail:
-                            Control: ModernButton@1.0.0
-                            Properties:
-                              Align: =Align.Center
-                              FontWeight: =FontWeight.Semibold
-                              Height: =28
-                              Icon: ="Eye"
-                              OnSelect: =Set(gSelectedRequest, ThisItem); Navigate(RequestDetailScreen)
-                              PaddingBottom: =5
-                              PaddingLeft: =12
-                              PaddingRight: =12
-                              PaddingTop: =5
-                              RadiusBottomLeft: =4
-                              RadiusBottomRight: =4
-                              RadiusTopLeft: =4
-                              RadiusTopRight: =4
-                              Text: ="Full Detail"
-                              VerticalAlign: =VerticalAlign.Middle
-                              Width: =130
                         - btnDoWork:
                             Control: ModernButton@1.0.0
                             Properties:
@@ -450,8 +424,8 @@ Screens:
                                     ),
                                     "Pending Procurement", Navigate(ProcurementExecutionScreen),
                                     "Pending Invoice", Navigate(InvoiceSubmissionScreen),
-                                    "Goods Receipt & Acceptance", Navigate(GoodsReceiptScreen),
-                                    "Pending Supplier Follow-up", If(
+                                    "Goods Receipt", Navigate(GoodsReceiptScreen),
+                                    "Supplier Follow-up", If(
                                         ThisItem.LatestReceiptDecision = "Accepted with Adjustment",
                                         Navigate(ProcurementFollowUpScreen),
                                         Navigate(SupplierFollowUpScreen)
@@ -477,8 +451,8 @@ Screens:
                                     ),
                                     "Pending Procurement", "Start Procurement →",
                                     "Pending Invoice", "Submit Invoice →",
-                                    "Goods Receipt & Acceptance", "Goods Receipt & Acceptance →",
-                                    "Pending Supplier Follow-up", If(
+                                    "Goods Receipt", "Goods Receipt →",
+                                    "Supplier Follow-up", If(
                                         ThisItem.LatestReceiptDecision = "Accepted with Adjustment",
                                         "Upload Credit Note →",
                                         "Goods Receipt — Round " & (Coalesce(ThisItem.ReceiptRoundCount, 0) + 1) & " →"
@@ -500,10 +474,10 @@ Screens:
                                     "Pending Invoice",
                                         (gCurrentUser.Role.Value = "Procurement" || gCurrentUser.Role.Value = "Admin") &&
                                         Not(ThisItem.InvoiceMode.Value = "ViaRequester" || ThisItem.InvoiceMode.Value = "Deferred"),
-                                    "Goods Receipt & Acceptance",
+                                    "Goods Receipt",
                                         ThisItem.RequesterEmail = gCurrentEmployee.Email ||
                                         ThisItem.GRAssignedToID.Id = gCurrentEmployee.ID,
-                                    "Pending Supplier Follow-up", If(
+                                    "Supplier Follow-up", If(
                                         ThisItem.LatestReceiptDecision = "Accepted with Adjustment",
                                         ThisItem.InvoiceSubmitted && (gCurrentUser.Role.Value = "Procurement" || gCurrentUser.Role.Value = "Admin"),
                                         ThisItem.LatestReceiptDecision = "Requires Supplier Follow-up" &&
@@ -632,6 +606,62 @@ Screens:
                                     RequestIDText = Text(ThisItem.ID)
                                 )))
                               Width: =180
+                        - conActionsSpacer_HS:
+                            Control: GroupContainer@1.5.0
+                            Variant: AutoLayout
+                            Properties:
+                              DropShadow: =DropShadow.None
+                              FillPortions: =1
+                              Height: =1
+                              RadiusBottomLeft: =0
+                              RadiusBottomRight: =0
+                              RadiusTopLeft: =0
+                              RadiusTopRight: =0
+                        - btnQuickView:
+                            Control: ModernButton@1.0.0
+                            Properties:
+                              Align: =Align.Center
+                              BasePaletteColor: =RGBA(83, 74, 183, 1)
+                              FontWeight: =FontWeight.Semibold
+                              Height: =28
+                              Icon: ="Info"
+                              OnSelect: |-
+                                =Set(gQuickViewRequest, ThisItem);
+                                ClearCollect(
+                                    colQuickViewItems,
+                                    Filter('RM Procurement Line Items', RequestIDText = Text(ThisItem.ID))
+                                );
+                                Set(gShowQuickView, true)
+                              PaddingBottom: =5
+                              PaddingLeft: =12
+                              PaddingRight: =12
+                              PaddingTop: =5
+                              RadiusBottomLeft: =4
+                              RadiusBottomRight: =4
+                              RadiusTopLeft: =4
+                              RadiusTopRight: =4
+                              Text: ="Quick View"
+                              VerticalAlign: =VerticalAlign.Middle
+                              Width: =140
+                        - btnFullDetail:
+                            Control: ModernButton@1.0.0
+                            Properties:
+                              Align: =Align.Center
+                              FontWeight: =FontWeight.Semibold
+                              Height: =28
+                              Icon: ="Eye"
+                              OnSelect: =Set(gSelectedRequest, ThisItem); Navigate(RequestDetailScreen)
+                              PaddingBottom: =5
+                              PaddingLeft: =12
+                              PaddingRight: =12
+                              PaddingTop: =5
+                              RadiusBottomLeft: =4
+                              RadiusBottomRight: =4
+                              RadiusTopLeft: =4
+                              RadiusTopRight: =4
+                              Text: ="Full Detail"
+                              VerticalAlign: =VerticalAlign.Middle
+                              Width: =130
             - rectSeparator:
                 Control: Rectangle@2.3.0
                 Properties:
@@ -1067,8 +1097,8 @@ Screens:
                               ),
                               "Pending Procurement", Navigate(ProcurementExecutionScreen),
                               "Pending Invoice", Navigate(InvoiceSubmissionScreen),
-                              "Goods Receipt & Acceptance", Navigate(GoodsReceiptScreen),
-                              "Pending Supplier Follow-up", If(
+                              "Goods Receipt", Navigate(GoodsReceiptScreen),
+                              "Supplier Follow-up", If(
                                   gQuickViewRequest.LatestReceiptDecision = "Accepted with Adjustment",
                                   Navigate(ProcurementFollowUpScreen),
                                   Navigate(SupplierFollowUpScreen)
@@ -1095,8 +1125,8 @@ Screens:
                               ),
                               "Pending Procurement", "Start Procurement →",
                               "Pending Invoice", "Submit Invoice →",
-                              "Goods Receipt & Acceptance", "Goods Receipt & Acceptance →",
-                              "Pending Supplier Follow-up", If(
+                              "Goods Receipt", "Goods Receipt →",
+                              "Supplier Follow-up", If(
                                   gQuickViewRequest.LatestReceiptDecision = "Accepted with Adjustment",
                                   "Upload Credit Note →",
                                   "Goods Receipt — Round " & (Coalesce(gQuickViewRequest.ReceiptRoundCount, 0) + 1) & " →"
@@ -1118,10 +1148,10 @@ Screens:
                                   gCurrentUser.Role.Value = "Procurement" || gCurrentUser.Role.Value = "Admin",
                               "Pending Invoice",
                                   gCurrentUser.Role.Value = "Procurement" || gCurrentUser.Role.Value = "Admin",
-                              "Goods Receipt & Acceptance",
+                              "Goods Receipt",
                                   gQuickViewRequest.RequesterEmail = gCurrentEmployee.Email ||
                                   gQuickViewRequest.GRAssignedToID.Id = gCurrentEmployee.ID,
-                              "Pending Supplier Follow-up", If(
+                              "Supplier Follow-up", If(
                                   gQuickViewRequest.LatestReceiptDecision = "Accepted with Adjustment",
                                   gQuickViewRequest.InvoiceSubmitted && (gCurrentUser.Role.Value = "Procurement" || gCurrentUser.Role.Value = "Admin"),
                                   gQuickViewRequest.LatestReceiptDecision = "Requires Supplier Follow-up" &&
@@ -1341,11 +1371,11 @@ Screens:
                                             "Procurement", Filter('RM Procurement Requests',
                                                 Status.Value = "Pending Procurement" ||
                                                 Status.Value = "In Delivery" ||
-                                                Status.Value = "Closed" ||
+                                                Status.Value = "Delivered" ||
                                                 Status.Value = "Pending Invoice" ||
                                                 Status.Value = "Pending Accounting" ||
-                                                Status.Value = "Goods Receipt & Acceptance" ||
-                                                Status.Value = "Pending Supplier Follow-up" ||
+                                                Status.Value = "Goods Receipt" ||
+                                                Status.Value = "Supplier Follow-up" ||
                                                 Status.Value = "Completed" ||
                                                 Status.Value = "Cancelled" ||
                                                 Status.Value = "Rejected" ||
@@ -1353,8 +1383,8 @@ Screens:
                                             ),
                                             "Accounting", Filter('RM Procurement Requests',
                                                 Status.Value = "Pending Accounting" ||
-                                                Status.Value = "Goods Receipt & Acceptance" ||
-                                                Status.Value = "Pending Supplier Follow-up" ||
+                                                Status.Value = "Goods Receipt" ||
+                                                Status.Value = "Supplier Follow-up" ||
                                                 Status.Value = "Completed" ||
                                                 RequesterEmail = User().Email
                                             ),

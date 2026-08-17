@@ -55,7 +55,7 @@ Screens:
             FontWeight: =FontWeight.Bold
             Height: =60
             Size: =14
-            Text: ="Raw Material Procurement - Goods Receipt & Acceptance"
+            Text: ="Raw Material Procurement - Goods Receipt"
             Width: =773
             X: =20
       - conScrollable_GR:
@@ -134,10 +134,10 @@ Screens:
                                   "Pending Executive", RGBA(175, 74, 20, 1),
                                   "Pending Procurement", RGBA(122, 108, 10, 1),
                                   "In Delivery", RGBA(83, 74, 183, 1),
-                                  "Closed", RGBA(13, 108, 108, 1),
+                                  "Delivered", RGBA(13, 108, 108, 1),
                                   "Rejected", RGBA(163, 45, 45, 1),
-                                  "Goods Receipt & Acceptance", RGBA(37, 92, 178, 1),
-                                  "Pending Supplier Follow-up", RGBA(11, 105, 132, 1),
+                                  "Goods Receipt", RGBA(37, 92, 178, 1),
+                                  "Supplier Follow-up", RGBA(11, 105, 132, 1),
                                   "Pending Invoice", RGBA(124, 58, 173, 1),
                                   "Pending Accounting", RGBA(158, 44, 108, 1),
                                   "Completed", RGBA(15, 110, 86, 1),
@@ -150,10 +150,10 @@ Screens:
                                   "Pending Executive", RGBA(253, 234, 222, 1),
                                   "Pending Procurement", RGBA(247, 245, 210, 1),
                                   "In Delivery", RGBA(228, 225, 250, 1),
-                                  "Closed", RGBA(219, 243, 243, 1),
+                                  "Delivered", RGBA(219, 243, 243, 1),
                                   "Rejected", RGBA(252, 233, 233, 1),
-                                  "Goods Receipt & Acceptance", RGBA(223, 234, 252, 1),
-                                  "Pending Supplier Follow-up", RGBA(219, 241, 249, 1),
+                                  "Goods Receipt", RGBA(223, 234, 252, 1),
+                                  "Supplier Follow-up", RGBA(219, 241, 249, 1),
                                   "Pending Invoice", RGBA(240, 228, 252, 1),
                                   "Pending Accounting", RGBA(252, 230, 242, 1),
                                   "Completed", RGBA(222, 245, 236, 1),
@@ -1338,7 +1338,7 @@ Screens:
                                                       {
                                                           Status: {Value: If(
                                                               ddAcceptanceDecision_GR.Selected.Value = "Requires Supplier Follow-up",
-                                                              "Pending Supplier Follow-up",
+                                                              "Supplier Follow-up",
                                                               If(!wLatest.InvoiceSubmitted, "Pending Invoice", "Pending Accounting")
                                                           )},
                                                           ReceiptRoundCount: 1,
@@ -1364,7 +1364,7 @@ Screens:
                                                               RequestID: {Id: gSelectedRequest.ID, Value: gSelectedRequest.Title},
                                                               RequestIDText: Text(gSelectedRequest.ID),
                                                               StepNumber: 3,
-                                                              StepName: {Value: "Goods Receipt & Acceptance"},
+                                                              StepName: {Value: "Goods Receipt"},
                                                               RoundNumber: 1,
                                                               ReceivedBy: gCurrentEmployee.Title,
                                                               ReceiptDate: dpReceiptDate_GR.SelectedDate,

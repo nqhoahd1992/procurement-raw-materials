@@ -90,7 +90,7 @@ Invoice flows (called from `ProcurementExecutionScreen` and `InvoiceSubmissionSc
 
 General-purpose notification flow — SharePoint flow name **`Procurement Notify`** (renamed from `Procurement_Notify_Receipt_Assignee`), referenced in Power Fx as `ProcurementNotify`:
 - `ProcurementNotify.Run(assigneeEmail, assigneeName, requestTitle, requestId, notificationType, deliveryDate, category, sourceApp, displayId)` — **9 args**, identical order at all **8 call sites**. Arg 9 (`displayId`) is `Coalesce(<record>.DisplayID, Text(<record>.ID))` — the human-facing code for the email body; **arg 4 stays the real numeric `ID`** so the flow can still fetch the row. Adding it as a 9th slot rather than retyping arg 4 was deliberate: deleting a Power Automate input and re-adding it as Text moves it to the end anyway, which would have shifted every positional argument. The flow branches on `notificationType`:
-  - `"GoodsReceipt"` — new assignee must perform Goods Receipt & Acceptance (round 1). `GoodsReceiptScreen.btnSaveAssignment_GR`.
+  - `"GoodsReceipt"` — new assignee must perform Goods Receipt (round 1). `GoodsReceiptScreen.btnSaveAssignment_GR`.
   - `"SupplierFollowUp"` — new assignee must perform the open receipt round (**round ≥ 2, any round** — the email is deliberately round-agnostic, since the app passes no round number). `SupplierFollowUpScreen.btnSaveAssignment_SFU`.
   - `"Unassigned"` — previous assignee no longer needs to act (email only, no Adaptive Card). Four call sites: `btnSaveAssignment_GR` / `btnSaveAssignment_SFU` (before assigning someone else) and `btnIWillReceive_GR` / `btnIWillReceive_SFU` (requester takes the task back).
   - `"ExecutivePayment"` — `ExecutiveApprovalScreen`, when an approved request is over-threshold: the Executive notifies **themselves** (`gCurrentEmployee.Email`) to go process the payment.
@@ -184,7 +184,7 @@ One purchase request's materials arrive from the supplier across **several separ
 | Invoice | **none** — the parent carries no invoice at all any more | its own `InvoiceMode`/`InvoiceSubmitted`/`OfficialInvoiceLink`. **This is what lets one request have many invoices** |
 | Receipt rounds | none of its own; rolls its children's up via `ParentRequestID` | its own |
 | Title | `ID: <own ID> - <employee> - <dd/mm/yyyy> - <project Title>` | `<parent Title> - #<DeliveryNumber>` |
-| Lifecycle | `Pending Manager` → `Pending Executive` → `Pending Procurement` → `In Delivery` → `Closed` | `Goods Receipt & Acceptance` → `Pending Supplier Follow-up` → `Pending Invoice` → `Pending Accounting` → `Completed` |
+| Lifecycle | `Pending Manager` → `Pending Executive` → `Pending Procurement` → `In Delivery` → `Delivered` | `Goods Receipt` → `Supplier Follow-up` → `Pending Invoice` → `Pending Accounting` → `Completed` |
 | Early exit | `Rejected` (Manager Reject, Executive Reject or Procurement Reject) | `Cancelled` (created in error, only while `ReceiptRoundCount = 0`) |
 
 **The two `Status` sets are disjoint.** That is the load-bearing property of this design: every pre-existing `Status` gate on the downstream screens is already type-safe, so **none of them needed a `RequestType` check added**. `RequestType` is consulted only by `HomeScreen`'s Manager branch and by presentation logic (indent, banner, the Deliveries section, the new buttons).
@@ -237,10 +237,14 @@ In Delivery  ◄── THE PARENT'S LIFECYCLE ENDS HERE. It is now an open conta
    │  Procurement/Admin "+ Add Delivery" → DeliveryBatchFormScreen → spawns Delivery #1, #2, #3…  (unbounded)
    │     each spawn writes ExecutionLog Step 7 on the PARENT and bumps the parent's DeliveryCount
    │  Procurement/Admin "Close Request"  → manual only, needs CloseRemarks, blocked while any delivery
-   │     is neither Completed nor Cancelled. Allowed when short-delivered (the supplier may never
-   │     deliver in full) — that is a normal outcome needing a written reason, not an error.
+   │     is in a receiving/invoicing status other than Completed/Cancelled/Pending Accounting.
+   │     Allowed when short-delivered (the supplier may never deliver in full) — that is a normal
+   │     outcome needing a written reason, not an error. Also allowed with a delivery still
+   │     Pending Accounting — see the auto-promotion note just below.
    ▼
-Closed  (terminal, ExecutionLog Step 8)
+Delivered  — auto-promotes to Completed once every delivery reaches Completed (ExecutionLog Step 9,
+          written from AccountingScreen's submit); otherwise this is where the parent stays,
+          terminal (ExecutionLog Step 8 recorded the Close itself)
 
 
 === TYPE 2 — Delivery (child), ONE INVOICE EACH ===
@@ -248,25 +252,25 @@ Closed  (terminal, ExecutionLog Step 8)
 DeliveryBatchFormScreen (Procurement picks which materials + qty are in this delivery, its expected
    │  date, its InvoiceMode, optionally a receiver. Creates the child row + its own line items.)
    ▼
-Goods Receipt & Acceptance ──(GoodsReceiptScreen — receipt ROUND 1, ExecutionLog Step 3)──┐
+Goods Receipt ──(GoodsReceiptScreen — receipt ROUND 1, ExecutionLog Step 3)──┐
    │ Always ends this screen. Writes ReceiptRoundCount = 1, LatestReceiptDecision = <decision>.
    │ Only 2 options — there is no "Rejected" at goods receipt; a bad delivery enters the loop.
    │ Accepted                    → Fulfillment = "Fulfilled"
    │                             → Pending Invoice (if !InvoiceSubmitted) else Pending Accounting
-   │ Requires Supplier Follow-up → Pending Supplier Follow-up, receipt round 2 opens immediately
+   │ Requires Supplier Follow-up → Supplier Follow-up, receipt round 2 opens immediately
    ▼
-Pending Supplier Follow-up ── THE RECEIVING LOOP, unbounded ──┐
+Supplier Follow-up ── THE RECEIVING LOOP, unbounded ──┐
    │
    │  ┌─ SupplierFollowUpScreen — Requester or SFU1AssignedToID, ExecutionLog Step 4, RoundNumber = N
    │  │     shown when LatestReceiptDecision = "Requires Supplier Follow-up"; the round being
    │  │     entered is ReceiptRoundCount + 1. Receiver is re-chosen every round.
    │  │     Writes ReceiptRoundCount = N, LatestReceiptDecision = <decision>, clears SFU1AssignedToID.
    │  │
-   │  │     Requires Supplier Follow-up → stays Pending Supplier Follow-up
+   │  │     Requires Supplier Follow-up → stays Supplier Follow-up
    │  │                                   → round N+1 opens immediately, NO Procurement step ─┐
    │  │     Accepted                    → Fulfillment = "Fulfilled"                           │
    │  │                                   → Pending Invoice / Pending Accounting  (loop ends) │
-   │  │     Accepted with Adjustment    → stays Pending Supplier Follow-up                    │
+   │  │     Accepted with Adjustment    → stays Supplier Follow-up                    │
    │  │                                   → hands over to Procurement ↓                       │
    │  │                                                                                       │
    │  └───────────────────────────────────────────────────────────────────────────────────────┘
@@ -274,7 +278,7 @@ Pending Supplier Follow-up ── THE RECEIVING LOOP, unbounded ──┐
    │  ┌─ ProcurementFollowUpScreen — Procurement/Admin, ExecutionLog Step 5, RoundNumber = N
    │  │     THE PROCUREMENT CLOSE-OUT (see below) — a document step, not a round.
    │  │     Runs at most ONCE per request, and only on the "Accepted with Adjustment" branch.
-   │  │     shown when Status = "Pending Supplier Follow-up" && LatestReceiptDecision = "Accepted with Adjustment"
+   │  │     shown when Status = "Supplier Follow-up" && LatestReceiptDecision = "Accepted with Adjustment"
    │  │     BLOCKED until the Official Invoice data exists (InvoiceSubmitted +
    │  │     OfficialInvoiceLink) — Procurement must submit it first via
    │  │     InvoiceSubmissionScreen, see below.
@@ -285,7 +289,7 @@ Pending Supplier Follow-up ── THE RECEIVING LOOP, unbounded ──┐
    ▼
 Pending Invoice ──(InvoiceSubmissionScreen [Procurement/Admin] or RequesterInvoiceScreen [Requester])──
    │ InvoiceSubmissionScreen submit (ExecutionLog StepNumber 6) → Pending Accounting
-   │   (it never bounces back to Pending Supplier Follow-up, so the old `locSFUStep2Pending`
+   │   (it never bounces back to Supplier Follow-up, so the old `locSFUStep2Pending`
    │    variable was removed outright. "Pending Invoice" is only ever reached from an
    │    "Accepted" receipt decision; the Credit Note branch now requires the invoice first
    │    and closes straight to Pending Accounting.)
@@ -301,9 +305,9 @@ Completed  (terminal — for THIS delivery. The parent is closed separately, man
 Cancelled  (terminal — a delivery created in error, only while ReceiptRoundCount = 0)
 ```
 
-**`Completed` now means "this delivery is done", not "the request is done".** One request yields N `Completed` rows and N Step-2 log rows, one per delivery. The parent never reaches `Completed` at all — its terminal state is `Closed`.
+**`Completed` now means "this delivery is done", not "the request is done".** One request yields N `Completed` rows and N Step-2 log rows, one per delivery. The parent never reaches `Completed` at all — its terminal state is `Delivered`.
 
-**`In Delivery` breaks an invariant the reminder flows rest on.** For every other status, being in it means work on *that row* is outstanding. An `In Delivery` parent is waiting on its children, not on anyone acting on itself — which is why `Closed` has to exist to drain it, and why a reminder that nags on `In Delivery` would need to check whether any child is actually open. **Nothing does that today**: no flow notices a parent sitting in `In Delivery` with no delivery ever created. Known gap.
+**`In Delivery` breaks an invariant the reminder flows rest on.** For every other status, being in it means work on *that row* is outstanding. An `In Delivery` parent is waiting on its children, not on anyone acting on itself — which is why `Delivered` has to exist to drain it, and why a reminder that nags on `In Delivery` would need to check whether any child is actually open. **Nothing does that today**: no flow notices a parent sitting in `In Delivery` with no delivery ever created. Known gap.
 
 **Executive-payment sub-flow** (`isExecutivePayment` Yes/No field on `'RM Procurement Requests'`): when Executive approves a request that is over-threshold (`Currency <> "AUD" || EstimatedCost > 10000` — `USD` always qualifies since this app only offers `AUD`/`USD`, no FX conversion for the AUD case, just the plain 10,000 cutoff), the request does **not** advance to "Pending Procurement" — it stays `Status = "Pending Executive"` with `isExecutivePayment = true`, and `RequestDetailScreen`/`HomeScreen` display it as **"Pending Payment From Executive"** purely as a computed label (same pattern as the "Supplier Follow-up (Step 1/2)" sub-status — the real `Status` value never changes). The Executive then uses `ExecutivePaymentScreen` (reached via `RequestDetailScreen`'s "Process Payment →" button, shown only when `isExecutivePayment = true`) to upload a remittance advice document; submitting patches `RemittanceURL` and moves `Status` to `"Pending Procurement"` (keeping `isExecutivePayment = true` for history). Unlike the sibling `procurement-procedure` app, there is no Manager fast-track to worry about here — every request that survives Manager review passes through `ExecutiveApprovalScreen`, so the threshold only needs to be checked in one place. `ManagerReviewScreen` no longer *always* routes to `Pending Executive`, though: `Reject` sends it straight to `Rejected`. That doesn't affect the threshold, because a Manager-rejected request never reaches the Executive at all.
 
@@ -315,21 +319,21 @@ Routing relies on these status strings being exact and consistent across `HomeSc
 
 ### The receiving loop's state — two fields on the request, not the log
 
-`Status` alone can't say where inside "Pending Supplier Follow-up" a request is, and a per-row `LookUp` into the execution log is non-delegable and too slow for `HomeScreen`'s gallery. The loop's position therefore lives in two plain request columns:
+`Status` alone can't say where inside "Supplier Follow-up" a request is, and a per-row `LookUp` into the execution log is non-delegable and too slow for `HomeScreen`'s gallery. The loop's position therefore lives in two plain request columns:
 
 | Field | Meaning |
 |---|---|
 | `ReceiptRoundCount` | receipt rounds submitted so far — the round being entered next is `+1` |
 | `LatestReceiptDecision` | the most recent round's acceptance decision (plain **Text**, so both the round-1 and round-N option sets fit) |
 
-Inside `Status = "Pending Supplier Follow-up"` there are exactly two states:
+Inside `Status = "Supplier Follow-up"` there are exactly two states:
 
 | `LatestReceiptDecision` | Meaning | Screen |
 |---|---|---|
 | `Requires Supplier Follow-up` | receipt round `ReceiptRoundCount + 1` is open | `SupplierFollowUpScreen` (Requester / `SFU1AssignedToID`) |
 | `Accepted with Adjustment` | Credit Note pending | `ProcurementFollowUpScreen` (Procurement/Admin) |
 
-**Call the Step-5 screen the "Procurement close-out", never a round.** *Round* here means one **goods receipt**: it increments `ReceiptRoundCount` and writes `'RM Procurement Receipt Rounds'` rows (one per line item) with received quantities, batch, expiry, QC, COA. `ProcurementFollowUpScreen` writes none of that — only `CreditNote`, `Fulfillment` and `Status`, plus a Step-5 log row carrying `ExecutedBy`/`ExecutedAt`/`Notes` (and the round number it is closing, which is why `colRoundHistory` hides the attachments button for Step 5: that step has no receipt photos). It is a **document step**: Procurement collects the supplier's Credit Note and ends the receiving process. Two different kinds of work share the single `Pending Supplier Follow-up` status — receiving (the receiver's rounds) and close-out (Procurement's paperwork) — and `LatestReceiptDecision` routes between them. The UI matches: screen title "Procurement Close-out (Round N)", section header "Procurement Close-out — closing Round N", `HomeScreen`'s pill "Procurement Close-out (Credit Note)", `colRoundHistory`'s `StepLabel` "Procurement close-out", and `RequestDetailScreen`'s Step-5 label "Procurement Close-out". The SharePoint choice value `StepName = "Supplier Follow-up — Procurement"` keeps its old text — renaming it means editing the list's choice column.
+**Call the Step-5 screen the "Procurement close-out", never a round.** *Round* here means one **goods receipt**: it increments `ReceiptRoundCount` and writes `'RM Procurement Receipt Rounds'` rows (one per line item) with received quantities, batch, expiry, QC, COA. `ProcurementFollowUpScreen` writes none of that — only `CreditNote`, `Fulfillment` and `Status`, plus a Step-5 log row carrying `ExecutedBy`/`ExecutedAt`/`Notes` (and the round number it is closing, which is why `colRoundHistory` hides the attachments button for Step 5: that step has no receipt photos). It is a **document step**: Procurement collects the supplier's Credit Note and ends the receiving process. Two different kinds of work share the single `Supplier Follow-up` status — receiving (the receiver's rounds) and close-out (Procurement's paperwork) — and `LatestReceiptDecision` routes between them. The UI matches: screen title "Procurement Close-out (Round N)", section header "Procurement Close-out — closing Round N", `HomeScreen`'s pill "Procurement Close-out (Credit Note)", `colRoundHistory`'s `StepLabel` "Procurement close-out", and `RequestDetailScreen`'s Step-5 label "Procurement Close-out". The SharePoint choice value `StepName = "Supplier Follow-up — Procurement"` keeps its old text — renaming it means editing the list's choice column.
 
 **Always gate on the pair `(Status, LatestReceiptDecision)`, never on the decision alone** — `gSFURoundOpen` and `gPFUPending` both do. The reason is that `LatestReceiptDecision` is a *historical* field: it records what the latest round decided and is never cleared. After Procurement uploads the Credit Note it still reads `Accepted with Adjustment` forever, so a gate reading only the decision would re-open that screen indefinitely. What actually consumes the pending state is `Status` moving to `Pending Invoice` / `Pending Accounting`; the decision only says *which kind* of work was pending.
 
@@ -396,9 +400,13 @@ Older requests that already have real `BudgetReference`/`RelatedSKU` values keep
 
 Both live on `RequestDetailScreen` and are Procurement/Admin only.
 
-**Close Request** (`btnActionCloseRequest` → `rectCloseOverlay_RD`/`conCloseDialog_RD`, the **last two screen-level children**, after the log-detail pair — z-order is child order). Visible only when `Not(gIsDelivery) && Status = "In Delivery"`. The dialog requires `txtCloseRemarks_RD`, shows an advisory line computed from `colLineItemsSummary` saying whether every material was fully received or how many are short, re-reads the request to abort if it moved, then patches `Status = "Closed"` + `ClosedByID`/`ClosedAt`/`CloseRemarks` and writes ExecutionLog Step 8. **Hard-blocked only** while a delivery is neither `Completed` nor `Cancelled`; a short delivery is *not* blocked — the shortfall advisory is advice, never a gate. There is deliberately no auto-close: an auto-rule could never fire in the common case (the supplier short-ships and the remainder is written off), and computing it per row on `HomeScreen` is exactly the non-delegable pattern the receiving loop already rejected.
+**Close Request** (`btnActionCloseRequest` → `rectCloseOverlay_RD`/`conCloseDialog_RD`, the **last two screen-level children**, after the log-detail pair — z-order is child order). Visible only when `Not(gIsDelivery) && Status = "In Delivery"`. The dialog requires `txtCloseRemarks_RD`, shows an advisory line computed from `colLineItemsSummary` saying whether every material was fully received or how many are short, re-reads the request to abort if it moved, then patches `ClosedByID`/`ClosedAt`/`CloseRemarks` and writes ExecutionLog Step 8. **Blocked while a delivery is in any of the receiving/invoicing statuses** (`btnCloseDlgConfirm_RD`'s guard is `Status.Value <> "Completed" && Status.Value <> "Cancelled" && Status.Value <> "Pending Accounting"`) — note `Pending Accounting` is deliberately let through, so **a parent can be closed while a delivery is still sitting in `Pending Accounting`**; see the auto-completion rule below for why that matters. A short delivery is *not* blocked either — the shortfall advisory is advice, never a gate.
 
-**Cancel** (`btnCancelDelivery_RD`, inside each row of the parent's Deliveries table). Visible only while `ReceiptRoundCount = 0` and the delivery is still at `Goods Receipt & Acceptance`; it re-reads the row and refuses if a round has appeared since render. Patches `Status = "Cancelled"` and reloads `colDeliveryBatches` in place. This exists because a delivery passes no approval screen and round 1 has no `Rejected`, so without it a mistakenly-created delivery would be permanent — and would block the parent from ever being closable.
+`Status` written by this patch is **not unconditionally `"Delivered"`** — `btnCloseDlgConfirm_RD` computes `wHasDeliveries` (at least one delivery exists) and `wAllDelivered` (`wHasDeliveries && IsEmpty(Filter('RM Procurement Requests', ParentRequestID = gSelectedRequest.ID && Status.Value <> "Completed"))`) *before* patching, and writes `Status: {Value: If(wAllDelivered, "Completed", "Delivered")}`. `wHasDeliveries` exists purely to stop the vacuous case — a request can reach this dialog having spawned **zero** deliveries at all (the guard above only blocks on a delivery being *mid-flight*, it never requires one to exist), and an empty `Filter(...)` is `IsEmpty` too, which would otherwise read as "all delivered" for a request nothing was ever delivered against. Step 8 ("Request Closed") is always written regardless of which branch fired, since the user did take the Close action and gave remarks either way; when `wAllDelivered` is true an **additional** ExecutionLog **Step 9** row (`StepName: "Request Completed"`) is written right after it, and the success `Notify` wording branches to say so.
+
+**Cancel** (`btnCancelDelivery_RD`, inside each row of the parent's Deliveries table). Visible only while `ReceiptRoundCount = 0` and the delivery is still at `Goods Receipt`; it re-reads the row and refuses if a round has appeared since render. Patches `Status = "Cancelled"` and reloads `colDeliveryBatches` in place. This exists because a delivery passes no approval screen and round 1 has no `Rejected`, so without it a mistakenly-created delivery would be permanent — and would block the parent from ever being closable.
+
+**A parent can also be promoted from `Delivered` to `Completed` *after* the fact**, for the case the Close-time check above can't catch: a delivery still `Pending Accounting` at the moment of Close (deliberately not blocked, see above) finishing *later*. The check lives in **`AccountingScreen`'s submit** (`btnSubmit_AC`, the only other place a delivery's `Status` is ever patched to `Completed`): right after that delivery's own Patch and its Step-2 log row succeed, it re-reads the delivery's parent (`ParentRequestID`) and, only if the parent is currently `Delivered`, re-queries all siblings (`Filter('RM Procurement Requests', ParentRequestID = wParentID && Status.Value <> "Completed")`) — if that comes back empty (every sibling, including the one just completed, is now `Completed`), it patches the parent to `Status = "Completed"` and writes its own ExecutionLog Step 9 row. Both sites use the identical `Status.Value <> "Completed"` emptiness check; keep them in sync. A parent with even one `Cancelled` delivery never satisfies either check and stays `Delivered` forever — matching that a short/incomplete fulfillment is a deliberate, permanent outcome, not something that should silently read as fully "Completed". **Needs a manual SharePoint change**: add `Request Completed` as a new Choice option on `'RM Procurement Execution Log'.StepName`, same as Steps 7/8 needed when they were introduced.
 
 ### Receipt data amendment (decoupled from the Status workflow)
 
@@ -467,7 +475,7 @@ There is deliberately **no way to assign a request to a specific Accounting pers
 
 `ProcurementExecutionScreen` and `InvoiceSubmissionScreen` used to carry an "Assign to Accounting Staff *" picker (`ddAccountingHandler_PE` / `ddAccountingHandler_ISS`, both required to submit) that wrote this field plus the log's `HandoverToID`. All of it was removed, because the assignment was never real:
 - It was overwritten twice downstream — by `InvoiceSubmissionScreen`, then unconditionally by `AccountingScreen` with whoever actually clicked submit.
-- It gated nothing. `HomeScreen`'s Accounting branch filters on **Status**, not on the assignee, so every Accounting user sees every request in `Pending Accounting` / `Goods Receipt & Acceptance` / `Pending Supplier Follow-up` / `Completed`; `AccountingScreen` has no assignee check either.
+- It gated nothing. `HomeScreen`'s Accounting branch filters on **Status**, not on the assignee, so every Accounting user sees every request in `Pending Accounting` / `Goods Receipt` / `Supplier Follow-up` / `Completed`; `AccountingScreen` has no assignee check either.
 - It was picked far too early to be meaningful — at Procurement time the request is only entering Goods Receipt, and with unbounded receipt rounds `Pending Accounting` can be arbitrarily far away.
 
 Don't reintroduce a picker without also making it load-bearing: gate `AccountingScreen`, filter `HomeScreen` by assignee, and stop `AccountingScreen` from overwriting the field. Related gap, currently accepted: **nothing notifies Accounting at any point**, not even when `Status` becomes `Pending Accounting` — they discover work by looking at `HomeScreen`.
@@ -478,8 +486,8 @@ Don't reintroduce a picker without also making it load-bearing: gate `Accounting
 
 The gallery `Items` filters `'RM Procurement Requests'` differently per `gUserRole` (always further filtered by `IsBlank(gStatusFilter) || Status.Value = gStatusFilter`):
 - **Manager** → `(ManagerApproverID.Id = gCurrentEmployee.ID && RequestType.Value = "Request")`, **or** their own requests (`RequesterEmail = User().Email`). **The `RequestType` term is load-bearing**: `ManagerApproverID` is Required ⚠ so every delivery must copy it, and without the term a manager would see every delivery of every request they ever approved and be able to act on none of them.
-- **Procurement** → requests in status `"Pending Procurement"`, **`"In Delivery"`**, **`"Closed"`**, `"Pending Invoice"`, `"Pending Accounting"`, `"Goods Receipt & Acceptance"`, `"Pending Supplier Follow-up"`, `"Completed"`, **`"Cancelled"`**, `"Rejected"`, or their own requests. Does not include `"Pending Manager"`/`"Pending Executive"`. **`"In Delivery"` is not optional** — without it the parent, the one row Procurement must open to create a delivery, vanishes from their HomeScreen entirely.
-- **Accounting** → a narrower version of Procurement's list: `"Pending Accounting"`, `"Goods Receipt & Acceptance"`, `"Pending Supplier Follow-up"`, `"Completed"`, or their own requests. Unchanged by the split — those four statuses now resolve to deliveries only, which is correct: Accounting works per invoice, i.e. per delivery.
+- **Procurement** → requests in status `"Pending Procurement"`, **`"In Delivery"`**, **`"Delivered"`**, `"Pending Invoice"`, `"Pending Accounting"`, `"Goods Receipt"`, `"Supplier Follow-up"`, `"Completed"`, **`"Cancelled"`**, `"Rejected"`, or their own requests. Does not include `"Pending Manager"`/`"Pending Executive"`. **`"In Delivery"` is not optional** — without it the parent, the one row Procurement must open to create a delivery, vanishes from their HomeScreen entirely.
+- **Accounting** → a narrower version of Procurement's list: `"Pending Accounting"`, `"Goods Receipt"`, `"Supplier Follow-up"`, `"Completed"`, or their own requests. Unchanged by the split — those four statuses now resolve to deliveries only, which is correct: Accounting works per invoice, i.e. per delivery.
 - **Executive / Admin** → all requests, unfiltered — so they see both types.
 - **Requester (default, and any unrecognized role)** → own requests (`RequesterEmail = User().Email`), plus requests where they're the current Goods Receipt or receipt-round assignee (`GRAssignedToID.Id = gCurrentEmployee.ID || SFU1AssignedToID.Id = gCurrentEmployee.ID`). Unchanged: a delivery copies `RequesterEmail`, so requesters see their own deliveries, and the two assignee columns now only ever exist on a delivery. Note `SFU1AssignedToID` is cleared at the end of every round, so this only matches while a round is actually open and assigned to them.
 
@@ -495,12 +503,12 @@ The gallery `Items` filters `'RM Procurement Requests'` differently per `gUserRo
 | `Pending Executive` | `ExecutivePaymentScreen` if `isExecutivePayment`, else `ExecutiveApprovalScreen` | Executive / Admin |
 | `Pending Procurement` | `ProcurementExecutionScreen` | Procurement / Admin |
 | `Pending Invoice` | `InvoiceSubmissionScreen` | Procurement / Admin, **only when `btnProcessInvoice` isn't already showing** |
-| `Goods Receipt & Acceptance` | `GoodsReceiptScreen` | the requester, or `GRAssignedToID` |
-| `Pending Supplier Follow-up` | `ProcurementFollowUpScreen` if `LatestReceiptDecision = "Accepted with Adjustment"`, else `SupplierFollowUpScreen` | Procurement/Admin for the close-out; the requester or `SFU1AssignedToID` for a round |
+| `Goods Receipt` | `GoodsReceiptScreen` | the requester, or `GRAssignedToID` |
+| `Supplier Follow-up` | `ProcurementFollowUpScreen` if `LatestReceiptDecision = "Accepted with Adjustment"`, else `SupplierFollowUpScreen` | Procurement/Admin for the close-out; the requester or `SFU1AssignedToID` for a round |
 | `Pending Accounting` | `AccountingScreen` | Accounting / Executive / Admin |
 | anything else | — | nobody (`Switch` default `false`) |
 
-`In Delivery`, `Closed`, `Completed`, `Rejected` and `Cancelled` deliberately have **no** arm: the first is served by `btnAddDelivery` (Close Request is a dialog and stays on the detail screen), and the rest are terminal. The `Pending Invoice` arm is the one gated negatively — `Not(InvoiceMode = "ViaRequester" || InvoiceMode = "Deferred")` — because `btnProcessInvoice` already covers those two modes with a better label ("Remind Requester" when the requester hasn't uploaded yet). Without that negation the row would show two buttons meaning the same thing; without the arm at all, a `Pending Invoice` row with a blank or `Direct` `InvoiceMode` would have no route to the invoice screen now that the row-click shortcut is gone.
+`In Delivery`, `Delivered`, `Completed`, `Rejected` and `Cancelled` deliberately have **no** arm: the first is served by `btnAddDelivery` (Close Request is a dialog and stays on the detail screen), and the rest are terminal. The `Pending Invoice` arm is the one gated negatively — `Not(InvoiceMode = "ViaRequester" || InvoiceMode = "Deferred")` — because `btnProcessInvoice` already covers those two modes with a better label ("Remind Requester" when the requester hasn't uploaded yet). Without that negation the row would show two buttons meaning the same thing; without the arm at all, a `Pending Invoice` row with a blank or `Direct` `InvoiceMode` would have no route to the invoice screen now that the row-click shortcut is gone.
 
 **A `Cancelled` delivery shows only the two look buttons — `btnQuickView` and `btnFullDetail`.** It is terminal and nothing more is ever owed on it, so every action button in `rowActions` must hide. `btnDoWork` and `btnAddDelivery` already do (no `Switch` arm; `RequestType = "Request"`), but the three remaining ones are gated on things a cancelled row can still satisfy — `btnProcessInvoice` and `btnSubmitInvoice` on `InvoiceMode` + `Not(InvoiceSubmitted)` (a delivery cancelled before its invoice was filed matches both), and `btnReceiptAmend_Request` on the existence of receipt rounds. All three therefore carry an explicit `ThisItem.Status.Value <> "Cancelled"` term. The amend button's is defensive rather than load-bearing — cancelling requires `ReceiptRoundCount = 0`, so the row has no rounds to amend — but it is written out so the rule reads the same on all three. `RequestDetailScreen`'s action bar needed no change: all eight of its buttons already gate on a specific `Status`, and `Cancelled` is none of them.
 
@@ -510,9 +518,9 @@ The gallery `Items` filters `'RM Procurement Requests'` differently per `gUserRo
 
 `btnAddDelivery` sits in each row's `rowActions` bar, visible only when `RequestType = "Request" && Status = "In Delivery"` and the user is Procurement/Admin. `btnSubmitInvoice` and `btnProcessInvoice` gate on `InvoiceMode`, and `btnReceiptAmend_Request` filters receipt rounds by `RequestIDText = Text(ThisItem.ID)` — all three therefore **self-hide on a parent** with no `RequestType` term needed, since a parent has no `InvoiceMode` and no receipt rounds of its own.
 
-The filter bar gained `In Delivery`, `Closed` and `Cancelled` pills. It did not need shortening to fit: `rowFilterBar` sets `LayoutOverflowX: =LayoutOverflow.Scroll`, so pills just append and the bar scrolls.
+The filter bar gained `In Delivery`, `Delivered` and `Cancelled` pills. It did not need shortening to fit: `rowFilterBar` sets `LayoutOverflowX: =LayoutOverflow.Scroll`, so pills just append and the bar scrolls.
 
-The status pill for `"Pending Supplier Follow-up"` is a **computed sub-status**, same pattern as "Pending Payment From Executive" — the real `Status` string never changes inside the loop. It renders `"Procurement Close-out (Credit Note)"` when `LatestReceiptDecision = "Accepted with Adjustment"`, otherwise `"Goods Receipt (Round <n+1>)"`. It reads only `ThisItem.*` fields — no `LookUp` — which is both delegable and faster than the old Step-4 log probe it replaced.
+The status pill for `"Supplier Follow-up"` is a **computed sub-status**, same pattern as "Pending Payment From Executive" — the real `Status` string never changes inside the loop. It renders `"Procurement Close-out (Credit Note)"` when `LatestReceiptDecision = "Accepted with Adjustment"`, otherwise `"Goods Receipt (Round <n+1>)"`. It reads only `ThisItem.*` fields — no `LookUp` — which is both delegable and faster than the old Step-4 log probe it replaced.
 
 Filter buttons and "+ New Request" are **not** role-gated — every user who passes the membership gate (`Not(IsBlank(gCurrentEmployee.ID)) && Not(IsBlank(gCurrentUser.ID))`) sees the same filter bar and "+ New Request" button; only the underlying gallery `Items` differ per role. Keep the per-role `Items` filter in sync when adding new statuses, but don't assume the buttons themselves need per-role `Visible` logic — they currently don't have any.
 
@@ -521,7 +529,7 @@ Filter buttons and "+ New Request" are **not** role-gated — every user who pas
 **None of this can be done from `.pa.yaml`, and the app will not run correctly until all of it is applied.**
 
 1. **`'RM Procurement Requests'`** → add `RequestType` (**Choice**: `Request`, `Delivery`, default `Request`), `ParentRequestID` (Number), `DeliveryNumber` (Number), `DeliveryCount` (Number), `GroupKey` (Number), `ClosedByID` (Lookup→Employee List), `ClosedAt` (DateTime), `CloseRemarks` (multiline text).
-2. **`'RM Procurement Requests'.Status`** → add three Choice options: `In Delivery`, `Closed`, `Cancelled`.
+2. **`'RM Procurement Requests'.Status`** → add three Choice options: `In Delivery`, `Delivered`, `Cancelled`.
 3. **`'RM Procurement Line Items'`** → add `ParentLineItemID` (Number).
 4. **`'RM Procurement Receipt Rounds'`** → add `ParentRequestID` (Number, **index it**) and `ParentLineItemID` (Number).
 5. **`'RM Procurement Execution Log'.StepName`** → add two Choice options: `Delivery Batch Created` (StepNumber 7), `Request Closed` (StepNumber 8).
@@ -592,7 +600,7 @@ None of this can be done from `.pa.yaml`. **The app will not run correctly until
   - **White `RGBA(255, 255, 255, 1)` = history.** The three sibling sections `rowGRSection` / `rowApprovalSection` / `rowExecutionSection`, each `PaddingTop 20` / `PaddingBottom 16` / `PaddingLeft`+`Right 20`, `LayoutGap 6`, one 28px Bold size-11 title, an optional grey size-9 summary line, then header + gallery.
   - **One table style everywhere:** header row 32px filled `RGBA(232, 230, 221, 1)` with size-9 Semibold `RGBA(107, 105, 98, 1)` labels; rows plain white with a 1px `RGBA(232, 230, 221, 1)` hairline as the **last child of the row template** (so the template is vertical: `…Body` at `TemplateSize − 1`, then the rule). **No zebra striping** — one separation mechanism per table, not three.
   - **History row geometry is shared by all three tables:** `TemplateSize: =52`, `TemplatePadding: =0`, body 51px with `PaddingTop`/`Bottom 4` and `LayoutGap 10`, a fixed **96px two-line timestamp column** (`dd/mm/yyyy` size-10 Semibold over `hh:mm` size-9 grey) then a `FillPortions: =1` column holding a 24px cells row and a 15px notes line. Section height is `108 + CountRows(...) * 52` (`134 + …` for `rowGRSection`, which has the extra summary line) — change the row height and all four numbers move together.
-  - **Status badges use the 12-hue per-status palette**, not the old grouped one — and **every status badge in the app now carries it**, not just the two overview screens. One distinct hue per `Status` value (amber Pending Manager · orange Pending Executive · olive Pending Procurement · purple In Delivery · teal Closed · red Rejected · blue Goods Receipt · cyan Pending Supplier Follow-up · violet Pending Invoice · magenta Pending Accounting · green Completed · muted-rose Cancelled), as a `Color`/`Fill` `Switch` pair with a neutral `RGBA(68, 68, 65, 1)` / `RGBA(241, 239, 232, 1)` default arm. This deliberately spends blue and violet on badges, which the link/chrome reservations below otherwise forbid; a badge is an outcome, not chrome. The computed sub-status labels ("Pending Payment From Executive", "Procurement Close-out (Credit Note)", "Goods Receipt (Round N)") intentionally share their parent status's hue.
+  - **Status badges use the 12-hue per-status palette**, not the old grouped one — and **every status badge in the app now carries it**, not just the two overview screens. One distinct hue per `Status` value (amber Pending Manager · orange Pending Executive · olive Pending Procurement · purple In Delivery · teal Delivered · red Rejected · blue Goods Receipt · cyan Supplier Follow-up · violet Pending Invoice · magenta Pending Accounting · green Completed · muted-rose Cancelled), as a `Color`/`Fill` `Switch` pair with a neutral `RGBA(68, 68, 65, 1)` / `RGBA(241, 239, 232, 1)` default arm. This deliberately spends blue and violet on badges, which the link/chrome reservations below otherwise forbid; a badge is an outcome, not chrome. The computed sub-status labels ("Pending Payment From Executive", "Procurement Close-out (Credit Note)", "Goods Receipt (Round N)") intentionally share their parent status's hue.
     - **Eleven copies, no shared constant — keep them in sync.** `HomeScreen`'s `lblRequestStatus`, `RequestDetailScreen`'s `lblStatusBadge`, and the nine work screens' `lblStatusBadge_{GR,SFU,PFU,AC,RIS,RA,EPS,PE,ISS}`. The two overview copies key off `ThisItem`/`gSelectedRequest`; the nine work-screen copies all key off `gSelectedRequest`. A twelfth, `lblBatchStatus_RD` (the Deliveries table), lists **only the six delivery statuses** since a delivery can hold no other — don't paste the 12-arm version over it.
     - **Badges carry no border.** `BorderColor`/`BorderThickness` were removed from all nine work-screen badges: the palette's paired fill+text hue is the whole signal, and a border in the same hue just muddied it at `Size: =10`. Don't add one back to a single screen.
     - The nine work-screen badges previously hardcoded one colour each — five amber `133,79,11`, two orange `246,88,16` (`SupplierFollowUpScreen`/`ProcurementFollowUpScreen`), and `InvoiceSubmissionScreen` had its own partial 4-arm map. They therefore lied whenever the row's real status wasn't the hardcoded one, most visibly on a `Cancelled` delivery rendering amber-as-pending. That is what this change fixed; a fresh hardcoded badge would reintroduce it.

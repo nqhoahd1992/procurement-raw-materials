@@ -90,5 +90,11 @@ App:
       Clear(colBatchEntry);
       Set(gPendingDeliveryBatch, Blank());
       Set(gPendingDirectAttachments, Blank());
+      Set(gQCSearched, false);
+      Set(gQCFound, false);
+      Set(gQCOriginRequest, Blank());
+      Set(gQCMatchParentID, Blank());
+      ClearCollect(colQCAllForOrigin, FirstN('RM Procurement Receipt Rounds', 1));
+      Clear(colQCAllForOrigin);
       Set(gAppReady, true)
     Theme: =PowerAppsTheme

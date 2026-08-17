@@ -21,7 +21,7 @@ Screens:
         Set(gRoundsDone, Coalesce(gSelectedRequest.ReceiptRoundCount, 0));
         Set(gLatestDecision, gSelectedRequest.LatestReceiptDecision);
         Set(gCurrentRound, gRoundsDone + 1);
-        Set(gSFURoundOpen, gSelectedRequest.Status.Value = "Pending Supplier Follow-up" && gLatestDecision = "Requires Supplier Follow-up");
+        Set(gSFURoundOpen, gSelectedRequest.Status.Value = "Supplier Follow-up" && gLatestDecision = "Requires Supplier Follow-up");
         ClearCollect(colLineItemsDetail, ForAll(Filter('RM Procurement Line Items', RequestIDText = Text(gSelectedRequest.ID)) As li, {ID: li.ID, MaterialID: li.MaterialID, MaterialName: li.MaterialName, Unit: li.Unit, Quantity: li.Quantity, ParentLineItemID: li.ParentLineItemID, RMPKCode: Coalesce(li.MaterialCode, "?")}));
         ClearCollect(colReceiptRounds, Filter('RM Procurement Receipt Rounds', RequestIDText = Text(gSelectedRequest.ID)));
         ClearCollect(
@@ -162,10 +162,10 @@ Screens:
                                   "Pending Executive", RGBA(175, 74, 20, 1),
                                   "Pending Procurement", RGBA(122, 108, 10, 1),
                                   "In Delivery", RGBA(83, 74, 183, 1),
-                                  "Closed", RGBA(13, 108, 108, 1),
+                                  "Delivered", RGBA(13, 108, 108, 1),
                                   "Rejected", RGBA(163, 45, 45, 1),
-                                  "Goods Receipt & Acceptance", RGBA(37, 92, 178, 1),
-                                  "Pending Supplier Follow-up", RGBA(11, 105, 132, 1),
+                                  "Goods Receipt", RGBA(37, 92, 178, 1),
+                                  "Supplier Follow-up", RGBA(11, 105, 132, 1),
                                   "Pending Invoice", RGBA(124, 58, 173, 1),
                                   "Pending Accounting", RGBA(158, 44, 108, 1),
                                   "Completed", RGBA(15, 110, 86, 1),
@@ -178,10 +178,10 @@ Screens:
                                   "Pending Executive", RGBA(253, 234, 222, 1),
                                   "Pending Procurement", RGBA(247, 245, 210, 1),
                                   "In Delivery", RGBA(228, 225, 250, 1),
-                                  "Closed", RGBA(219, 243, 243, 1),
+                                  "Delivered", RGBA(219, 243, 243, 1),
                                   "Rejected", RGBA(252, 233, 233, 1),
-                                  "Goods Receipt & Acceptance", RGBA(223, 234, 252, 1),
-                                  "Pending Supplier Follow-up", RGBA(219, 241, 249, 1),
+                                  "Goods Receipt", RGBA(223, 234, 252, 1),
+                                  "Supplier Follow-up", RGBA(219, 241, 249, 1),
                                   "Pending Invoice", RGBA(240, 228, 252, 1),
                                   "Pending Accounting", RGBA(252, 230, 242, 1),
                                   "Completed", RGBA(222, 245, 236, 1),
@@ -1840,7 +1840,7 @@ Screens:
                                                               Status: {Value: If(
                                                                   ddAcceptanceDecision2_SFU.Selected.Value = "Accepted",
                                                                   If(!wLatest.InvoiceSubmitted, "Pending Invoice", "Pending Accounting"),
-                                                                  "Pending Supplier Follow-up"
+                                                                  "Supplier Follow-up"
                                                               )},
                                                               ReceiptRoundCount: gCurrentRound,
                                                               LatestReceiptDecision: ddAcceptanceDecision2_SFU.Selected.Value,
