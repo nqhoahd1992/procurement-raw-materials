@@ -54,6 +54,7 @@ Screens:
           Properties:
             DropShadow: =DropShadow.None
             Height: =80
+            LayoutAlignItems: =LayoutAlignItems.Center
             LayoutDirection: =LayoutDirection.Horizontal
             LayoutGap: =10
             LayoutJustifyContent: =LayoutJustifyContent.SpaceBetween
@@ -88,7 +89,6 @@ Screens:
             - chkParentsOnly_HS:
                 Control: CheckBox@0.0.30
                 Properties:
-                  AlignInContainer: =AlignInContainer.Center
                   Label: ="Requests only"
                   OnCheck: =Set(gParentsOnly, true)
                   OnUncheck: =Set(gParentsOnly, false)
@@ -977,8 +977,7 @@ Screens:
                         Height: =20
                         PaddingLeft: =0
                         Size: =9
-                        Text: |-
-                          ="Invoice Link (Requester)" & If(IsBlank(gQuickViewRequest.InvoiceType.Value), "", " · " & gQuickViewRequest.InvoiceType.Value)
+                        Text: ="Invoice Link (Requester)" & If(IsBlank(gQuickViewRequest.InvoiceType.Value), "", " · " & gQuickViewRequest.InvoiceType.Value)
                         Width: =Parent.Width
                   - lblQVRequesterInvoiceValue_HS:
                       Control: Label@2.5.1

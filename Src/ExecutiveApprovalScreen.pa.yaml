@@ -336,6 +336,7 @@ Screens:
                   - lblReqLineItemsTitle_PE_2:
                       Control: Label@2.5.1
                       Properties:
+                        Color: =RGBA(136, 135, 128, 1)
                         Height: =24
                         Size: =11
                         Text: ="Raw Materials (" & CountRows(colLineItemsDetail) & ")"
@@ -437,7 +438,7 @@ Screens:
                                     Height: =24
                                     Size: =11
                                     Text: =If(IsBlank(gSelectedRequest.ProjectID), "—", Coalesce(LookUp(Project_List, ProjectID = gSelectedRequest.ProjectID).Title, "—"))
-                                    Width: =260
+                                    Width: =Parent.Width
                         - colProjectBudget_EA:
                             Control: GroupContainer@1.5.0
                             Variant: AutoLayout

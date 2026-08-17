@@ -47,7 +47,7 @@ Screens:
             Height: =60
             Size: =14
             Text: ="Invoice Submission - " & gSelectedRequest.Title
-            Width: =654
+            Width: =800
             X: =20
       - lblUserInfo_ISS:
           Control: Label@2.5.1
@@ -952,17 +952,6 @@ Screens:
                         Height: =24
                         Size: =12
                         Text: ="Upload Supplier Invoice *"
-                        Width: =Parent.Width - 40
-                  - lblExistingAttachment_ISS:
-                      Control: Label@2.5.1
-                      Properties:
-                        Color: =RGBA(136, 135, 128, 1)
-                        PaddingLeft: =0
-                        Size: =9
-                        Text: |-
-                          ="This delivery already has a file attached: " & Concat(gSelectedRequest.Attachments, DisplayName, ", ") &
-                          ". Uploading the same file name replaces it; a different name keeps both. Whichever file you extract and submit here becomes the official invoice."
-                        Visible: =CountRows(gSelectedRequest.Attachments) > 0
                         Width: =Parent.Width - 40
                   - lblOfficialInvoiceHint_ISS:
                       Control: Label@2.5.1

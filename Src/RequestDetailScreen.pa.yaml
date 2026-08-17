@@ -189,14 +189,14 @@ Screens:
                   LayoutGap: =4
                   LayoutMinHeight: |-
                     =510 -
-                        If(gIsDelivery, (4 + 60) + (4 + 60) + (4 + 84), 0) +
+                        If(gIsDelivery, (4 + 60) + (4 + 60) + (4 + 84) + (4 + 130), 0) +
                         (24 + (36 + CountRows(colLineItemsSummary) * 48 + 12) + 16) +
                         If(CountRows(colRequirementFiles) > 0, 4 + 36 + CountRows(colRequirementFiles) * 32, 0) +
                         If(Not(IsBlank(gSelectedRequest.RequesterInvoiceURL)), 4 + 60, 0) +
                         If(Not(IsBlank(gSelectedRequest.RemittanceURL)), 4 + 56, 0) +
                         If(Not(IsBlank(gSelectedRequest.AccountingHandlerID)), 4 + 60, 0) +
                         If(Not(IsBlank(gSelectedRequest.CreditNote)), 4 + 60, 0) +
-                        If(gIsDelivery, 4 + 64, 0)
+                        If(gIsDelivery, 4 + 96, 0)
                   PaddingBottom: =20
                   PaddingLeft: =20
                   PaddingRight: =20
@@ -214,11 +214,11 @@ Screens:
                         DropShadow: =DropShadow.None
                         Fill: =RGBA(250, 238, 218, 1)
                         FillPortions: =0
-                        Height: =64
+                        Height: =96
                         LayoutAlignItems: =LayoutAlignItems.Center
                         LayoutDirection: =LayoutDirection.Horizontal
                         LayoutGap: =12
-                        LayoutMinHeight: =64
+                        LayoutMinHeight: =96
                         PaddingBottom: =8
                         PaddingLeft: =12
                         PaddingRight: =12
@@ -235,10 +235,15 @@ Screens:
                             Properties:
                               Color: =RGBA(133, 79, 11, 1)
                               FillPortions: =1
-                              Height: =48
+                              Height: =50
+                              Overflow: =Overflow.Scroll
                               Size: =10
                               Text: |-
-                                ="⚠ This is " & Coalesce(gSelectedRequest.DisplayID, "Delivery #" & gSelectedRequest.DeliveryNumber) & " of " & Coalesce(gParentRequest.DisplayID, "Request #" & gSelectedRequest.ParentRequestID) & ". The approval, cost and manager fields below belong to the parent request, not to this delivery — only the raw materials, receipt rounds and invoice on this page are this delivery's own."
+                                =With(
+                                    {wNotes: If(Find(Char(10), Coalesce(gSelectedRequest.ProcurementDescription, "")) > 0, Mid(gSelectedRequest.ProcurementDescription, Find(Char(10), gSelectedRequest.ProcurementDescription) + 1), "")},
+                                    "⚠ This is " & Coalesce(gSelectedRequest.DisplayID, "Delivery #" & gSelectedRequest.DeliveryNumber) & " of " & Coalesce(gParentRequest.DisplayID, "Request #" & gSelectedRequest.ParentRequestID) & ". The approval, cost and manager fields below belong to the parent request, not to this delivery — only the raw materials, receipt rounds and invoice on this page are this delivery's own." &
+                                        If(IsBlank(wNotes), "", Char(10) & Char(10) & "Notes: " & wNotes)
+                                )
                               Width: =Parent.Width - 240
                         - btnOpenParent_RD:
                             Control: Button@0.0.45
@@ -617,6 +622,7 @@ Screens:
                         RadiusBottomRight: =0
                         RadiusTopLeft: =0
                         RadiusTopRight: =0
+                        Visible: =Not(gIsDelivery)
                         Width: =Parent.Width
                       Children:
                         - lblDescriptionLabel_2:
@@ -1085,6 +1091,7 @@ Screens:
                               DropShadow: =DropShadow.None
                               LayoutDirection: =LayoutDirection.Vertical
                               LayoutGap: =2
+                              LayoutMinHeight: =60
                               RadiusBottomLeft: =0
                               RadiusBottomRight: =0
                               RadiusTopLeft: =0
@@ -1106,7 +1113,7 @@ Screens:
                                     Height: =24
                                     Size: =11
                                     Text: =If(IsBlank(gSelectedRequest.AccountingHandlerID), "—", gSelectedRequest.AccountingHandlerID.Value)
-                                    Width: =220
+                                    Width: =Parent.Width
                   - rowCreditNote:
                       Control: GroupContainer@1.5.0
                       Variant: AutoLayout
