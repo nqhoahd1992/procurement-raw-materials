@@ -726,8 +726,11 @@ Screens:
                         Size: =11
                         Text: |-
                           =With(
-                              {wSummary: LookUp('RM Procurement Execution Log', RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 1).SupplierSummary},
-                              If(IsBlank(wSummary), "—", wSummary)
+                              {wRootID: If(gSelectedRequest.RequestType.Value = "Delivery", gSelectedRequest.ParentRequestID, gSelectedRequest.ID)},
+                              With(
+                                  {wSummary: LookUp('RM Procurement Execution Log', RequestIDText = Text(wRootID) && StepNumber = 1).SupplierSummary},
+                                  If(IsBlank(wSummary), "—", wSummary)
+                              )
                           )
                         VerticalAlign: =VerticalAlign.Top
                         Width: =Parent.Width - 40

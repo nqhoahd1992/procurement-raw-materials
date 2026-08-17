@@ -5,6 +5,7 @@ Screens:
       OnVisible: |-
         =Set(gSelectedRequest, LookUp('RM Procurement Requests', ID = gSelectedRequest.ID));
         Set(gDeliveryNumber, Coalesce(gSelectedRequest.DeliveryCount, 0) + 1);
+        Set(gDBFSubmitting, false);
         Reset(dpBatchDeliveryDate);
         Set(gIsViaRequesterBatch,
             gSelectedRequest.ProcurementType.Value = "Invoice Supplied" &&
@@ -495,7 +496,6 @@ Screens:
                         - dpBatchDeliveryDate:
                             Control: ModernDatePicker@1.0.1
                             Properties:
-                              DefaultDate: =gSelectedRequest.RequiredDeliveryDate
                               Format: ="dd/mm/yyyy"
                               Height: =40
                               Placeholder: ="Choose a date"
@@ -1259,9 +1259,14 @@ Screens:
                       Control: Button@0.0.45
                       Properties:
                         BasePaletteColor: =RGBA(5, 102, 178, 1)
+                        DisplayMode: =If(gDBFSubmitting, DisplayMode.Disabled, DisplayMode.Edit)
                         Height: =36
                         OnSelect: |-
                           =If(
+                              gDBFSubmitting,
+                              Notify("Please wait — your previous request is still processing.", NotificationType.Warning),
+                          Set(gDBFSubmitting, true);
+                          If(
                               Not(IsBlank(gPendingDeliveryBatch.ID)) && gHasInvoiceResult,
                               If(
                                   IsBlank(txtFldInvNumber_DBF.Value) || IsBlank(txtFldInvDate_DBF.Value) ||
@@ -1379,7 +1384,7 @@ Screens:
                                                                               Currency: gSelectedRequest.Currency,
                                                                               RequiredDeliveryDate: dpBatchDeliveryDate.SelectedDate,
                                                                               DeliveryLocation: Blank(),
-                                                                              CostCenter: Blank(),
+                                                                              CostCenter: If(IsBlank(gSelectedRequest.CostCenter.Value), Blank(), {Value: gSelectedRequest.CostCenter.Value}),
                                                                               InvoiceRegion: {Value: gSelectedRequest.InvoiceRegion.Value},
                                                                               InvoiceMode: {Value: If(gIsViaRequesterBatch, "ViaRequester", rdoBatchInvoiceMode.Selected.Value)},
                                                                               InvoiceSubmitted: false,
@@ -1471,6 +1476,8 @@ Screens:
                                           )
                                       )
                                   )
+                          );
+                          Set(gDBFSubmitting, false)
                           )
                         Text: |-
                           =If(
@@ -1484,9 +1491,14 @@ Screens:
                       Control: Button@0.0.45
                       Properties:
                         BasePaletteColor: =RGBA(5, 102, 178, 1)
+                        DisplayMode: =If(gDBFSubmitting, DisplayMode.Disabled, DisplayMode.Edit)
                         Height: =36
                         OnSelect: |-
                           =If(
+                              gDBFSubmitting,
+                              Notify("Please wait — your previous request is still processing.", NotificationType.Warning),
+                          Set(gDBFSubmitting, true);
+                          If(
                               Not(IsBlank(gPendingDeliveryBatch.ID)) && gHasInvoiceResult,
                               If(
                                   IsBlank(txtFldInvNumber_DBF.Value) || IsBlank(txtFldInvDate_DBF.Value) ||
@@ -1604,7 +1616,7 @@ Screens:
                                                                               Currency: gSelectedRequest.Currency,
                                                                               RequiredDeliveryDate: dpBatchDeliveryDate.SelectedDate,
                                                                               DeliveryLocation: Blank(),
-                                                                              CostCenter: Blank(),
+                                                                              CostCenter: If(IsBlank(gSelectedRequest.CostCenter.Value), Blank(), {Value: gSelectedRequest.CostCenter.Value}),
                                                                               InvoiceRegion: {Value: gSelectedRequest.InvoiceRegion.Value},
                                                                               InvoiceMode: {Value: If(gIsViaRequesterBatch, "ViaRequester", rdoBatchInvoiceMode.Selected.Value)},
                                                                               InvoiceSubmitted: false,
@@ -1696,6 +1708,8 @@ Screens:
                                           )
                                       )
                                   )
+                          );
+                          Set(gDBFSubmitting, false)
                           )
                         Text: |-
                           =If(

@@ -194,7 +194,6 @@ Screens:
                         If(CountRows(colRequirementFiles) > 0, 4 + 36 + CountRows(colRequirementFiles) * 32, 0) +
                         If(Not(IsBlank(gSelectedRequest.RequesterInvoiceURL)), 4 + 60, 0) +
                         If(Not(IsBlank(gSelectedRequest.RemittanceURL)), 4 + 56, 0) +
-                        If(gSelectedRequest.ProcurementType.Value = "To be sourced by Procurement", 4 + 70, 0) +
                         If(Not(IsBlank(gSelectedRequest.AccountingHandlerID)), 4 + 60, 0) +
                         If(Not(IsBlank(gSelectedRequest.CreditNote)), 4 + 60, 0) +
                         If(gIsDelivery, 4 + 64, 0)
@@ -1019,46 +1018,6 @@ Screens:
                               Underline: =Not(IsBlank(gSelectedRequest.RemittanceURL))
                               Width: =Parent.Width
                               Wrap: =false
-                  - rowPurchaseRequestLink_1:
-                      Control: GroupContainer@1.5.0
-                      Variant: AutoLayout
-                      Properties:
-                        DropShadow: =DropShadow.None
-                        FillPortions: =0
-                        Height: =70
-                        LayoutDirection: =LayoutDirection.Vertical
-                        LayoutGap: =2
-                        LayoutMinHeight: =70
-                        PaddingBottom: =4
-                        PaddingTop: =4
-                        RadiusBottomLeft: =0
-                        RadiusBottomRight: =0
-                        RadiusTopLeft: =0
-                        RadiusTopRight: =0
-                        Visible: =gSelectedRequest.ProcurementType.Value = "To be sourced by Procurement"
-                        Width: =Parent.Width
-                      Children:
-                        - lblPurchaseRequestLinkLabel_1:
-                            Control: Label@2.5.1
-                            Properties:
-                              Color: =RGBA(136, 135, 128, 1)
-                              Height: =20
-                              Size: =9
-                              Text: ="Purchase Request Link"
-                              Width: =Parent.Width
-                        - lblPurchaseRequestLinkValue:
-                            Control: Label@2.5.1
-                            Properties:
-                              FillPortions: =1
-                              FontWeight: =FontWeight.Semibold
-                              Height: =48
-                              OnSelect: =If(Not(IsBlank(gSelectedRequest.PurchaseRequestLink)), Launch(gSelectedRequest.PurchaseRequestLink, {}, LaunchTarget.New))
-                              Size: =11
-                              Text: =If(IsBlank(gSelectedRequest.PurchaseRequestLink), "—", "Open purchase request ↗")
-                              Tooltip: =gSelectedRequest.PurchaseRequestLink
-                              Underline: =Not(IsBlank(gSelectedRequest.PurchaseRequestLink))
-                              Width: =Parent.Width
-                              Wrap: =false
                   - rowOfficialInvoiceLink:
                       Control: GroupContainer@1.5.0
                       Variant: AutoLayout
@@ -1266,6 +1225,7 @@ Screens:
                             Control: Label@2.5.1
                             Properties:
                               Color: =RGBA(107, 105, 98, 1)
+                              FillPortions: =1
                               FontWeight: =FontWeight.Semibold
                               Height: =32
                               PaddingLeft: =0
@@ -1277,7 +1237,6 @@ Screens:
                             Control: Label@2.5.1
                             Properties:
                               Color: =RGBA(107, 105, 98, 1)
-                              FillPortions: =1
                               FontWeight: =FontWeight.Semibold
                               Height: =32
                               PaddingLeft: =0
@@ -1305,6 +1264,17 @@ Screens:
                               PaddingLeft: =0
                               Size: =9
                               Text: ="Official Invoice"
+                              Wrap: =false
+                        - lblBatchColCreditNote_RD:
+                            Control: Label@2.5.1
+                            Properties:
+                              Color: =RGBA(107, 105, 98, 1)
+                              FontWeight: =FontWeight.Semibold
+                              Height: =32
+                              PaddingLeft: =0
+                              Size: =9
+                              Text: ="Credit Note"
+                              Width: =100
                               Wrap: =false
                         - lblBatchColActions_RD:
                             Control: Label@2.5.1
@@ -1375,6 +1345,7 @@ Screens:
                                         Control: Label@2.5.1
                                         Properties:
                                           Color: =RGBA(136, 135, 128, 1)
+                                          FillPortions: =1
                                           Height: =24
                                           PaddingLeft: =0
                                           Size: =10
@@ -1405,7 +1376,6 @@ Screens:
                                               "Cancelled", RGBA(243, 235, 235, 1),
                                               RGBA(241, 239, 232, 1)
                                             )
-                                          FillPortions: =1
                                           FontWeight: =FontWeight.Semibold
                                           Height: =26
                                           Size: =9
@@ -1441,6 +1411,19 @@ Screens:
                                           Text: =If(IsBlank(ThisItem.OfficialInvoiceLink), "Not submitted", "Open invoice ↗")
                                           Tooltip: =ThisItem.OfficialInvoiceLink
                                           Underline: =Not(IsBlank(ThisItem.OfficialInvoiceLink))
+                                          Wrap: =false
+                                    - lblBatchCreditNote_RD:
+                                        Control: Label@2.5.1
+                                        Properties:
+                                          Color: =If(IsBlank(ThisItem.CreditNote), RGBA(136, 135, 128, 1), RGBA(56, 96, 178, 1))
+                                          Height: =24
+                                          OnSelect: =If(Not(IsBlank(ThisItem.CreditNote)), Launch(ThisItem.CreditNote, {}, LaunchTarget.New))
+                                          PaddingLeft: =0
+                                          Size: =10
+                                          Text: =If(IsBlank(ThisItem.CreditNote), "—", "Open link ↗")
+                                          Tooltip: =ThisItem.CreditNote
+                                          Underline: =Not(IsBlank(ThisItem.CreditNote))
+                                          Width: =100
                                           Wrap: =false
                                     - rowBatchActions_RD:
                                         Control: GroupContainer@1.5.0
@@ -1629,7 +1612,7 @@ Screens:
                                     PaddingLeft: =0
                                     Size: =9
                                     Text: ="Round"
-                                    Width: =62
+                                    Width: =80
                                     Wrap: =false
                               - lblGRColStep:
                                   Control: Label@2.5.1
@@ -1812,7 +1795,7 @@ Screens:
                                                       PaddingLeft: =0
                                                       Size: =10
                                                       Text: =If(ThisItem.StepNumber = 5, "For Round ", "Round ") & ThisItem.RoundNumber
-                                                      Width: =62
+                                                      Width: =80
                                                       Wrap: =false
                                                 - lblRRStep:
                                                     Control: Label@2.5.1

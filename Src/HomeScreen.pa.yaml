@@ -977,7 +977,8 @@ Screens:
                         Height: =20
                         PaddingLeft: =0
                         Size: =9
-                        Text: ="Invoice Link (Requester)"
+                        Text: |-
+                          ="Invoice Link (Requester)" & If(IsBlank(gQuickViewRequest.InvoiceType.Value), "", " · " & gQuickViewRequest.InvoiceType.Value)
                         Width: =Parent.Width
                   - lblQVRequesterInvoiceValue_HS:
                       Control: Label@2.5.1
