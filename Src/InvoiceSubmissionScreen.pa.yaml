@@ -31,7 +31,27 @@ Screens:
                 }
             )
         );
-        ClearCollect(colLineItemsDetail, ForAll(Filter('RM Procurement Line Items', RequestIDText = Text(gSelectedRequest.ID)) As li, {ID: li.ID, MaterialID: li.MaterialID, MaterialName: li.MaterialName, Unit: li.Unit, Quantity: li.Quantity, ParentLineItemID: li.ParentLineItemID, RMPKCode: Coalesce(li.MaterialCode, "?")}))
+        ClearCollect(colLineItemsDetail, ForAll(Filter('RM Procurement Line Items', RequestIDText = Text(gSelectedRequest.ID)) As li, {ID: li.ID, MaterialID: li.MaterialID, MaterialName: li.MaterialName, Unit: li.Unit, Quantity: li.Quantity, ParentLineItemID: li.ParentLineItemID, RMPKCode: Coalesce(li.MaterialCode, "?")}));
+        ClearCollect(colReceiptRounds, Filter('RM Procurement Receipt Rounds', RequestIDText = Text(gSelectedRequest.ID)));
+        ClearCollect(
+            colPFUSummary,
+            ForAll(
+                colLineItemsDetail As li,
+                With(
+                    {wRows: Filter(colReceiptRounds, LineItemID = li.ID)},
+                    {
+                        LineItemID: li.ID,
+                        MaterialName: li.MaterialName,
+                        Unit: li.Unit,
+                        RMPKCode: li.RMPKCode,
+                        OrderedQty: li.Quantity,
+                        TotalReceivedQty: Coalesce(Sum(wRows, ReceivedQty), 0),
+                        OutstandingQty: li.Quantity - Coalesce(Sum(wRows, ReceivedQty), 0),
+                        RoundsCount: CountRows(wRows)
+                    }
+                )
+            )
+        )
     Children:
       - rectHeader_ISS:
           Control: Rectangle@2.3.0
@@ -89,7 +109,7 @@ Screens:
                   FillPortions: =0
                   Height: |-
                     =68 + 276 +
-                        64 +
+                        (112 + CountRows(colPFUSummary) * 40) +
                         If(gSelectedRequest.Status.Value <> "Pending Invoice", 32, 0) +
                         If(CountRows(colRequirementFiles) > 0, 28 + CountRows(colRequirementFiles) * 32 + 8, 0) +
                         If(Not(IsBlank(gSelectedRequest.RemittanceURL)), 56, 0)
@@ -97,7 +117,7 @@ Screens:
                   LayoutGap: =4
                   LayoutMinHeight: |-
                     =68 + 276 +
-                        64 +
+                        (112 + CountRows(colPFUSummary) * 40) +
                         If(gSelectedRequest.Status.Value <> "Pending Invoice", 32, 0) +
                         If(CountRows(colRequirementFiles) > 0, 28 + CountRows(colRequirementFiles) * 32 + 8, 0) +
                         If(Not(IsBlank(gSelectedRequest.RemittanceURL)), 56, 0)
@@ -189,14 +209,14 @@ Screens:
                         FillPortions: =0
                         Height: |-
                           =276 +
-                              64 +
+                              (112 + CountRows(colPFUSummary) * 40) +
                               If(gSelectedRequest.Status.Value <> "Pending Invoice", 32, 0) +
                               If(CountRows(colRequirementFiles) > 0, 28 + CountRows(colRequirementFiles) * 32 + 8, 0) +
                               If(Not(IsBlank(gSelectedRequest.RemittanceURL)), 56, 0)
                         LayoutDirection: =LayoutDirection.Vertical
                         LayoutMinHeight: |-
                           =276 +
-                              64 +
+                              (112 + CountRows(colPFUSummary) * 40) +
                               If(gSelectedRequest.Status.Value <> "Pending Invoice", 32, 0) +
                               If(CountRows(colRequirementFiles) > 0, 28 + CountRows(colRequirementFiles) * 32 + 8, 0) +
                               If(Not(IsBlank(gSelectedRequest.RemittanceURL)), 56, 0)
@@ -535,16 +555,16 @@ Screens:
                                     Size: =11
                                     Text: =Coalesce(gSelectedRequest.ProcurementDescription, "—")
                                     Width: =Parent.Width
-                        - rowReqLineItems_ISS:
+                        - rowReqReceived_ISS:
                             Control: GroupContainer@1.5.0
                             Variant: AutoLayout
                             Properties:
                               DropShadow: =DropShadow.None
                               FillPortions: =0
-                              Height: =64
+                              Height: =112 + CountRows(colPFUSummary) * 40
                               LayoutDirection: =LayoutDirection.Vertical
                               LayoutGap: =4
-                              LayoutMinHeight: =64
+                              LayoutMinHeight: =112 + CountRows(colPFUSummary) * 40
                               PaddingBottom: =8
                               PaddingTop: =8
                               RadiusBottomLeft: =0
@@ -553,40 +573,218 @@ Screens:
                               RadiusTopRight: =0
                               Width: =Parent.Width
                             Children:
-                              - lblReqLineItemsTitle_ISS:
+                              - lblReqReceivedTitle_ISS:
                                   Control: Label@2.5.1
                                   Properties:
-                                    Color: =RGBA(136, 135, 128, 1)
+                                    FontWeight: =FontWeight.Bold
                                     Height: =24
                                     PaddingLeft: =0
-                                    Size: =9
-                                    Text: ="Raw Materials (" & CountRows(colLineItemsDetail) & ")"
+                                    Size: =11
+                                    Text: ="Raw Materials On This Delivery (" & CountRows(colPFUSummary) & ")"
                                     Width: =Parent.Width
-                              - lblReqLineItemsValue_ISS:
+                              - lblReqReceivedNote_ISS:
                                   Control: Label@2.5.1
                                   Properties:
-                                    FontWeight: =FontWeight.Semibold
+                                    Color: |-
+                                      =If(
+                                          gSelectedRequest.Status.Value = "Goods Receipt" || gSelectedRequest.Status.Value = "Supplier Follow-up",
+                                          RGBA(133, 79, 11, 1),
+                                          RGBA(136, 135, 128, 1)
+                                      )
                                     Height: =20
                                     PaddingLeft: =0
-                                    Size: =11
+                                    Size: =9
                                     Text: |-
-                                      =If(
-                                          CountRows(colLineItemsDetail) = 0,
-                                          "—",
-                                          Concat(
-                                              colLineItemsDetail,
-                                              RMPKCode & " — " & MaterialName & " (" & Text(Quantity) & " " & Unit & ")",
-                                              "  ·  "
+                                      =With(
+                                          {
+                                              wOpen: gSelectedRequest.Status.Value = "Goods Receipt" || gSelectedRequest.Status.Value = "Supplier Follow-up",
+                                              wRounds: Coalesce(gSelectedRequest.ReceiptRoundCount, 0),
+                                              wShort: CountRows(Filter(colPFUSummary, OutstandingQty > 0)),
+                                              wTotal: CountRows(colPFUSummary)
+                                          },
+                                          If(
+                                              wOpen,
+                                              "⚠ Receiving is NOT closed yet — this delivery is still in " & gSelectedRequest.Status.Value & ", " & Text(wRounds) & " receipt round(s) recorded. The figures below count only what has arrived so far and may still increase.",
+                                              If(
+                                                  wShort = 0,
+                                                  "Receiving is closed. Every material on this delivery was received in full.",
+                                                  "Receiving is closed. " & Text(wShort) & " of " & Text(wTotal) & " material(s) were short-delivered — check this against the invoice amount."
+                                              )
                                           )
                                       )
-                                    Tooltip: |-
-                                      =Concat(
-                                          colLineItemsDetail,
-                                          RMPKCode & " — " & MaterialName & " (" & Text(Quantity) & " " & Unit & ")",
-                                          Char(10)
-                                      )
                                     Width: =Parent.Width
-                                    Wrap: =false
+                              - rowISSReceivedHeader:
+                                  Control: GroupContainer@1.5.0
+                                  Variant: AutoLayout
+                                  Properties:
+                                    DropShadow: =DropShadow.None
+                                    Fill: =RGBA(232, 230, 221, 1)
+                                    FillPortions: =0
+                                    Height: =32
+                                    LayoutAlignItems: =LayoutAlignItems.Center
+                                    LayoutDirection: =LayoutDirection.Horizontal
+                                    LayoutGap: =8
+                                    PaddingLeft: =8
+                                    PaddingRight: =8
+                                    RadiusBottomLeft: =0
+                                    RadiusBottomRight: =0
+                                    RadiusTopLeft: =0
+                                    RadiusTopRight: =0
+                                    Width: =Parent.Width
+                                  Children:
+                                    - lblISSRcvColName:
+                                        Control: Label@2.5.1
+                                        Properties:
+                                          Color: =RGBA(107, 105, 98, 1)
+                                          FillPortions: =1
+                                          FontWeight: =FontWeight.Semibold
+                                          Height: =32
+                                          Size: =9
+                                          Text: ="Trade Name"
+                                          Width: =Parent.Width * 0.24
+                                    - lblISSRcvColCode:
+                                        Control: Label@2.5.1
+                                        Properties:
+                                          Color: =RGBA(107, 105, 98, 1)
+                                          FontWeight: =FontWeight.Semibold
+                                          Height: =32
+                                          Size: =9
+                                          Text: ="RM Code"
+                                          Width: =Parent.Width * 0.13
+                                    - lblISSRcvColUnit:
+                                        Control: Label@2.5.1
+                                        Properties:
+                                          Color: =RGBA(107, 105, 98, 1)
+                                          FontWeight: =FontWeight.Semibold
+                                          Height: =32
+                                          Size: =9
+                                          Text: ="Unit"
+                                          Width: =Parent.Width * 0.08
+                                    - lblISSRcvColOrd:
+                                        Control: Label@2.5.1
+                                        Properties:
+                                          Color: =RGBA(107, 105, 98, 1)
+                                          FontWeight: =FontWeight.Semibold
+                                          Height: =32
+                                          Size: =9
+                                          Text: ="Ordered"
+                                          Width: =Parent.Width * 0.12
+                                    - lblISSRcvColRec:
+                                        Control: Label@2.5.1
+                                        Properties:
+                                          Color: =RGBA(107, 105, 98, 1)
+                                          FontWeight: =FontWeight.Semibold
+                                          Height: =32
+                                          Size: =9
+                                          Text: ="Received"
+                                          Width: =Parent.Width * 0.12
+                                    - lblISSRcvColOut:
+                                        Control: Label@2.5.1
+                                        Properties:
+                                          Color: =RGBA(107, 105, 98, 1)
+                                          FontWeight: =FontWeight.Semibold
+                                          Height: =32
+                                          Size: =9
+                                          Text: ="Outstanding"
+                                          Width: =Parent.Width * 0.15
+                                    - lblISSRcvColRnd:
+                                        Control: Label@2.5.1
+                                        Properties:
+                                          Color: =RGBA(107, 105, 98, 1)
+                                          FontWeight: =FontWeight.Semibold
+                                          Height: =32
+                                          Size: =9
+                                          Text: ="Rounds"
+                                          Width: =Parent.Width * 0.09
+                              - galISSReceived:
+                                  Control: Gallery@2.15.0
+                                  Variant: BrowseLayout_Vertical_TwoTextOneImageVariant_ver5.0
+                                  Properties:
+                                    FillPortions: =0
+                                    Height: =CountRows(colPFUSummary) * 40 + 8
+                                    Items: =colPFUSummary
+                                    ShowScrollbar: =false
+                                    TemplateSize: =40
+                                    Width: =Parent.Width
+                                  Children:
+                                    - rowISSReceivedItem:
+                                        Control: GroupContainer@1.5.0
+                                        Variant: AutoLayout
+                                        Properties:
+                                          DropShadow: =DropShadow.None
+                                          Fill: =RGBA(255, 255, 255, 1)
+                                          Height: =40
+                                          LayoutAlignItems: =LayoutAlignItems.Center
+                                          LayoutDirection: =LayoutDirection.Horizontal
+                                          LayoutGap: =8
+                                          PaddingLeft: =8
+                                          PaddingRight: =8
+                                          RadiusBottomLeft: =0
+                                          RadiusBottomRight: =0
+                                          RadiusTopLeft: =0
+                                          RadiusTopRight: =0
+                                          Width: =Parent.Width
+                                        Children:
+                                          - lblISSRcvName:
+                                              Control: Label@2.5.1
+                                              Properties:
+                                                FillPortions: =1
+                                                Height: =32
+                                                Size: =11
+                                                Text: =ThisItem.MaterialName
+                                                Width: =Parent.Width * 0.24
+                                                Wrap: =false
+                                          - lblISSRcvCode:
+                                              Control: Label@2.5.1
+                                              Properties:
+                                                FontWeight: =FontWeight.Semibold
+                                                Height: =32
+                                                Size: =11
+                                                Text: =If(IsBlank(ThisItem.RMPKCode), "—", ThisItem.RMPKCode)
+                                                Width: =Parent.Width * 0.13
+                                                Wrap: =false
+                                          - lblISSRcvUnit:
+                                              Control: Label@2.5.1
+                                              Properties:
+                                                Height: =32
+                                                Size: =11
+                                                Text: =ThisItem.Unit
+                                                Width: =Parent.Width * 0.08
+                                                Wrap: =false
+                                          - lblISSRcvOrd:
+                                              Control: Label@2.5.1
+                                              Properties:
+                                                Height: =32
+                                                Size: =11
+                                                Text: =Text(ThisItem.OrderedQty)
+                                                Width: =Parent.Width * 0.12
+                                                Wrap: =false
+                                          - lblISSRcvRec:
+                                              Control: Label@2.5.1
+                                              Properties:
+                                                Height: =32
+                                                Size: =11
+                                                Text: =Text(ThisItem.TotalReceivedQty)
+                                                Width: =Parent.Width * 0.12
+                                                Wrap: =false
+                                          - lblISSRcvOut:
+                                              Control: Label@2.5.1
+                                              Properties:
+                                                Color: =If(ThisItem.OutstandingQty <= 0, RGBA(15, 110, 86, 1), RGBA(163, 45, 45, 1))
+                                                FontWeight: =FontWeight.Semibold
+                                                Height: =32
+                                                Size: =11
+                                                Text: =If(ThisItem.OutstandingQty <= 0, "Complete", Text(ThisItem.OutstandingQty))
+                                                Width: =Parent.Width * 0.15
+                                                Wrap: =false
+                                          - lblISSRcvRnd:
+                                              Control: Label@2.5.1
+                                              Properties:
+                                                Height: =32
+                                                Size: =11
+                                                Text: =Text(ThisItem.RoundsCount)
+                                                Width: =Parent.Width * 0.09
+                                                Wrap: =false
                         - rowReqRequirementFiles_ISS:
                             Control: GroupContainer@1.5.0
                             Variant: AutoLayout

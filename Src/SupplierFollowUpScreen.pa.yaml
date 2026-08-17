@@ -111,7 +111,7 @@ Screens:
                   Height: =160
                   LayoutDirection: =LayoutDirection.Vertical
                   LayoutGap: =4
-                  LayoutMinHeight: =192 + Max(1, CountRows(colLineItemsDetail)) * 30
+                  LayoutMinHeight: =160
                   PaddingBottom: =12
                   PaddingLeft: =20
                   PaddingRight: =20
@@ -574,7 +574,7 @@ Screens:
                                     Size: =9
                                     Text: |-
                                       =If(IsBlank(ThisItem.Notes), "", "Notes: " & ThisItem.Notes)
-                                    Width: =Parent.Width
+                                    Width: =Parent.Width - 16
                                     Wrap: =false
                               - rowHistAttachments_SFU:
                                   Control: GroupContainer@1.5.0
@@ -612,7 +612,7 @@ Screens:
                                           RadiusBottomRight: =4
                                           RadiusTopLeft: =4
                                           RadiusTopRight: =4
-                                          Size: =9
+                                          Size: =12
                                           Text: ="View attachments"
                                           VerticalAlign: =VerticalAlign.Middle
                                           Width: =140
@@ -652,7 +652,7 @@ Screens:
                                           RadiusBottomRight: =4
                                           RadiusTopLeft: =4
                                           RadiusTopRight: =4
-                                          Size: =9
+                                          Size: =12
                                           Text: ="View receipt details"
                                           VerticalAlign: =VerticalAlign.Middle
                                           Width: =150

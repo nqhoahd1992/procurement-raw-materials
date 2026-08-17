@@ -78,7 +78,7 @@ Screens:
                   FillPortions: =0
                   Height: |-
                     =68 + 276 +
-                        64 +
+                        (44 + Max(1, CountRows(colLineItemsDetail)) * 30) +
                         If(CountRows(colRequirementFiles) > 0, 28 + CountRows(colRequirementFiles) * 32 + 8, 0) +
                         If(Not(IsBlank(gSelectedRequest.RequesterInvoiceURL)), 56, 0) +
                         If(Not(IsBlank(gSelectedRequest.RemittanceURL)), 56, 0)
@@ -86,7 +86,7 @@ Screens:
                   LayoutGap: =4
                   LayoutMinHeight: |-
                     =68 + 276 +
-                        64 +
+                        (44 + Max(1, CountRows(colLineItemsDetail)) * 30) +
                         If(CountRows(colRequirementFiles) > 0, 28 + CountRows(colRequirementFiles) * 32 + 8, 0) +
                         If(Not(IsBlank(gSelectedRequest.RequesterInvoiceURL)), 56, 0) +
                         If(Not(IsBlank(gSelectedRequest.RemittanceURL)), 56, 0)
@@ -178,14 +178,14 @@ Screens:
                         FillPortions: =0
                         Height: |-
                           =276 +
-                              64 +
+                              (44 + Max(1, CountRows(colLineItemsDetail)) * 30) +
                               If(CountRows(colRequirementFiles) > 0, 28 + CountRows(colRequirementFiles) * 32 + 8, 0) +
                               If(Not(IsBlank(gSelectedRequest.RequesterInvoiceURL)), 56, 0) +
                               If(Not(IsBlank(gSelectedRequest.RemittanceURL)), 56, 0)
                         LayoutDirection: =LayoutDirection.Vertical
                         LayoutMinHeight: |-
                           =276 +
-                              64 +
+                              (44 + Max(1, CountRows(colLineItemsDetail)) * 30) +
                               If(CountRows(colRequirementFiles) > 0, 28 + CountRows(colRequirementFiles) * 32 + 8, 0) +
                               If(Not(IsBlank(gSelectedRequest.RequesterInvoiceURL)), 56, 0) +
                               If(Not(IsBlank(gSelectedRequest.RemittanceURL)), 56, 0)
@@ -482,10 +482,10 @@ Screens:
                             Properties:
                               DropShadow: =DropShadow.None
                               FillPortions: =0
-                              Height: =64
+                              Height: =44 + Max(1, CountRows(colLineItemsDetail)) * 30
                               LayoutDirection: =LayoutDirection.Vertical
                               LayoutGap: =4
-                              LayoutMinHeight: =64
+                              LayoutMinHeight: =44 + Max(1, CountRows(colLineItemsDetail)) * 30
                               PaddingBottom: =8
                               PaddingTop: =8
                               RadiusBottomLeft: =0
@@ -503,31 +503,48 @@ Screens:
                                     Size: =9
                                     Text: ="Raw Materials (" & CountRows(colLineItemsDetail) & ")"
                                     Width: =Parent.Width
-                              - lblReqLineItemsValue_PE:
+                              - lblReqLineItemsEmpty_PE:
                                   Control: Label@2.5.1
                                   Properties:
                                     FontWeight: =FontWeight.Semibold
                                     Height: =20
                                     PaddingLeft: =0
                                     Size: =11
-                                    Text: |-
-                                      =If(
-                                          CountRows(colLineItemsDetail) = 0,
-                                          "—",
-                                          Concat(
-                                              colLineItemsDetail,
-                                              RMPKCode & " — " & MaterialName & " (" & Text(Quantity) & " " & Unit & ")",
-                                              "  ·  "
-                                          )
-                                      )
-                                    Tooltip: |-
-                                      =Concat(
-                                          colLineItemsDetail,
-                                          RMPKCode & " — " & MaterialName & " (" & Text(Quantity) & " " & Unit & ")",
-                                          Char(10)
-                                      )
+                                    Text: ="—"
+                                    Visible: =CountRows(colLineItemsDetail) = 0
                                     Width: =Parent.Width
-                                    Wrap: =false
+                              - galReqLineItems_PE:
+                                  Control: Gallery@2.15.0
+                                  Variant: BrowseLayout_Vertical_TwoTextOneImageVariant_ver5.0
+                                  Properties:
+                                    FillPortions: =0
+                                    Height: =CountRows(colLineItemsDetail) * 30
+                                    Items: =colLineItemsDetail
+                                    ShowScrollbar: =false
+                                    TemplateSize: =30
+                                    Visible: =CountRows(colLineItemsDetail) > 0
+                                    Width: =Parent.Width
+                                  Children:
+                                    - rowReqLineItem_PE:
+                                        Control: GroupContainer@1.5.0
+                                        Variant: AutoLayout
+                                        Properties:
+                                          DropShadow: =DropShadow.None
+                                          Height: =30
+                                          LayoutDirection: =LayoutDirection.Horizontal
+                                          Width: =Parent.Width
+                                        Children:
+                                          - lblReqLineItemText_PE:
+                                              Control: Label@2.5.1
+                                              Properties:
+                                                FontWeight: =FontWeight.Semibold
+                                                Height: =30
+                                                PaddingLeft: =0
+                                                Size: =11
+                                                Text: =ThisItem.RMPKCode & " — " & ThisItem.MaterialName & " (" & Text(ThisItem.Quantity) & " " & ThisItem.Unit & ")"
+                                                Tooltip: =ThisItem.RMPKCode & " — " & ThisItem.MaterialName & " (" & Text(ThisItem.Quantity) & " " & ThisItem.Unit & ")"
+                                                Width: =Parent.Width
+                                                Wrap: =false
                         - rowReqRequirementFiles_PE:
                             Control: GroupContainer@1.5.0
                             Variant: AutoLayout
@@ -929,44 +946,62 @@ Screens:
                         OnFailure: =Notify("Attachment upload failed. Please try again.", NotificationType.Error)
                         OnSuccess: |-
                           =With(
-                              {wURL: gSharePointAttachmentBase & Text(gSelectedRequest.ID) & "/" & EncodeUrl(gPendingNewAttName)},
+                              {
+                                  wCode: Trim(txtSupplierSummary_PE.Value),
+                                  wURL: gSharePointAttachmentBase & Text(gSelectedRequest.ID) & "/" & EncodeUrl(gPendingNewAttName)
+                              },
+                              // Re-check uniqueness right before writing, so two people submitting at once
+                              // cannot file the same SO/PO/INV on two different requests.
                               With(
-                                  {wReq: Patch(
-                                      'RM Procurement Requests',
-                                      gSelectedRequest,
-                                      {
-                                          Status: {Value: "In Delivery"},
-                                          OrderConfirmationURL: wURL,
-                                          ProcurementExecutedBy: {Id: gCurrentEmployee.ID, Value: gCurrentEmployee.Title},
-                                          ProcurementExecutedAt: Now()
-                                      }
+                                  {wDup: LookUp(
+                                      'RM Procurement Execution Log',
+                                      StepNumber = 1 && SupplierSummary = wCode && RequestIDText <> Text(gSelectedRequest.ID)
                                   )},
                                   If(
-                                      IsBlank(wReq.ID),
-                                      Notify("Failed to submit. Please try again.", NotificationType.Error),
-                                      Patch(
-                                          'RM Procurement Execution Log',
-                                          Defaults('RM Procurement Execution Log'),
-                                          {
-                                              Title: "Step 1 - Procurement Execution - " & gSelectedRequest.Title,
-                                              RequestID: {Id: gSelectedRequest.ID, Value: gSelectedRequest.Title},
-                                              RequestIDText: Text(gSelectedRequest.ID),
-                                              StepNumber: 1,
-                                              StepName: {Value: "Procurement Execution"},
-                                              ExecutedBy: {Id: gCurrentEmployee.ID, Value: gCurrentEmployee.Title},
-                                              ExecutedAt: Now(),
-                                              SupplierSummary: txtSupplierSummary_PE.Value,
-                                              PurchaseOrderLink: txtPurchaseOrder_PE.Value
-                                          }
-                                      );
-                                      Patch(
-                                          'RM Procurement Requests',
-                                          {ID: wReq.ID},
-                                          {Title: wReq.Title & " - " & txtSupplierSummary_PE.Value}
-                                      );
-                                      Set(gSelectedRequest, LookUp('RM Procurement Requests', ID = gSelectedRequest.ID));
-                                      Notify("Request approved for sourcing. You can now create the first delivery.", NotificationType.Success);
-                                      Navigate(RequestDetailScreen)
+                                      Not(IsBlank(wDup.ID)),
+                                      Notify(
+                                          "SO/PO/INV " & wCode & " is already used by request ID " & wDup.RequestIDText & ". Nothing was submitted - please enter a different number.",
+                                          NotificationType.Error
+                                      ),
+                                      With(
+                                          {wReq: Patch(
+                                              'RM Procurement Requests',
+                                              gSelectedRequest,
+                                              {
+                                                  Status: {Value: "In Delivery"},
+                                                  OrderConfirmationURL: wURL,
+                                                  ProcurementExecutedBy: {Id: gCurrentEmployee.ID, Value: gCurrentEmployee.Title},
+                                                  ProcurementExecutedAt: Now()
+                                              }
+                                          )},
+                                          If(
+                                              IsBlank(wReq.ID),
+                                              Notify("Failed to submit. Please try again.", NotificationType.Error),
+                                              Patch(
+                                                  'RM Procurement Execution Log',
+                                                  Defaults('RM Procurement Execution Log'),
+                                                  {
+                                                      Title: "Step 1 - Procurement Execution - " & gSelectedRequest.Title,
+                                                      RequestID: {Id: gSelectedRequest.ID, Value: gSelectedRequest.Title},
+                                                      RequestIDText: Text(gSelectedRequest.ID),
+                                                      StepNumber: 1,
+                                                      StepName: {Value: "Procurement Execution"},
+                                                      ExecutedBy: {Id: gCurrentEmployee.ID, Value: gCurrentEmployee.Title},
+                                                      ExecutedAt: Now(),
+                                                      SupplierSummary: wCode,
+                                                      PurchaseOrderLink: txtPurchaseOrder_PE.Value
+                                                  }
+                                              );
+                                              Patch(
+                                                  'RM Procurement Requests',
+                                                  {ID: wReq.ID},
+                                                  {Title: wReq.Title & " - " & wCode}
+                                              );
+                                              Set(gSelectedRequest, LookUp('RM Procurement Requests', ID = gSelectedRequest.ID));
+                                              Notify("Request approved for sourcing. You can now create the first delivery.", NotificationType.Success);
+                                              Navigate(RequestDetailScreen)
+                                          )
+                                      )
                                   )
                               )
                           )
@@ -1111,13 +1146,30 @@ Screens:
                               ),
                               // --- PROCEED ---
                               If(
-                                  IsBlank(txtSupplierSummary_PE.Value),
+                                  IsBlank(Trim(txtSupplierSummary_PE.Value)),
                                   Notify("Please enter SO/PO/INV", NotificationType.Error),
                                   If(
                                       CountRows(attShadow_Confirmation.Attachments) = 0,
                                       Notify("Please attach an order confirmation document", NotificationType.Error),
-                                      Set(gPendingNewAttName, Last(attShadow_Confirmation.Attachments).Name);
-                                      SubmitForm(formConfirmation)
+                                      // SO/PO/INV must be unique across requests - it is stored on the
+                                      // step 1 execution log row, so that is where the duplicate lives.
+                                      With(
+                                          {wDup: LookUp(
+                                              'RM Procurement Execution Log',
+                                              StepNumber = 1
+                                                  && SupplierSummary = Trim(txtSupplierSummary_PE.Value)
+                                                  && RequestIDText <> Text(gSelectedRequest.ID)
+                                          )},
+                                          If(
+                                              Not(IsBlank(wDup.ID)),
+                                              Notify(
+                                                  "This SO/PO/INV is already used by request ID " & wDup.RequestIDText & ". Please enter a different number.",
+                                                  NotificationType.Error
+                                              ),
+                                              Set(gPendingNewAttName, Last(attShadow_Confirmation.Attachments).Name);
+                                              SubmitForm(formConfirmation)
+                                          )
+                                      )
                                   )
                               )
                           )
