@@ -84,7 +84,7 @@ Screens:
                   DropShadow: =DropShadow.None
                   Fill: =RGBA(241, 239, 232, 1)
                   FillPortions: =0
-                  Height: =80
+                  Height: =60
                   LayoutDirection: =LayoutDirection.Horizontal
                   LayoutMinHeight: =140
                   LayoutWrap: =true
@@ -166,7 +166,7 @@ Screens:
                   DropShadow: =DropShadow.None
                   Fill: =RGBA(241, 239, 232, 1)
                   FillPortions: =0
-                  Height: =80
+                  Height: =60
                   LayoutDirection: =LayoutDirection.Horizontal
                   LayoutMinHeight: =140
                   LayoutWrap: =true
@@ -285,7 +285,6 @@ Screens:
                   Fill: =RGBA(241, 239, 232, 1)
                   LayoutDirection: =LayoutDirection.Vertical
                   LayoutGap: =4
-                  LayoutMinHeight: =140
                   PaddingBottom: =12
                   PaddingLeft: =20
                   PaddingRight: =20
@@ -308,7 +307,7 @@ Screens:
                       Control: Label@2.5.1
                       Properties:
                         FontWeight: =FontWeight.Semibold
-                        Height: =80
+                        Height: =60
                         Overflow: =Overflow.Scroll
                         Size: =11
                         Text: =gSelectedRequest.ProcurementDescription
@@ -320,10 +319,10 @@ Screens:
                   DropShadow: =DropShadow.None
                   Fill: =RGBA(241, 239, 232, 1)
                   FillPortions: =0
-                  Height: =90
+                  Height: =50 + Max(1, CountRows(colLineItemsDetail)) * 30
                   LayoutDirection: =LayoutDirection.Vertical
                   LayoutGap: =4
-                  LayoutMinHeight: =88
+                  LayoutMinHeight: =68 + Max(1, CountRows(colLineItemsDetail)) * 30
                   PaddingBottom: =20
                   PaddingLeft: =20
                   PaddingRight: =20
@@ -341,40 +340,56 @@ Screens:
                         Size: =11
                         Text: ="Raw Materials (" & CountRows(colLineItemsDetail) & ")"
                         Width: =Parent.Width - 40
-                  - lblReqLineItemsValue_PE_2:
+                  - lblReqLineItemsEmpty_PE_2:
                       Control: Label@2.5.1
                       Properties:
                         FontWeight: =FontWeight.Semibold
                         Height: =20
                         Size: =11
-                        Text: |-
-                          =If(
-                              CountRows(colLineItemsDetail) = 0,
-                              "—",
-                              Concat(
-                                  colLineItemsDetail,
-                                  RMPKCode & " — " & MaterialName & " (" & Text(Quantity) & " " & Unit & ")",
-                                  "  ·  "
-                              )
-                          )
-                        Tooltip: |-
-                          =Concat(
-                              colLineItemsDetail,
-                              RMPKCode & " — " & MaterialName & " (" & Text(Quantity) & " " & Unit & ")",
-                              Char(10)
-                          )
+                        Text: ="—"
+                        Visible: =CountRows(colLineItemsDetail) = 0
                         Width: =Parent.Width - 40
-                        Wrap: =false
+                  - galReqLineItems_PE_2:
+                      Control: Gallery@2.15.0
+                      Variant: BrowseLayout_Vertical_TwoTextOneImageVariant_ver5.0
+                      Properties:
+                        FillPortions: =0
+                        Height: =CountRows(colLineItemsDetail) * 30
+                        Items: =colLineItemsDetail
+                        ShowScrollbar: =false
+                        TemplateSize: =30
+                        Visible: =CountRows(colLineItemsDetail) > 0
+                        Width: =Parent.Width - 40
+                      Children:
+                        - rowReqLineItem_PE_2:
+                            Control: GroupContainer@1.5.0
+                            Variant: AutoLayout
+                            Properties:
+                              DropShadow: =DropShadow.None
+                              Height: =30
+                              LayoutDirection: =LayoutDirection.Horizontal
+                              Width: =Parent.Width
+                            Children:
+                              - lblReqLineItemText_PE_2:
+                                  Control: Label@2.5.1
+                                  Properties:
+                                    FontWeight: =FontWeight.Semibold
+                                    Height: =30
+                                    Size: =11
+                                    Text: =ThisItem.RMPKCode & " — " & ThisItem.MaterialName & " (" & Text(ThisItem.Quantity) & " " & ThisItem.Unit & ")"
+                                    Tooltip: =ThisItem.RMPKCode & " — " & ThisItem.MaterialName & " (" & Text(ThisItem.Quantity) & " " & ThisItem.Unit & ")"
+                                    Width: =Parent.Width
+                                    Wrap: =false
             - rowProjectInfo_EA:
                 Control: GroupContainer@1.5.0
                 Variant: AutoLayout
                 Properties:
                   DropShadow: =DropShadow.None
                   Fill: =RGBA(238, 236, 250, 1)
-                  Height: =300
+                  Height: =116
                   LayoutDirection: =LayoutDirection.Vertical
                   LayoutGap: =8
-                  LayoutMinHeight: =260
+                  LayoutMinHeight: =116
                   PaddingBottom: =12
                   PaddingLeft: =20
                   PaddingRight: =20
@@ -400,9 +415,10 @@ Screens:
                       Variant: AutoLayout
                       Properties:
                         DropShadow: =DropShadow.None
+                        Height: =60
                         LayoutDirection: =LayoutDirection.Horizontal
+                        LayoutGap: =20
                         LayoutMinHeight: =60
-                        LayoutWrap: =true
                         RadiusBottomLeft: =0
                         RadiusBottomRight: =0
                         RadiusTopLeft: =0
@@ -435,7 +451,7 @@ Screens:
                                   Control: Label@2.5.1
                                   Properties:
                                     FontWeight: =FontWeight.Semibold
-                                    Height: =24
+                                    Height: =30
                                     Size: =11
                                     Text: =If(IsBlank(gSelectedRequest.ProjectID), "—", Coalesce(LookUp(Project_List, ProjectID = gSelectedRequest.ProjectID).Title, "—"))
                                     Width: =Parent.Width
@@ -465,7 +481,7 @@ Screens:
                                   Control: Label@2.5.1
                                   Properties:
                                     FontWeight: =FontWeight.Semibold
-                                    Height: =24
+                                    Height: =30
                                     Size: =11
                                     Text: |-
                                       =If(
@@ -474,74 +490,92 @@ Screens:
                                           Text(gProjectInfo.BudgetAmount, "#,###.00") & " " & gProjectInfo.Currency
                                       )
                                     Width: =260
-                  - rectProjectGrandDivider_EA:
-                      Control: Rectangle@2.3.0
-                      Properties:
-                        BorderColor: =RGBA(0, 0, 0, 0)
-                        Fill: =RGBA(210, 209, 199, 1)
-                        Height: =1
-                        Width: =Parent.Width - 40
-                  - lblProjectGrandTotal_EA:
-                      Control: Label@2.5.1
-                      Properties:
-                        Color: =RGBA(83, 74, 183, 1)
-                        FontWeight: =FontWeight.Bold
-                        Height: =28
-                        Size: =11
-                        Text: |-
-                          ="Grand Total: " &
-                          Text(
-                              Sum(
-                                  AddColumns(
-                                      colProjectInvoices,
-                                      AUDAmount,
-                                      TotalAmount /
-                                      Switch(
-                                          Upper(Currency),
-                                          "AUD", 1,
-                                          "USD", 0.7,
-                                          "GBP", 0.5,
-                                          "RM", 3,
-                                          "MYR", 3,
-                                          "SGD", 0.9,
-                                          "VND", 18000,
-                                          "RMB", 4.7,
-                                          "CNY", 4.7,
-                                          1
-                                      )
-                                  ),
-                                  AUDAmount
-                              ),
-                              "#,###.00"
-                          ) & " AUD"
-                        Width: =Parent.Width - 40
-                  - lblProjectRateLink_EA:
-                      Control: Label@2.5.1
-                      Properties:
-                        Color: =RGBA(83, 74, 183, 1)
-                        Height: =20
-                        OnSelect: =Set(gShowRateInfo, true)
-                        Size: =9
-                        Text: ="View exchange rates"
-                        Underline: =true
-                        Width: =180
-                  - lblProjectDescLabel_EA:
-                      Control: Label@2.5.1
-                      Properties:
-                        Color: =RGBA(136, 135, 128, 1)
-                        Height: =20
-                        Size: =9
-                        Text: ="Project Short Description"
-                        Width: =Parent.Width - 40
-                  - lblProjectDescValue_EA:
-                      Control: Label@2.5.1
-                      Properties:
-                        FontWeight: =FontWeight.Semibold
-                        Overflow: =Overflow.Scroll
-                        Size: =11
-                        Text: =Coalesce(gProjectInfo.ProjectDescription, "—")
-                        VerticalAlign: =VerticalAlign.Top
-                        Width: =Parent.Width - 40
+                        - colProjectGrandTotal_EA:
+                            Control: GroupContainer@1.5.0
+                            Variant: AutoLayout
+                            Properties:
+                              DropShadow: =DropShadow.None
+                              LayoutDirection: =LayoutDirection.Vertical
+                              LayoutGap: =2
+                              LayoutMinHeight: =50
+                              RadiusBottomLeft: =0
+                              RadiusBottomRight: =0
+                              RadiusTopLeft: =0
+                              RadiusTopRight: =0
+                              Width: =260
+                            Children:
+                              - lblProjectGrandTotalLabel_EA:
+                                  Control: Label@2.5.1
+                                  Properties:
+                                    Color: =RGBA(136, 135, 128, 1)
+                                    Height: =20
+                                    Size: =9
+                                    Text: ="Grand Total"
+                                    Width: =260
+                              - lblProjectGrandTotal_EA:
+                                  Control: Label@2.5.1
+                                  Properties:
+                                    Color: =RGBA(83, 74, 183, 1)
+                                    FontWeight: =FontWeight.Bold
+                                    Height: =30
+                                    Size: =11
+                                    Text: |-
+                                      =Text(
+                                          Sum(
+                                              AddColumns(
+                                                  colProjectInvoices,
+                                                  AUDAmount,
+                                                  TotalAmount /
+                                                  Switch(
+                                                      Upper(Currency),
+                                                      "AUD", 1,
+                                                      "USD", 0.7,
+                                                      "GBP", 0.5,
+                                                      "RM", 3,
+                                                      "MYR", 3,
+                                                      "SGD", 0.9,
+                                                      "VND", 18000,
+                                                      "RMB", 4.7,
+                                                      "CNY", 4.7,
+                                                      1
+                                                  )
+                                              ),
+                                              AUDAmount
+                                          ),
+                                          "#,###.00"
+                                      ) & " AUD"
+                                    Width: =260
+                        - colProjectDesc_EA:
+                            Control: GroupContainer@1.5.0
+                            Variant: AutoLayout
+                            Properties:
+                              DropShadow: =DropShadow.None
+                              LayoutDirection: =LayoutDirection.Vertical
+                              LayoutGap: =2
+                              LayoutMinHeight: =50
+                              RadiusBottomLeft: =0
+                              RadiusBottomRight: =0
+                              RadiusTopLeft: =0
+                              RadiusTopRight: =0
+                            Children:
+                              - lblProjectDescLabel_EA:
+                                  Control: Label@2.5.1
+                                  Properties:
+                                    Color: =RGBA(136, 135, 128, 1)
+                                    Height: =20
+                                    Size: =9
+                                    Text: ="Project Short Description"
+                                    Width: =Parent.Width
+                              - lblProjectDescValue_EA:
+                                  Control: Label@2.5.1
+                                  Properties:
+                                    FontWeight: =FontWeight.Semibold
+                                    Height: =30
+                                    Overflow: =Overflow.Scroll
+                                    Size: =11
+                                    Text: =Coalesce(gProjectInfo.ProjectDescription, "—")
+                                    VerticalAlign: =VerticalAlign.Top
+                                    Width: =Parent.Width
             - rowManagerSummaryTitle:
                 Control: GroupContainer@1.5.0
                 Variant: AutoLayout

@@ -108,10 +108,10 @@ Screens:
                   DropShadow: =DropShadow.None
                   Fill: =RGBA(245, 245, 250, 1)
                   FillPortions: =0
-                  Height: =212
+                  Height: =192 + Max(1, CountRows(colLineItemsDetail)) * 30
                   LayoutDirection: =LayoutDirection.Vertical
                   LayoutGap: =4
-                  LayoutMinHeight: =212
+                  LayoutMinHeight: =192 + Max(1, CountRows(colLineItemsDetail)) * 30
                   PaddingBottom: =12
                   PaddingLeft: =20
                   PaddingRight: =20
@@ -371,10 +371,10 @@ Screens:
                       Properties:
                         DropShadow: =DropShadow.None
                         FillPortions: =0
-                        Height: =40
+                        Height: =18 + 2 + Max(1, CountRows(colLineItemsDetail)) * 30
                         LayoutDirection: =LayoutDirection.Vertical
                         LayoutGap: =2
-                        LayoutMinHeight: =40
+                        LayoutMinHeight: =18 + 2 + Max(1, CountRows(colLineItemsDetail)) * 30
                         RadiusBottomLeft: =0
                         RadiusBottomRight: =0
                         RadiusTopLeft: =0
@@ -390,31 +390,48 @@ Screens:
                               Size: =9
                               Text: ="Raw Materials (" & CountRows(colLineItemsDetail) & ")"
                               Width: =Parent.Width
-                        - lblInfoMaterialsValue_SFU:
+                        - lblInfoMaterialsEmpty_SFU:
                             Control: Label@2.5.1
                             Properties:
                               FontWeight: =FontWeight.Semibold
                               Height: =20
                               PaddingLeft: =0
                               Size: =11
-                              Text: |-
-                                =If(
-                                    CountRows(colLineItemsDetail) = 0,
-                                    "—",
-                                    Concat(
-                                        colLineItemsDetail,
-                                        RMPKCode & " — " & MaterialName & " (" & Text(Quantity) & " " & Unit & ")",
-                                        "  ·  "
-                                    )
-                                )
-                              Tooltip: |-
-                                =Concat(
-                                    colLineItemsDetail,
-                                    RMPKCode & " — " & MaterialName & " (" & Text(Quantity) & " " & Unit & ")",
-                                    Char(10)
-                                )
+                              Text: ="—"
+                              Visible: =CountRows(colLineItemsDetail) = 0
                               Width: =Parent.Width
-                              Wrap: =false
+                        - galInfoMaterials_SFU:
+                            Control: Gallery@2.15.0
+                            Variant: BrowseLayout_Vertical_TwoTextOneImageVariant_ver5.0
+                            Properties:
+                              FillPortions: =0
+                              Height: =CountRows(colLineItemsDetail) * 30
+                              Items: =colLineItemsDetail
+                              ShowScrollbar: =false
+                              TemplateSize: =30
+                              Visible: =CountRows(colLineItemsDetail) > 0
+                              Width: =Parent.Width
+                            Children:
+                              - rowInfoMaterialItem_SFU:
+                                  Control: GroupContainer@1.5.0
+                                  Variant: AutoLayout
+                                  Properties:
+                                    DropShadow: =DropShadow.None
+                                    Height: =30
+                                    LayoutDirection: =LayoutDirection.Horizontal
+                                    Width: =Parent.Width
+                                  Children:
+                                    - lblInfoMaterialItemText_SFU:
+                                        Control: Label@2.5.1
+                                        Properties:
+                                          FontWeight: =FontWeight.Semibold
+                                          Height: =30
+                                          PaddingLeft: =0
+                                          Size: =11
+                                          Text: =ThisItem.RMPKCode & " — " & ThisItem.MaterialName & " (" & Text(ThisItem.Quantity) & " " & ThisItem.Unit & ")"
+                                          Tooltip: =ThisItem.RMPKCode & " — " & ThisItem.MaterialName & " (" & Text(ThisItem.Quantity) & " " & ThisItem.Unit & ")"
+                                          Width: =Parent.Width
+                                          Wrap: =false
             - rowHistoryHeader_SFU:
                 Control: GroupContainer@1.5.0
                 Variant: AutoLayout
