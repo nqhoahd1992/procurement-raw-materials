@@ -2756,7 +2756,8 @@ Screens:
                         Visible: |-
                           =Not(gIsDelivery) &&
                           gSelectedRequest.Status.Value = "In Delivery" &&
-                          (gCurrentUser.Role.Value = "Procurement" || gCurrentUser.Role.Value = "Admin")
+                          (gCurrentUser.Role.Value = "Procurement" || gCurrentUser.Role.Value = "Admin") &&
+                          Not(IsEmpty(Filter(colDeliveryBatches, Status.Value <> "Cancelled")))
                         Width: =160
                   - btnActionAddDelivery:
                       Control: Button@0.0.45
@@ -3608,7 +3609,9 @@ Screens:
                                           With(
                                               {wHasDeliveries: Not(IsEmpty(Filter('RM Procurement Requests', ParentRequestID = gSelectedRequest.ID)))},
                                               With(
-                                                  {wAllDelivered: wHasDeliveries && IsEmpty(Filter('RM Procurement Requests', ParentRequestID = gSelectedRequest.ID && Status.Value <> "Completed"))},
+                                                  {wAllDelivered: wHasDeliveries
+                                                      && IsEmpty(Filter('RM Procurement Requests', ParentRequestID = gSelectedRequest.ID && Status.Value <> "Completed" && Status.Value <> "Cancelled"))
+                                                      && Not(IsEmpty(Filter('RM Procurement Requests', ParentRequestID = gSelectedRequest.ID && Status.Value = "Completed")))},
                                                   With(
                                                       {wClosed: Patch(
                                                           'RM Procurement Requests',

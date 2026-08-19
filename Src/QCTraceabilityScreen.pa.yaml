@@ -110,7 +110,7 @@ Screens:
                         FontWeight: =FontWeight.Bold
                         Height: =24
                         Size: =12
-                        Text: ="Find the origin request by QC Number"
+                        Text: ="Find the SO/PO/INV by QC Number"
                         Width: =400
                   - rowSearchInput_QC:
                       Control: GroupContainer@1.5.0
