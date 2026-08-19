@@ -689,7 +689,7 @@ Screens:
                   Fill: =RGBA(219, 234, 254, 1)
                   LayoutDirection: =LayoutDirection.Vertical
                   LayoutGap: =4
-                  LayoutMinHeight: =140
+                  LayoutMinHeight: =150
                   PaddingBottom: =12
                   PaddingLeft: =20
                   PaddingRight: =20
@@ -1141,7 +1141,9 @@ Screens:
                                                       With(
                                                           {wParent: If(wParentID > 0, LookUp('RM Procurement Requests', ID = wParentID), Blank())},
                                                           If(
-                                                              Not(IsBlank(wParent)) && wParent.Status.Value = "Delivered" && IsEmpty(Filter('RM Procurement Requests', ParentRequestID = wParentID && Status.Value <> "Completed")),
+                                                              Not(IsBlank(wParent)) && wParent.Status.Value = "Delivered"
+                                                                  && IsEmpty(Filter('RM Procurement Requests', ParentRequestID = wParentID && Status.Value <> "Completed" && Status.Value <> "Cancelled"))
+                                                                  && Not(IsEmpty(Filter('RM Procurement Requests', ParentRequestID = wParentID && Status.Value = "Completed"))),
                                                               Patch('RM Procurement Requests', wParent, {Status: {Value: "Completed"}});
                                                               Patch(
                                                                   'RM Procurement Execution Log',

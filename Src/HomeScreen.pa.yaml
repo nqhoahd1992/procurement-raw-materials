@@ -82,7 +82,7 @@ Screens:
                         "Admin",       "All Requests",
                         "Executive",   "All Requests",
                         "Procurement", "Procurement Requests",
-                        "Accounting",  "Accounting Requests",
+                        "Accounting",  "All Requests",
                         "My Requests"
                     )
                   Width: =400
@@ -186,13 +186,7 @@ Screens:
                               Status.Value = "Rejected" ||
                               RequesterEmail = User().Email
                           ),
-                          "Accounting", Filter('RM Procurement Requests',
-                              Status.Value = "Pending Accounting" ||
-                              Status.Value = "Goods Receipt" ||
-                              Status.Value = "Supplier Follow-up" ||
-                              Status.Value = "Completed" ||
-                              RequesterEmail = User().Email
-                          ),
+                          "Accounting", 'RM Procurement Requests',
                           "Executive", 'RM Procurement Requests',
                           "Admin", 'RM Procurement Requests',
                           Filter('RM Procurement Requests',
@@ -1381,13 +1375,7 @@ Screens:
                                                 Status.Value = "Rejected" ||
                                                 RequesterEmail = User().Email
                                             ),
-                                            "Accounting", Filter('RM Procurement Requests',
-                                                Status.Value = "Pending Accounting" ||
-                                                Status.Value = "Goods Receipt" ||
-                                                Status.Value = "Supplier Follow-up" ||
-                                                Status.Value = "Completed" ||
-                                                RequesterEmail = User().Email
-                                            ),
+                                            "Accounting", 'RM Procurement Requests',
                                             "Executive", 'RM Procurement Requests',
                                             "Admin", 'RM Procurement Requests',
                                             Filter('RM Procurement Requests',
