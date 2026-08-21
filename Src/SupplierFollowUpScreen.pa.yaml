@@ -2518,12 +2518,28 @@ Screens:
                                                   )
                                               )
                                           },
-                                          ForAll(
-                                              wParsed As m,
-                                              UpdateIf(
-                                                  colRoundEntry,
-                                                  LineItemID = m.LineItemID,
-                                                  {QCNumber: m.FinalQC, BatchNumber: m.FinalBatch, ExpiryDate: m.FinalExpiry, ReceivedQty: m.FinalQty, COALink: m.FinalCOA}
+                                          ClearCollect(
+                                              colRoundEntry,
+                                              ForAll(
+                                                  colRoundEntry As row,
+                                                  With(
+                                                      {wMatch: LookUp(wParsed, LineItemID = row.LineItemID)},
+                                                      {
+                                                          LineItemID: row.LineItemID,
+                                                          ParentLineItemID: row.ParentLineItemID,
+                                                          MaterialID: row.MaterialID,
+                                                          MaterialName: row.MaterialName,
+                                                          Unit: row.Unit,
+                                                          OrderedQty: row.OrderedQty,
+                                                          PrevReceivedQty: row.PrevReceivedQty,
+                                                          ReceivedQty: wMatch.FinalQty,
+                                                          BatchNumber: wMatch.FinalBatch,
+                                                          ExpiryDate: wMatch.FinalExpiry,
+                                                          QCNumber: wMatch.FinalQC,
+                                                          RMPKCode: row.RMPKCode,
+                                                          COALink: wMatch.FinalCOA
+                                                      }
+                                                  )
                                               )
                                           );
                                           Notify(Text(CountRows(wParsed)) & " row(s) updated.", NotificationType.Success);
