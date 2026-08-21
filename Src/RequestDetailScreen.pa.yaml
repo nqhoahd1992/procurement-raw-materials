@@ -3610,7 +3610,7 @@ Screens:
                                               {wHasDeliveries: Not(IsEmpty(Filter('RM Procurement Requests', ParentRequestID = gSelectedRequest.ID)))},
                                               With(
                                                   {wAllDelivered: wHasDeliveries
-                                                      && IsEmpty(Filter('RM Procurement Requests', ParentRequestID = gSelectedRequest.ID && Status.Value <> "Completed" && Status.Value <> "Cancelled"))
+                                                      && IsEmpty(Filter('RM Procurement Requests', ParentRequestID = gSelectedRequest.ID && (Status.Value = "Goods Receipt" || Status.Value = "Supplier Follow-up" || Status.Value = "Pending Invoice" || Status.Value = "Pending Accounting")))
                                                       && Not(IsEmpty(Filter('RM Procurement Requests', ParentRequestID = gSelectedRequest.ID && Status.Value = "Completed")))},
                                                   With(
                                                       {wClosed: Patch(

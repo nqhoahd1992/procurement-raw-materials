@@ -1142,7 +1142,7 @@ Screens:
                                                           {wParent: If(wParentID > 0, LookUp('RM Procurement Requests', ID = wParentID), Blank())},
                                                           If(
                                                               Not(IsBlank(wParent)) && wParent.Status.Value = "Delivered"
-                                                                  && IsEmpty(Filter('RM Procurement Requests', ParentRequestID = wParentID && Status.Value <> "Completed" && Status.Value <> "Cancelled"))
+                                                                  && IsEmpty(Filter('RM Procurement Requests', ParentRequestID = wParentID && (Status.Value = "Goods Receipt" || Status.Value = "Supplier Follow-up" || Status.Value = "Pending Invoice" || Status.Value = "Pending Accounting")))
                                                                   && Not(IsEmpty(Filter('RM Procurement Requests', ParentRequestID = wParentID && Status.Value = "Completed"))),
                                                               Patch('RM Procurement Requests', wParent, {Status: {Value: "Completed"}});
                                                               Patch(
