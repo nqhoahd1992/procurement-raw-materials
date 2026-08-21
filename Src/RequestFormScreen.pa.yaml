@@ -1324,7 +1324,7 @@ Screens:
                         Height: =40
                         InputTextPlaceholder: ="Choose an option"
                         ItemDisplayText: =ThisItem.EmployeeID.Value
-                        Items: =Sort(Filter('RM User', Role.Value = "Manager" && IsActive), EmployeeID.Value, SortOrder.Ascending)
+                        Items: =Filter('RM User', Role.Value = "Manager" && IsActive)
                         SelectMultiple: =false
                         Size: =0
                         Width: =Parent.Width - 40

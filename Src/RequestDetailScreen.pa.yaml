@@ -3369,7 +3369,7 @@ Screens:
                   Height: =32
                   PaddingLeft: =0
                   Size: =12
-                  Text: ="Step Details"
+                  Text: =Coalesce(gLogDetailTitle, "Step Details")
                   Width: =Parent.Width - 40
                   Wrap: =false
             - rectLogDlgDivider_RD:
