@@ -15,7 +15,7 @@ Screens:
                 ProjectID = gSelectedRequest.ProjectID
             )
         );
-        ClearCollect(colLineItemsDetail, ForAll(Filter('RM Procurement Line Items', RequestIDText = Text(gSelectedRequest.ID)) As li, {ID: li.ID, MaterialID: li.MaterialID, MaterialName: li.MaterialName, Unit: li.Unit, Quantity: li.Quantity, ParentLineItemID: li.ParentLineItemID, RMPKCode: Coalesce(li.MaterialCode, "?")}))
+        ClearCollect(colLineItemsDetail, ForAll(Filter('RM Procurement Line Items', RequestIDNum = gSelectedRequest.ID) As li, {ID: li.ID, MaterialID: li.MaterialID, MaterialName: li.MaterialName, Unit: li.Unit, Quantity: li.Quantity, ParentLineItemID: li.ParentLineItemID, RMPKCode: Coalesce(li.MaterialCode, "?")}))
     Children:
       - rectHeader_1:
           Control: Rectangle@2.3.0
@@ -761,7 +761,7 @@ Screens:
                                           {
                                               Title: "Step 2 - " & rdoApproved.Selected.Value & " - " & gSelectedRequest.Title,
                                               RequestID: {Id: gSelectedRequest.ID, Value: gSelectedRequest.Title},
-                                              RequestIDText: Text(gSelectedRequest.ID),
+                                              RequestIDNum: gSelectedRequest.ID,
                                               StepNumber: 2,
                                               ApproverID: {Id: gCurrentEmployee.ID, Value: gCurrentEmployee.Title},
                                               Decision: {Value: rdoApproved.Selected.Value},

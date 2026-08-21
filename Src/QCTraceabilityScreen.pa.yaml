@@ -27,9 +27,9 @@ Screens:
                         {
                             OriginID: a.OriginID,
                             DisplayID: Coalesce(LookUp(colQCRequestsIndex, ID = a.OriginID).DisplayID, "Request #" & a.OriginID),
-                            SupplierSummary: Coalesce(LookUp(colQCStep1Index, RequestIDText = Text(a.OriginID)).SupplierSummary, "—"),
+                            SupplierSummary: Coalesce(LookUp(colQCStep1Index, RequestIDNum = a.OriginID).SupplierSummary, "—"),
                             QCNumbers: Concat(Filter(wFlatRounds, ParentRequestID = a.OriginID), Coalesce(QCNumber, "—"), ", "),
-                            POLink: Coalesce(LookUp(colQCStep1Index, RequestIDText = Text(a.OriginID)).PurchaseOrderLink, "")
+                            POLink: Coalesce(LookUp(colQCStep1Index, RequestIDNum = a.OriginID).PurchaseOrderLink, "")
                         }
                     )
                 )
@@ -158,9 +158,9 @@ Screens:
                                                     {
                                                         OriginID: a.OriginID,
                                                         DisplayID: Coalesce(LookUp(colQCRequestsIndex, ID = a.OriginID).DisplayID, "Request #" & a.OriginID),
-                                                        SupplierSummary: Coalesce(LookUp(colQCStep1Index, RequestIDText = Text(a.OriginID)).SupplierSummary, "—"),
+                                                        SupplierSummary: Coalesce(LookUp(colQCStep1Index, RequestIDNum = a.OriginID).SupplierSummary, "—"),
                                                         QCNumbers: Concat(Filter(wFlatRounds, ParentRequestID = a.OriginID), Coalesce(QCNumber, "—"), ", "),
-                                                        POLink: Coalesce(LookUp(colQCStep1Index, RequestIDText = Text(a.OriginID)).PurchaseOrderLink, "")
+                                                        POLink: Coalesce(LookUp(colQCStep1Index, RequestIDNum = a.OriginID).PurchaseOrderLink, "")
                                                     }
                                                 )
                                             )
@@ -198,9 +198,9 @@ Screens:
                                                     {
                                                         OriginID: a.OriginID,
                                                         DisplayID: Coalesce(LookUp(colQCRequestsIndex, ID = a.OriginID).DisplayID, "Request #" & a.OriginID),
-                                                        SupplierSummary: Coalesce(LookUp(colQCStep1Index, RequestIDText = Text(a.OriginID)).SupplierSummary, "—"),
+                                                        SupplierSummary: Coalesce(LookUp(colQCStep1Index, RequestIDNum = a.OriginID).SupplierSummary, "—"),
                                                         QCNumbers: Concat(Filter(wFlatRounds, ParentRequestID = a.OriginID), Coalesce(QCNumber, "—"), ", "),
-                                                        POLink: Coalesce(LookUp(colQCStep1Index, RequestIDText = Text(a.OriginID)).PurchaseOrderLink, "")
+                                                        POLink: Coalesce(LookUp(colQCStep1Index, RequestIDNum = a.OriginID).PurchaseOrderLink, "")
                                                     }
                                                 )
                                             )

@@ -6,7 +6,7 @@ Screens:
         =ResetForm(formExecutivePayment);
         Set(gPendingNewAttName, "");
         Set(gSelectedRequest, LookUp('RM Procurement Requests', ID = gSelectedRequest.ID));
-        ClearCollect(colLineItemsDetail, ForAll(Filter('RM Procurement Line Items', RequestIDText = Text(gSelectedRequest.ID)) As li, {ID: li.ID, MaterialID: li.MaterialID, MaterialName: li.MaterialName, Unit: li.Unit, Quantity: li.Quantity, ParentLineItemID: li.ParentLineItemID, RMPKCode: Coalesce(li.MaterialCode, "?")}))
+        ClearCollect(colLineItemsDetail, ForAll(Filter('RM Procurement Line Items', RequestIDNum = gSelectedRequest.ID) As li, {ID: li.ID, MaterialID: li.MaterialID, MaterialName: li.MaterialName, Unit: li.Unit, Quantity: li.Quantity, ParentLineItemID: li.ParentLineItemID, RMPKCode: Coalesce(li.MaterialCode, "?")}))
     Children:
       - rectHeader_EPS:
           Control: Rectangle@2.3.0
@@ -450,7 +450,7 @@ Screens:
                                     Size: =11
                                     Text: |-
                                       =With(
-                                          {wRemark: LookUp('RM Procurement Approval Log', RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 3).ApprovalConditions},
+                                          {wRemark: LookUp('RM Procurement Approval Log', RequestIDNum = gSelectedRequest.ID && StepNumber = 3).ApprovalConditions},
                                           If(IsBlank(wRemark), "—", wRemark)
                                       )
                                     VerticalAlign: =VerticalAlign.Top

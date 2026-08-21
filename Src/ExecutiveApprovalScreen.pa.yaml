@@ -15,7 +15,7 @@ Screens:
                 ProjectID = gSelectedRequest.ProjectID
             )
         );
-        ClearCollect(colLineItemsDetail, ForAll(Filter('RM Procurement Line Items', RequestIDText = Text(gSelectedRequest.ID)) As li, {ID: li.ID, MaterialID: li.MaterialID, MaterialName: li.MaterialName, Unit: li.Unit, Quantity: li.Quantity, ParentLineItemID: li.ParentLineItemID, RMPKCode: Coalesce(li.MaterialCode, "?")}))
+        ClearCollect(colLineItemsDetail, ForAll(Filter('RM Procurement Line Items', RequestIDNum = gSelectedRequest.ID) As li, {ID: li.ID, MaterialID: li.MaterialID, MaterialName: li.MaterialName, Unit: li.Unit, Quantity: li.Quantity, ParentLineItemID: li.ParentLineItemID, RMPKCode: Coalesce(li.MaterialCode, "?")}))
     Children:
       - rectHeader_3:
           Control: Rectangle@2.3.0
@@ -699,7 +699,7 @@ Screens:
                               Height: =69
                               Overflow: =Overflow.Scroll
                               Size: =11
-                              Text: =LookUp('RM Procurement Approval Log', RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 2).ManagerRemarks
+                              Text: =LookUp('RM Procurement Approval Log', RequestIDNum = gSelectedRequest.ID && StepNumber = 2).ManagerRemarks
                               VerticalAlign: =VerticalAlign.Top
                               Width: =Parent.Width
                   - colManagerDecision:
@@ -733,7 +733,7 @@ Screens:
                               Height: =24
                               LayoutMinHeight: =24
                               Size: =11
-                              Text: =LookUp('RM Procurement Approval Log', RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 2).Decision.Value
+                              Text: =LookUp('RM Procurement Approval Log', RequestIDNum = gSelectedRequest.ID && StepNumber = 2).Decision.Value
                               VerticalAlign: =VerticalAlign.Top
                               Width: =Parent.Width
             - rowApprovalConditions:
@@ -879,7 +879,7 @@ Screens:
                                           {
                                               Title: "Step 3 - " & rdoExecutiveDecision.Selected.Value & " - " & gSelectedRequest.Title,
                                               RequestID: {Id: gSelectedRequest.ID, Value: gSelectedRequest.Title},
-                                              RequestIDText: Text(gSelectedRequest.ID),
+                                              RequestIDNum: gSelectedRequest.ID,
                                               StepNumber: 3,
                                               ApproverID: {Id: gCurrentEmployee.ID, Value: gCurrentEmployee.Title},
                                               Decision: {Value: rdoExecutiveDecision.Selected.Value},

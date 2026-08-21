@@ -15,7 +15,7 @@ Live flow name in the portal: **`RM Procurement - Update COA Reminder for Procur
 - **What counts as outstanding:** a `'RM Procurement Receipt Rounds'` row with `COAMissing = Yes`. Nothing more — a receipt-round row only exists for a material actually received in that round (`ReceivedQty > 0`), so the old `ReceivedQty1 gt 0` / `ReceivedQty2 gt 0` guards are gone.
 - **Granularity: request level, not line-item level.** Outstanding rows are collapsed to their parent request, so the email lists *requests* pending COA, not individual material/round rows. Procurement can't act on a single row from the email anyway — they open the request and `ReceiptAmendmentScreen` lists every receipt round for it. This is a deliberate change from the original design (which listed `<request> — <material> — Round <n>` per row); the trade-off is that the email doesn't show *how many* rows a request is missing.
 
-> ⚠ **Since the parent/delivery split, "request" here means a *delivery* row, not the Requester's original request.** Receipt-round rows are written against the **delivery** (`RequestIDText` = the delivery's ID), so `RequestID.Value` resolves to the delivery's Title — `<parent title> - #<n>`. That string still names the parent, so the email stays readable, but the `union()` dedupe in step 5 is **per delivery**: one original request with three COA-deficient deliveries produces three lines, not one. That is arguably the more useful granularity (each delivery has its own COA paperwork), but it contradicts the "request level" claim above, so read this section as *delivery level*. If you want true parent-level grouping, project the new `ParentRequestID` (Number) column in the step-4 `Select` and dedupe on that instead. See `CLAUDE.md`'s "Two request types" section.
+> ⚠ **Since the parent/delivery split, "request" here means a *delivery* row, not the Requester's original request.** Receipt-round rows are written against the **delivery** (`RequestIDNum` = the delivery's ID), so `RequestID.Value` resolves to the delivery's Title — `<parent title> - #<n>`. That string still names the parent, so the email stays readable, but the `union()` dedupe in step 5 is **per delivery**: one original request with three COA-deficient deliveries produces three lines, not one. That is arguably the more useful granularity (each delivery has its own COA paperwork), but it contradicts the "request level" claim above, so read this section as *delivery level*. If you want true parent-level grouping, project the new `ParentRequestID` (Number) column in the step-4 `Select` and dedupe on that instead. See `CLAUDE.md`'s "Two request types" section.
 - **Recipients:** every active `'RM User'` row with `Role = "Procurement"`, resolved to an email via `Employee List`. Not per-assignee (there is no assignee column for this task) and not Admin — Procurement only, as scoped. One email is sent **per recipient** (inside `Apply to each`), so a run sends N emails for N Procurement users.
 - **Nothing outstanding → no email.** Guarded by a Condition; see step 6.
 
@@ -33,9 +33,9 @@ Live flow name in the portal: **`RM Procurement - Update COA Reminder for Procur
 Two **single-column indexes** on `'RM Procurement Receipt Rounds'` (List settings → Indexed columns), both with Secondary column `(none)`:
 
 1. `COAMissing` — used by this flow's filter.
-2. `RequestIDText` — used by the app (`ReceiptAmendmentScreen`, `HomeScreen`).
+2. `RequestIDNum` — used by the app (`ReceiptAmendmentScreen`, `HomeScreen`). This superseded `RequestIDText`: the app now joins on the delegable `RequestIDNum` (Number) column instead of `RequestIDText = Text(id)`, which was never actually delegable — see "Pending manual SharePoint work for delegable request-ID lookups" in `CLAUDE.md`. Re-point this index at `RequestIDNum` once that column exists and is backfilled.
 
-No compound index is needed: every query filters on one of the two, and the app's `RequestIDText = … && COAMissing` narrows on the indexed text column first.
+No compound index is needed: every query filters on one of the two, and the app's `RequestIDNum = … && COAMissing` narrows on the indexed number column first.
 
 This list grows one row per (line item × receipt round), so it reaches 5,000 items faster than the others — and past 5,000 SharePoint **refuses to create new indexes**, leaving the queries permanently stuck against the list-view threshold. Create both indexes while the list is small.
 
@@ -74,7 +74,7 @@ Top Count and Pagination are both required: left blank, SharePoint Get items ret
 ```
 `RequestID` is a Lookup to `'RM Procurement Requests'` (`{Id, Value}` where Value is the request Title), so the request's name is available here — no second `Get items` against the Requests list.
 
-> **Confirm this path after any connector change.** If the connector ever returns the lookup flattened (`RequestIDId` / `RequestIDValue`), both fields become `null`, step 5 collapses them into a single `{ID: null, Title: null}` entry, and the email sends one meaningless line — with the run still Succeeded. If that happens, `RequestIDText` (plain text, always present) is the robust source for `ID`.
+> **Confirm this path after any connector change.** If the connector ever returns the lookup flattened (`RequestIDId` / `RequestIDValue`), both fields become `null`, step 5 collapses them into a single `{ID: null, Title: null}` entry, and the email sends one meaningless line — with the run still Succeeded. If that happens, `RequestIDNum` (plain number, always present once backfilled) is the robust source for `ID`. **Not `RequestIDText`** — that column is deprecated and no longer written by the app; don't build a new fallback on a column being phased out (see `CLAUDE.md`).
 
 ### 5. `Deduplicate` — Compose
 ```

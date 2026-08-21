@@ -8,7 +8,7 @@ Screens:
         Set(gInvoiceResult, Blank());
         Set(gPendingNewAttName, "");
         Set(gSelectedRequest, LookUp('RM Procurement Requests', ID = gSelectedRequest.ID));
-        ClearCollect(colLineItemsDetail, ForAll(Filter('RM Procurement Line Items', RequestIDText = Text(gSelectedRequest.ID)) As li, {ID: li.ID, MaterialID: li.MaterialID, MaterialName: li.MaterialName, Unit: li.Unit, Quantity: li.Quantity, ParentLineItemID: li.ParentLineItemID, RMPKCode: Coalesce(li.MaterialCode, "?")}))
+        ClearCollect(colLineItemsDetail, ForAll(Filter('RM Procurement Line Items', RequestIDNum = gSelectedRequest.ID) As li, {ID: li.ID, MaterialID: li.MaterialID, MaterialName: li.MaterialName, Unit: li.Unit, Quantity: li.Quantity, ParentLineItemID: li.ParentLineItemID, RMPKCode: Coalesce(li.MaterialCode, "?")}))
     Children:
       - rectHeader_RIS:
           Control: Rectangle@2.3.0

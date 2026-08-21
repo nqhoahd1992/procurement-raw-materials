@@ -20,7 +20,7 @@ Screens:
                 }
             )
         );
-        ClearCollect(colLineItemsDetail, ForAll(Filter('RM Procurement Line Items', RequestIDText = Text(gSelectedRequest.ID)) As li, {ID: li.ID, MaterialID: li.MaterialID, MaterialName: li.MaterialName, Unit: li.Unit, Quantity: li.Quantity, ParentLineItemID: li.ParentLineItemID, RMPKCode: Coalesce(li.MaterialCode, "?")}))
+        ClearCollect(colLineItemsDetail, ForAll(Filter('RM Procurement Line Items', RequestIDNum = gSelectedRequest.ID) As li, {ID: li.ID, MaterialID: li.MaterialID, MaterialName: li.MaterialName, Unit: li.Unit, Quantity: li.Quantity, ParentLineItemID: li.ParentLineItemID, RMPKCode: Coalesce(li.MaterialCode, "?")}))
     Children:
       - rectHeader_PE:
           Control: Rectangle@2.3.0
@@ -726,7 +726,7 @@ Screens:
                   RadiusTopRight: =0
                   Visible: |-
                     =rdoDecision_PE.Selected.Value = "Proceed" &&
-                    Not(IsBlank(LookUp('RM Procurement Approval Log', RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 3).ApprovalConditions))
+                    Not(IsBlank(LookUp('RM Procurement Approval Log', RequestIDNum = gSelectedRequest.ID && StepNumber = 3).ApprovalConditions))
                   Width: =Parent.Width
                 Children:
                   - lblConditionsTitle_PE:
@@ -749,7 +749,7 @@ Screens:
                         PaddingLeft: =0
                         PaddingRight: =0
                         Size: =11
-                        Text: =LookUp('RM Procurement Approval Log', RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 3).ApprovalConditions
+                        Text: =LookUp('RM Procurement Approval Log', RequestIDNum = gSelectedRequest.ID && StepNumber = 3).ApprovalConditions
                         VerticalAlign: =VerticalAlign.Top
                         Width: =Parent.Width - 40
             - rowDecision_PE:
@@ -956,12 +956,12 @@ Screens:
                               With(
                                   {wDup: LookUp(
                                       'RM Procurement Execution Log',
-                                      StepNumber = 1 && SupplierSummary = wCode && RequestIDText <> Text(gSelectedRequest.ID)
+                                      StepNumber = 1 && SupplierSummary = wCode && RequestIDNum <> gSelectedRequest.ID
                                   )},
                                   If(
                                       Not(IsBlank(wDup.ID)),
                                       Notify(
-                                          "SO/PO/INV " & wCode & " is already used by request ID " & wDup.RequestIDText & ". Nothing was submitted - please enter a different number.",
+                                          "SO/PO/INV " & wCode & " is already used by request ID " & wDup.RequestIDNum & ". Nothing was submitted - please enter a different number.",
                                           NotificationType.Error
                                       ),
                                       With(
@@ -984,7 +984,7 @@ Screens:
                                                   {
                                                       Title: "Step 1 - Procurement Execution - " & gSelectedRequest.Title,
                                                       RequestID: {Id: gSelectedRequest.ID, Value: gSelectedRequest.Title},
-                                                      RequestIDText: Text(gSelectedRequest.ID),
+                                                      RequestIDNum: gSelectedRequest.ID,
                                                       StepNumber: 1,
                                                       StepName: {Value: "Procurement Execution"},
                                                       ExecutedBy: {Id: gCurrentEmployee.ID, Value: gCurrentEmployee.Title},
@@ -1132,7 +1132,7 @@ Screens:
                                               {
                                                   Title: "Step 1 - Procurement Rejected - " & gSelectedRequest.Title,
                                                   RequestID: {Id: gSelectedRequest.ID, Value: gSelectedRequest.Title},
-                                                  RequestIDText: Text(gSelectedRequest.ID),
+                                                  RequestIDNum: gSelectedRequest.ID,
                                                   StepNumber: 1,
                                                   StepName: {Value: "Procurement Execution"},
                                                   ExecutedBy: {Id: gCurrentEmployee.ID, Value: gCurrentEmployee.Title},
@@ -1159,12 +1159,12 @@ Screens:
                                               'RM Procurement Execution Log',
                                               StepNumber = 1
                                                   && SupplierSummary = Trim(txtSupplierSummary_PE.Value)
-                                                  && RequestIDText <> Text(gSelectedRequest.ID)
+                                                  && RequestIDNum <> gSelectedRequest.ID
                                           )},
                                           If(
                                               Not(IsBlank(wDup.ID)),
                                               Notify(
-                                                  "This SO/PO/INV is already used by request ID " & wDup.RequestIDText & ". Please enter a different number.",
+                                                  "This SO/PO/INV is already used by request ID " & wDup.RequestIDNum & ". Please enter a different number.",
                                                   NotificationType.Error
                                               ),
                                               Set(gPendingNewAttName, Last(attShadow_Confirmation.Attachments).Name);

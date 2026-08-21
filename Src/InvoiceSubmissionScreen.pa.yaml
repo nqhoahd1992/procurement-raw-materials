@@ -31,8 +31,8 @@ Screens:
                 }
             )
         );
-        ClearCollect(colLineItemsDetail, ForAll(Filter('RM Procurement Line Items', RequestIDText = Text(gSelectedRequest.ID)) As li, {ID: li.ID, MaterialID: li.MaterialID, MaterialName: li.MaterialName, Unit: li.Unit, Quantity: li.Quantity, ParentLineItemID: li.ParentLineItemID, RMPKCode: Coalesce(li.MaterialCode, "?")}));
-        ClearCollect(colReceiptRounds, Filter('RM Procurement Receipt Rounds', RequestIDText = Text(gSelectedRequest.ID)));
+        ClearCollect(colLineItemsDetail, ForAll(Filter('RM Procurement Line Items', RequestIDNum = gSelectedRequest.ID) As li, {ID: li.ID, MaterialID: li.MaterialID, MaterialName: li.MaterialName, Unit: li.Unit, Quantity: li.Quantity, ParentLineItemID: li.ParentLineItemID, RMPKCode: Coalesce(li.MaterialCode, "?")}));
+        ClearCollect(colReceiptRounds, Filter('RM Procurement Receipt Rounds', RequestIDNum = gSelectedRequest.ID));
         ClearCollect(
             colPFUSummary,
             ForAll(
@@ -516,7 +516,7 @@ Screens:
                                           Text: |-
                                             =With(
                                                 {wRootID: If(gSelectedRequest.RequestType.Value = "Delivery", gSelectedRequest.ParentRequestID, gSelectedRequest.ID)},
-                                                Coalesce(LookUp('RM Procurement Execution Log', RequestIDText = Text(wRootID) && StepNumber = 1).SupplierSummary, "—")
+                                                Coalesce(LookUp('RM Procurement Execution Log', RequestIDNum = wRootID && StepNumber = 1).SupplierSummary, "—")
                                             )
                                           Width: =Parent.Width - 20
                                           Wrap: =false
@@ -1781,7 +1781,7 @@ Screens:
                                                     {
                                                         Title: "Step 6 - Invoice Submission - " & gSelectedRequest.Title,
                                                         RequestID: {Id: gSelectedRequest.ID, Value: gSelectedRequest.Title},
-                                                        RequestIDText: Text(gSelectedRequest.ID),
+                                                        RequestIDNum: gSelectedRequest.ID,
                                                         StepNumber: 6,
                                                         StepName: {Value: "Invoice Submission"},
                                                         ExecutedBy: {Id: gCurrentEmployee.ID, Value: gCurrentEmployee.Title},

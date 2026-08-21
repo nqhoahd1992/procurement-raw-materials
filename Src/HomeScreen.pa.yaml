@@ -597,7 +597,7 @@ Screens:
                                 ThisItem.Status.Value <> "Rejected" &&
                                 ThisItem.Status.Value <> "Cancelled" &&
                                 Not(IsEmpty(Filter('RM Procurement Receipt Rounds',
-                                    RequestIDText = Text(ThisItem.ID)
+                                    RequestIDNum = ThisItem.ID
                                 )))
                               Width: =180
                         - conActionsSpacer_HS:
@@ -623,7 +623,7 @@ Screens:
                                 =Set(gQuickViewRequest, ThisItem);
                                 ClearCollect(
                                     colQuickViewItems,
-                                    Filter('RM Procurement Line Items', RequestIDText = Text(ThisItem.ID))
+                                    Filter('RM Procurement Line Items', RequestIDNum = ThisItem.ID)
                                 );
                                 Set(gShowQuickView, true)
                               PaddingBottom: =5

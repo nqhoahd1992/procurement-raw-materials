@@ -60,8 +60,9 @@ Suggested flow name: `RM Procurement - Daily Goods Receipt Reminder`.
 - **Condition:** `item()?['Status']?['Value']` **is equal to** `'Pending Supplier Follow-up'`.
   - **Yes:** add **SharePoint → Get items** on `'RM Procurement Execution Log'`, filter:
     ```
-    RequestIDText eq '{item()?['ID']}' and (StepNumber eq 4 or StepNumber eq 5)
+    RequestIDNum eq {item()?['ID']} and (StepNumber eq 4 or StepNumber eq 5)
     ```
+    (Number comparison, no quotes — `RequestIDNum` superseded `RequestIDText` as the join column; see "Pending manual SharePoint work for delegable request-ID lookups" in `CLAUDE.md`. If this flow was already built against `RequestIDText eq '{item()?['ID']}'`, repoint it once `RequestIDNum` exists and is backfilled — `RequestIDText` is slated for deletion.)
     Then add two **Compose** actions (cleaner than one nested expression — lets the Condition step below use plain dynamic-content picks instead of hand-typed expressions):
     - Compose **`HasStep4`**:
       ```

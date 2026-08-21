@@ -282,7 +282,7 @@ Screens:
                                                                                                       Defaults('RM Procurement Line Items'),
                                                                                                       {
                                                                                                           RequestID: {Id: wNewRequest.ID, Value: gSelectedRequest.Title},
-                                                                                                          RequestIDText: Text(wNewRequest.ID),
+                                                                                                          RequestIDNum: wNewRequest.ID,
                                                                                                           ParentLineItemID: 0,
                                                                                                           MaterialID: {Id: MaterialID, Value: MaterialName},
                                                                                                           MaterialCode: Coalesce(MaterialCode, ""),

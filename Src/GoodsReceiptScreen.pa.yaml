@@ -18,7 +18,7 @@ Screens:
         Reset(ddAssignReceiver_GR);
         Set(gShowBulkReceiptGR, false);
         Set(gSelectedRequest, LookUp('RM Procurement Requests', ID = gSelectedRequest.ID));
-        ClearCollect(colLineItemsDetail, ForAll(Filter('RM Procurement Line Items', RequestIDText = Text(gSelectedRequest.ID)) As li, {ID: li.ID, MaterialID: li.MaterialID, MaterialName: li.MaterialName, Unit: li.Unit, Quantity: li.Quantity, ParentLineItemID: li.ParentLineItemID, RMPKCode: Coalesce(li.MaterialCode, "?")}));
+        ClearCollect(colLineItemsDetail, ForAll(Filter('RM Procurement Line Items', RequestIDNum = gSelectedRequest.ID) As li, {ID: li.ID, MaterialID: li.MaterialID, MaterialName: li.MaterialName, Unit: li.Unit, Quantity: li.Quantity, ParentLineItemID: li.ParentLineItemID, RMPKCode: Coalesce(li.MaterialCode, "?")}));
         ClearCollect(
             colRoundEntry,
             ForAll(
@@ -277,7 +277,7 @@ Screens:
                   RadiusTopRight: =0
                   Visible: |-
                     =gSelectedRequest.RequesterEmail = gCurrentEmployee.Email
-                    && IsBlank(LookUp('RM Procurement Execution Log', RequestIDText = Text(gSelectedRequest.ID) && StepNumber = 3))
+                    && IsBlank(LookUp('RM Procurement Execution Log', RequestIDNum = gSelectedRequest.ID && StepNumber = 3))
                   Width: =Parent.Width
                 Children:
                   - lblDelegationHeader_GR:
@@ -1292,7 +1292,7 @@ Screens:
                                                           {
                                                               Title: "Step 3 - Goods Receipt Round 1 - " & gSelectedRequest.Title,
                                                               RequestID: {Id: gSelectedRequest.ID, Value: gSelectedRequest.Title},
-                                                              RequestIDText: Text(gSelectedRequest.ID),
+                                                              RequestIDNum: gSelectedRequest.ID,
                                                               StepNumber: 3,
                                                               StepName: {Value: "Goods Receipt"},
                                                               RoundNumber: 1,
@@ -1320,7 +1320,7 @@ Screens:
                                                                   {
                                                                       Title: "R1 - " & re.MaterialName,
                                                                       RequestID: {Id: gSelectedRequest.ID, Value: gSelectedRequest.Title},
-                                                                      RequestIDText: Text(gSelectedRequest.ID),
+                                                                      RequestIDNum: gSelectedRequest.ID,
                                                                       LineItemID: re.LineItemID,
                                                                       ParentRequestID: Coalesce(gSelectedRequest.ParentRequestID, 0),
                                                                       ParentLineItemID: re.ParentLineItemID,

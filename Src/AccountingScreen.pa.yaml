@@ -10,8 +10,8 @@ Screens:
         Reset(chk5_AC);
         Reset(txtNotes_AC);
         Set(gSelectedRequest, LookUp('RM Procurement Requests', ID = gSelectedRequest.ID));
-        ClearCollect(colLineItemsDetail, ForAll(Filter('RM Procurement Line Items', RequestIDText = Text(gSelectedRequest.ID)) As li, {ID: li.ID, MaterialID: li.MaterialID, MaterialName: li.MaterialName, Unit: li.Unit, Quantity: li.Quantity, ParentLineItemID: li.ParentLineItemID, RMPKCode: Coalesce(li.MaterialCode, "?")}));
-        ClearCollect(colReceiptRounds, Filter('RM Procurement Receipt Rounds', RequestIDText = Text(gSelectedRequest.ID)));
+        ClearCollect(colLineItemsDetail, ForAll(Filter('RM Procurement Line Items', RequestIDNum = gSelectedRequest.ID) As li, {ID: li.ID, MaterialID: li.MaterialID, MaterialName: li.MaterialName, Unit: li.Unit, Quantity: li.Quantity, ParentLineItemID: li.ParentLineItemID, RMPKCode: Coalesce(li.MaterialCode, "?")}));
+        ClearCollect(colReceiptRounds, Filter('RM Procurement Receipt Rounds', RequestIDNum = gSelectedRequest.ID));
         ClearCollect(
             colPFUSummary,
             ForAll(
@@ -744,7 +744,7 @@ Screens:
                           =With(
                               {wRootID: If(gSelectedRequest.RequestType.Value = "Delivery", gSelectedRequest.ParentRequestID, gSelectedRequest.ID)},
                               With(
-                                  {wSummary: LookUp('RM Procurement Execution Log', RequestIDText = Text(wRootID) && StepNumber = 1).SupplierSummary},
+                                  {wSummary: LookUp('RM Procurement Execution Log', RequestIDNum = wRootID && StepNumber = 1).SupplierSummary},
                                   If(IsBlank(wSummary), "—", wSummary)
                               )
                           )
@@ -1125,7 +1125,7 @@ Screens:
                                                   {
                                                       Title: "Step 2 - Accounting Handover - " & gSelectedRequest.Title,
                                                       RequestID: {Id: gSelectedRequest.ID, Value: gSelectedRequest.Title},
-                                                      RequestIDText: Text(gSelectedRequest.ID),
+                                                      RequestIDNum: gSelectedRequest.ID,
                                                       StepNumber: 2,
                                                       StepName: {Value: "Accounting Handover"},
                                                       ExecutedBy: {Id: gCurrentEmployee.ID, Value: gCurrentEmployee.Title},
@@ -1151,7 +1151,7 @@ Screens:
                                                                   {
                                                                       Title: "Step 9 - Request Completed - " & wParent.Title,
                                                                       RequestID: {Id: wParent.ID, Value: wParent.Title},
-                                                                      RequestIDText: Text(wParent.ID),
+                                                                      RequestIDNum: wParent.ID,
                                                                       StepNumber: 9,
                                                                       StepName: {Value: "Request Completed"},
                                                                       ExecutedBy: {Id: gCurrentEmployee.ID, Value: gCurrentEmployee.Title},

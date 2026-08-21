@@ -23,7 +23,7 @@ Screens:
         Set(gPendingDeliveryBatch, Blank());
         Set(gPendingNewAttName, "");
         Set(gPendingDirectAttachments, Blank());
-        ClearCollect(colParentLineItems, Filter('RM Procurement Line Items', RequestIDText = Text(gSelectedRequest.ID)));
+        ClearCollect(colParentLineItems, Filter('RM Procurement Line Items', RequestIDNum = gSelectedRequest.ID));
         ClearCollect(colParentReceived, Filter('RM Procurement Receipt Rounds', ParentRequestID = gSelectedRequest.ID));
         ClearCollect(colSiblingBatches, Filter('RM Procurement Requests', ParentRequestID = gSelectedRequest.ID));
         ClearCollect(
@@ -1284,7 +1284,7 @@ Screens:
                                               {
                                                   Title: "Step 6 - Invoice Submission - " & gPendingDeliveryBatch.Title,
                                                   RequestID: {Id: gPendingDeliveryBatch.ID, Value: gPendingDeliveryBatch.Title},
-                                                  RequestIDText: Text(gPendingDeliveryBatch.ID),
+                                                  RequestIDNum: gPendingDeliveryBatch.ID,
                                                   StepNumber: 6,
                                                   StepName: {Value: "Invoice Submission"},
                                                   ExecutedBy: {Id: gCurrentEmployee.ID, Value: gCurrentEmployee.Title},
@@ -1403,7 +1403,7 @@ Screens:
                                                                                   Defaults('RM Procurement Line Items'),
                                                                                   {
                                                                                       RequestID: {Id: wBatch.ID, Value: wBatch.Title},
-                                                                                      RequestIDText: Text(wBatch.ID),
+                                                                                      RequestIDNum: wBatch.ID,
                                                                                       ParentLineItemID: be.ParentLineItemID,
                                                                                       MaterialID: {Id: be.MaterialID, Value: be.MaterialName},
                                                                                       MaterialCode: Coalesce(be.MaterialCode, ""),
@@ -1420,7 +1420,7 @@ Screens:
                                                                               {
                                                                                   Title: "Step 7 - Delivery Batch #" & gDeliveryNumber & " Created - " & gSelectedRequest.Title,
                                                                                   RequestID: {Id: gSelectedRequest.ID, Value: gSelectedRequest.Title},
-                                                                                  RequestIDText: Text(gSelectedRequest.ID),
+                                                                                  RequestIDNum: gSelectedRequest.ID,
                                                                                   StepNumber: 7,
                                                                                   StepName: {Value: "Delivery Batch Created"},
                                                                                   RoundNumber: gDeliveryNumber,
@@ -1516,7 +1516,7 @@ Screens:
                                               {
                                                   Title: "Step 6 - Invoice Submission - " & gPendingDeliveryBatch.Title,
                                                   RequestID: {Id: gPendingDeliveryBatch.ID, Value: gPendingDeliveryBatch.Title},
-                                                  RequestIDText: Text(gPendingDeliveryBatch.ID),
+                                                  RequestIDNum: gPendingDeliveryBatch.ID,
                                                   StepNumber: 6,
                                                   StepName: {Value: "Invoice Submission"},
                                                   ExecutedBy: {Id: gCurrentEmployee.ID, Value: gCurrentEmployee.Title},
@@ -1635,7 +1635,7 @@ Screens:
                                                                                   Defaults('RM Procurement Line Items'),
                                                                                   {
                                                                                       RequestID: {Id: wBatch.ID, Value: wBatch.Title},
-                                                                                      RequestIDText: Text(wBatch.ID),
+                                                                                      RequestIDNum: wBatch.ID,
                                                                                       ParentLineItemID: be.ParentLineItemID,
                                                                                       MaterialID: {Id: be.MaterialID, Value: be.MaterialName},
                                                                                       MaterialCode: Coalesce(be.MaterialCode, ""),
@@ -1652,7 +1652,7 @@ Screens:
                                                                               {
                                                                                   Title: "Step 7 - Delivery Batch #" & gDeliveryNumber & " Created - " & gSelectedRequest.Title,
                                                                                   RequestID: {Id: gSelectedRequest.ID, Value: gSelectedRequest.Title},
-                                                                                  RequestIDText: Text(gSelectedRequest.ID),
+                                                                                  RequestIDNum: gSelectedRequest.ID,
                                                                                   StepNumber: 7,
                                                                                   StepName: {Value: "Delivery Batch Created"},
                                                                                   RoundNumber: gDeliveryNumber,

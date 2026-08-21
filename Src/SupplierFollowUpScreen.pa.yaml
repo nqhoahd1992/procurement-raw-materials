@@ -22,13 +22,13 @@ Screens:
         Set(gLatestDecision, gSelectedRequest.LatestReceiptDecision);
         Set(gCurrentRound, gRoundsDone + 1);
         Set(gSFURoundOpen, gSelectedRequest.Status.Value = "Supplier Follow-up" && gLatestDecision = "Requires Supplier Follow-up");
-        ClearCollect(colLineItemsDetail, ForAll(Filter('RM Procurement Line Items', RequestIDText = Text(gSelectedRequest.ID)) As li, {ID: li.ID, MaterialID: li.MaterialID, MaterialName: li.MaterialName, Unit: li.Unit, Quantity: li.Quantity, ParentLineItemID: li.ParentLineItemID, RMPKCode: Coalesce(li.MaterialCode, "?")}));
-        ClearCollect(colReceiptRounds, Filter('RM Procurement Receipt Rounds', RequestIDText = Text(gSelectedRequest.ID)));
+        ClearCollect(colLineItemsDetail, ForAll(Filter('RM Procurement Line Items', RequestIDNum = gSelectedRequest.ID) As li, {ID: li.ID, MaterialID: li.MaterialID, MaterialName: li.MaterialName, Unit: li.Unit, Quantity: li.Quantity, ParentLineItemID: li.ParentLineItemID, RMPKCode: Coalesce(li.MaterialCode, "?")}));
+        ClearCollect(colReceiptRounds, Filter('RM Procurement Receipt Rounds', RequestIDNum = gSelectedRequest.ID));
         ClearCollect(
             colRoundHistory,
             ForAll(
                 Sort(
-                    Filter('RM Procurement Execution Log', RequestIDText = Text(gSelectedRequest.ID) && StepNumber >= 3 && StepNumber <= 5),
+                    Filter('RM Procurement Execution Log', RequestIDNum = gSelectedRequest.ID && StepNumber >= 3 && StepNumber <= 5),
                     ID,
                     SortOrder.Ascending
                 ) As lg,
@@ -1777,7 +1777,7 @@ Screens:
                                                               {
                                                                   Title: "Step 4 - Goods Receipt Round " & gCurrentRound & " - " & gSelectedRequest.Title,
                                                                   RequestID: {Id: gSelectedRequest.ID, Value: gSelectedRequest.Title},
-                                                                  RequestIDText: Text(gSelectedRequest.ID),
+                                                                  RequestIDNum: gSelectedRequest.ID,
                                                                   StepNumber: 4,
                                                                   StepName: {Value: "Supplier Follow-up — Requester Detail"},
                                                                   RoundNumber: gCurrentRound,
@@ -1805,7 +1805,7 @@ Screens:
                                                                       {
                                                                           Title: "R" & gCurrentRound & " - " & re.MaterialName,
                                                                           RequestID: {Id: gSelectedRequest.ID, Value: gSelectedRequest.Title},
-                                                                          RequestIDText: Text(gSelectedRequest.ID),
+                                                                          RequestIDNum: gSelectedRequest.ID,
                                                                           LineItemID: re.LineItemID,
                                                                           ParentRequestID: Coalesce(gSelectedRequest.ParentRequestID, 0),
                                                                           ParentLineItemID: re.ParentLineItemID,

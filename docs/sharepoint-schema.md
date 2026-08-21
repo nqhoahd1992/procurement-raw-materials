@@ -10,8 +10,9 @@ Authoritative data model for the Max Biocare Raw Materials Procurement app, reco
 - **Choice** columns: write `{Value: "..."}`, read `Col.Value`.
 - **Lookup / Person** columns: write `{Id: ..., Value: ...}`, read `Col.Value` / `Col.Id`. (These are SharePoint *lookup* columns pointing at another list — `Col.Value` resolves to the target's Title or ID per the `OdataQueryName` noted below.)
 - **Required** columns are flagged ⚠ — a `Patch` that omits them fails.
-- `RequestIDText` (plain-text copy of the request ID) is the delegable join key for log lookups: `LookUp('RM Procurement Execution Log', RequestIDText = Text(request.ID) && StepNumber = N)`.
-- **`RequestID` (the Lookup) is written everywhere but read nowhere in the app** — all 12 `Patch` sites write `RequestID` and `RequestIDText` together, and every `Filter`/`LookUp` in every screen keys off `RequestIDText`, because equality on a Lookup column isn't delegable in the SharePoint connector. Don't take that as licence to drop it: `'RM Procurement Approval Log'.RequestID` is Required ⚠ (an omitting `Patch` fails), the standalone `RM Procurement - Update COA Reminder for Procurement` flow reads `RequestID?['Id']`/`?['Value']` off `'RM Procurement Receipt Rounds'` to name each request without a second `Get items` (see `daily-coa-completion-reminder-flow.md`) — and losing it there degrades silently, with the run still reporting Succeeded — and the Lookup is what makes the row clickable through to its request when anyone opens these lists in SharePoint. It costs nothing to keep: it rides along in a `Patch` that is happening anyway.
+- `RequestIDNum` (plain-**Number** copy of the request ID, on `'RM Procurement Line Items'`, `'RM Procurement Receipt Rounds'`, `'RM Procurement Execution Log'`, `'RM Procurement Approval Log'`) is the delegable join key for log/line-item lookups: `LookUp('RM Procurement Execution Log', RequestIDNum = request.ID && StepNumber = N)` — a plain `Number = Number` comparison, no function call needed.
+- **`RequestIDText` (plain-text copy of the same ID) is gone from the app entirely** — comparing it always needed `RequestIDText = Text(x)` inside a `Filter`/`LookUp`, and `Text()` is not a delegable function for the SharePoint connector, so every such comparison silently capped at the Data row limit once the list grew past it. Nothing in `Src/` reads or writes it any more (the two display-only `Notify` messages on `ProcurementExecutionScreen` that used to print it now print `RequestIDNum` instead), so the column is safe to delete once the `RequestIDNum` backfill below is confirmed. See "Pending manual SharePoint work for delegable request-ID lookups" in `CLAUDE.md`.
+- **`RequestID` (the Lookup) is written everywhere but read nowhere in the app** — all 12+ `Patch` sites write `RequestID` and `RequestIDNum` together, and every `Filter`/`LookUp` in every screen keys off `RequestIDNum`, because equality on a Lookup column (`.Id` or `.Value`) is *also* non-delegable in the SharePoint connector — that dead end is exactly why a separate plain-Number join column was needed. Don't take RequestID being unread as licence to drop it: `'RM Procurement Approval Log'.RequestID` is Required ⚠ (an omitting `Patch` fails), the standalone `RM Procurement - Update COA Reminder for Procurement` flow reads `RequestID?['Id']`/`?['Value']` off `'RM Procurement Receipt Rounds'` to name each request without a second `Get items` (see `daily-coa-completion-reminder-flow.md`) — and losing it there degrades silently, with the run still reporting Succeeded — and the Lookup is what makes the row clickable through to its request when anyone opens these lists in SharePoint. It costs nothing to keep: it rides along in a `Patch` that is happening anyway.
 - List names all carry an `RM ` prefix and contain spaces, so they're always single-quoted in Power Fx: `'RM Procurement Requests'`, `'RM Procurement Line Items'`, `'RM User'`, `'RM Procurement Approval Log'`, `'RM Procurement Execution Log'`.
 
 ---
@@ -120,7 +121,7 @@ Both live in `'RM Procurement Requests'`; `RequestType` tells them apart.
 | Created by | Requester, `RequestFormScreen` | Procurement, `DeliveryBatchFormScreen` |
 | Line items | all materials requested | only the materials in this delivery, with that delivery's quantity, each carrying `ParentLineItemID` |
 | Invoice columns | **unused** — the parent never carries an invoice any more | its own `InvoiceMode` / `InvoiceSubmitted` / `OfficialInvoiceLink`. **This is what makes one request able to have many invoices** |
-| Receipt rounds | none of its own; rolls up its children's via `ParentRequestID` | its own, `RequestIDText` = the child's ID |
+| Receipt rounds | none of its own; rolls up its children's via `ParentRequestID` | its own, `RequestIDNum` = the child's ID |
 | Legal `Status` | `Pending Manager`, `Pending Executive`, `Pending Procurement`, `In Delivery`, `Delivered`, `Rejected` | `Goods Receipt`, `Supplier Follow-up`, `Pending Invoice`, `Pending Accounting`, `Completed`, `Cancelled` |
 
 Because the two sets are disjoint, every existing `Status` gate on the downstream screens is **already type-safe** and needed no `RequestType` check added. `RequestType` is only consulted by `HomeScreen`'s Manager branch and by presentation logic.
@@ -168,13 +169,14 @@ Routing is **not** a straight line — see `CLAUDE.md`'s "The workflow" section 
 
 ## `'RM Procurement Line Items'` — one row per raw material on a request
 
-Required ⚠: none enforced by schema, but the app always writes `RequestID`, `RequestIDText`, `MaterialID`, `MaterialName`, `Unit`, `Quantity` together as a set on submit.
+Required ⚠: none enforced by schema, but the app always writes `RequestID`, `RequestIDNum`, `MaterialID`, `MaterialName`, `Unit`, `Quantity` together as a set on submit.
 
 | Column | Type | Notes |
 |---|---|---|
 | `Title` (Title) | Text | Not set by the app's `Patch` — left blank/default |
 | `RequestID` | Lookup→'RM Procurement Requests' | `{Id: wNewRequest.ID, Value: wNewRequest.Title}`, written once per line item via `ForAll` on `RequestFormScreen` submit |
-| `RequestIDText` | Text | join key — `Filter('RM Procurement Line Items', RequestIDText = Text(gSelectedRequest.ID))` on every downstream screen. **May point at either a parent or a delivery** (see below) |
+| `RequestIDText` | Text | **no longer referenced anywhere in `Src/`** — safe to delete once the `RequestIDNum` backfill is confirmed; see "Pending manual SharePoint work for delegable request-ID lookups" in `CLAUDE.md` |
+| `RequestIDNum` ⬅ **new** | Number | the actual join key — `Filter('RM Procurement Line Items', RequestIDNum = gSelectedRequest.ID)` on every downstream screen. **May point at either a parent or a delivery** (see below) |
 | `ParentLineItemID` ⬅ **new** | Number | `0` on a parent's rows; on a delivery's rows, the `ID` of the parent line item it draws down. This is what lets the parent roll up "delivered so far per material" across all its deliveries |
 | `MaterialCode` ⬅ new | Text | the raw material's `Code`, denormalised onto the line item at creation. Read as `RMPKCode` by every screen's `colLineItemsDetail` projection. Exists so no screen has to `LookUp('Raw Materials', …)` inside a `ForAll` — that is client-side per row and always raises a delegation warning |
 | `MaterialID` | Lookup→'Raw Materials' | `{Id: MaterialID, Value: MaterialName}` |
@@ -182,13 +184,13 @@ Required ⚠: none enforced by schema, but the app always writes `RequestID`, `R
 | `Unit` | Text | one of `pcs`, `kg`, `box`, `set`, `liter`, `meter` (hardcoded list on `RequestFormScreen`, not a Choice column) |
 | `Quantity` | Number | |
 
-**This list now holds rows for both request types.** A parent's rows are what the Requester asked for (`ParentLineItemID = 0`); a delivery's rows are the subset Procurement says is arriving in that delivery, with that delivery's quantity. **This is the fix for the original complaint** — `GoodsReceiptScreen` still does the same unchanged `Filter(…, RequestIDText = Text(gSelectedRequest.ID))`, but because it now runs against a delivery it naturally lists only that delivery's materials instead of every material on the request. `Quantity` on a delivery row therefore means *expected in this delivery*, not *ordered*, and `colRoundEntry.OrderedQty` (and the "Ordered" column on both receipt screens) inherits that meaning.
+**This list now holds rows for both request types.** A parent's rows are what the Requester asked for (`ParentLineItemID = 0`); a delivery's rows are the subset Procurement says is arriving in that delivery, with that delivery's quantity. **This is the fix for the original complaint** — `GoodsReceiptScreen` still does the same unchanged `Filter(…, RequestIDNum = gSelectedRequest.ID)`, but because it now runs against a delivery it naturally lists only that delivery's materials instead of every material on the request. `Quantity` on a delivery row therefore means *expected in this delivery*, not *ordered*, and `colRoundEntry.OrderedQty` (and the "Ordered" column on both receipt screens) inherits that meaning.
 
 **Nothing about receiving lives on this list.** The 14 `…1` / `…2` columns it used to carry (`ReceivedQty1` `BatchNumber1` `ExpiryDate1` `QCNumber1` `RMPKCode1` `COALink1` `COA1Missing` and the matching `…2` set) were **deleted** when receipt rounds became unbounded — two fixed column sets can only ever hold two rounds. Per-round receipt data is now one row per (line item × round) in `'RM Procurement Receipt Rounds'`. No formula anywhere in the app reads the deleted columns.
 
 **How it's populated**: `RequestFormScreen` builds a working collection `colLineItems` (`{RowID, MaterialID, MaterialName, Unit, Quantity}`) via `galLineItems`/`btnAddLineItem`/`ddMaterial_1`/`ddUnit_1`/`txtQty_1`/`btnRemoveItem_1`. Submit requires ≥1 row, every row's `MaterialID <> 0`, non-blank `Unit`, and `Quantity > 0`. After the request `Patch` succeeds, a `ForAll(colLineItems, Patch('RM Procurement Line Items', Defaults(...), {...}))` writes one row per material, then `Clear(colLineItems)`.
 
-**How it's read back**: `GoodsReceiptScreen`, `SupplierFollowUpScreen`, `RequestDetailScreen` each load `colLineItemsDetail` via `ClearCollect(colLineItemsDetail, Filter('RM Procurement Line Items', RequestIDText = Text(gSelectedRequest.ID)))` on `OnVisible`. It is now a **read-only staging collection** — no screen patches receipt data back onto these rows any more. Each screen immediately projects it into a purpose-built collection:
+**How it's read back**: `GoodsReceiptScreen`, `SupplierFollowUpScreen`, `RequestDetailScreen` each load `colLineItemsDetail` via `ClearCollect(colLineItemsDetail, Filter('RM Procurement Line Items', RequestIDNum = gSelectedRequest.ID))` on `OnVisible`. It is now a **read-only staging collection** — no screen patches receipt data back onto these rows any more. Each screen immediately projects it into a purpose-built collection:
 - `GoodsReceiptScreen` / `SupplierFollowUpScreen` → `colRoundEntry`, the blank data-entry buffer for the round being recorded (`{LineItemID, MaterialID, MaterialName, Unit, OrderedQty, PrevReceivedQty, ReceivedQty, BatchNumber, ExpiryDate, QCNumber, RMPKCode, COALink}`). `PrevReceivedQty` = `Sum` of that line item's existing `colReceiptRounds` rows, so the receiver can see how much is still outstanding. On submit each row with `ReceivedQty > 0` becomes a new `'RM Procurement Receipt Rounds'` row.
 - `RequestDetailScreen` → `colLineItemsSummary` (`{ID, MaterialID, MaterialName, Unit, Quantity, TotalReceivedQty}`), where `TotalReceivedQty` is the `Sum` across all rounds.
 
@@ -259,7 +261,8 @@ Required ⚠: `RequestID`, `StepNumber`.
 | `ApprovalConditions` | Text (multiline) | step 3 — the Executive's **Remark**, required on **both** `Approve` and `Reject` (one box serves both; there is no separate rejection-reason input any more). **The single home for this value** — the duplicate `'RM Procurement Requests'.ConditionsText` was removed, and all three readers (`RequestDetailScreen` via `gExecutiveRemark`, `ProcurementExecutionScreen`, `ExecutivePaymentScreen`) now resolve it off this row. Column name unchanged |
 | `RejectionReason` | Text (multiline) | **dead — the string doesn't appear anywhere in `Src/` any more.** Both approval screens have one always-required remark box, so a rejection reason lives in that step's own remark column (`ManagerRemarks` for step 2, `ApprovalConditions` for step 3). Writing it here *as well* would make `RequestDetailScreen`'s approval note line print the same text twice. Old rows are being migrated by hand; the column can be dropped once that's done |
 | `ManagerRemarks` | Text (multiline) | step 2 |
-| `RequestIDText` | Text | join key |
+| `RequestIDText` | Text | **no longer referenced anywhere in `Src/`** — safe to delete once the `RequestIDNum` backfill is confirmed; see "Pending manual SharePoint work for delegable request-ID lookups" in `CLAUDE.md` |
+| `RequestIDNum` ⬅ **new** | Number | the actual join key |
 
 ---
 
@@ -271,7 +274,8 @@ Required ⚠: none.
 |---|---|---|
 | `Title` (Title) | Text | `Step <n> - <name> - <request title>` |
 | `RequestID` | Lookup (→ID) | `{Id,Value}` |
-| `RequestIDText` | Text | join key |
+| `RequestIDText` | Text | **no longer referenced anywhere in `Src/`** — safe to delete once the `RequestIDNum` backfill is confirmed; see "Pending manual SharePoint work for delegable request-ID lookups" in `CLAUDE.md` |
+| `RequestIDNum` ⬅ **new** | Number | the actual join key |
 | `StepNumber` | Number | `1` Procurement Execution · `2` Accounting Handover (written by `AccountingScreen`'s submit, i.e. at completion — despite the "handover" name it records the accounting step being *done*, not assigned) · `3` Goods Receipt **round 1** · `4` Goods Receipt **round N ≥ 2** · `5` Supplier Follow-up (Procurement, the `Accepted with Adjustment` close-out) · `6` Invoice Submission · **`7` Delivery Batch Created** · **`8` Request Closed** |
 | `StepName` | Choice | matches the step. **Two new options must be added on SharePoint**: `Delivery Batch Created`, `Request Closed` |
 | `RoundNumber` ⬅ **new** | Number | which receipt round this row belongs to. Step 3 always `1`; step 4 = `N`; step 5 = the round it follows up on. **On a step-7 row it carries the `DeliveryNumber` instead** — the column is reused rather than adding a ninth. **Blank on rows written before the unlimited-rounds change** — every reader coalesces to `If(StepNumber = 3, 1, 2)` |
@@ -292,7 +296,7 @@ Required ⚠: none.
 
 **Steps 1, 7 and 8 are written against the parent; steps 2–6 against a delivery.** That split is deliberate: Procurement Execution, "delivery created" and "request closed" are all things that happen *to the request*, so the parent's own history reads as a complete story of the sourcing decision and every delivery spun off it, while each delivery's history holds only its own receiving and invoicing. There can be **many step-7 rows per parent** — one per delivery — so, like step 4, never `LookUp` one expecting uniqueness.
 
-Consequence to know about: a delivery's `colExecutionLog` therefore contains **no step-1 row**, so its detail screen shows no Supplier Summary or PO link — those live on the parent, one click away via the delivery's banner. Its `colApprovalLog`, by contrast, *is* back-filled from the parent (`RequestIDText = Text(gRootRequestID)`), because a delivery heading into Accounting with no visible approval trail at all was an audit regression.
+Consequence to know about: a delivery's `colExecutionLog` therefore contains **no step-1 row**, so its detail screen shows no Supplier Summary or PO link — those live on the parent, one click away via the delivery's banner. Its `colApprovalLog`, by contrast, *is* back-filled from the parent (`RequestIDNum = gRootRequestID`), because a delivery heading into Accounting with no visible approval trail at all was an audit regression.
 
 There can be **many step-4 rows per request** (one per receipt round from round 2 on) — never `LookUp` one expecting it to be unique. A step-5 row is written at most once, on the `Accepted with Adjustment` branch. Routing state lives on the request in `ReceiptRoundCount` / `LatestReceiptDecision`, not in the log. The presence of a step-6 row still distinguishes whether `InvoiceSubmissionScreen` has already run for a request.
 
@@ -306,7 +310,8 @@ Created for the unlimited-receipt-rounds change: the old fixed `…1` / `…2` c
 |---|---|---|
 | `Title` (Title) | Text | `R<n> - <material name>` |
 | `RequestID` | Lookup→'RM Procurement Requests' | `{Id, Value}` |
-| `RequestIDText` | Text | join key — every screen filters on this. Always the **delivery's** ID, since receiving only ever happens on a delivery |
+| `RequestIDText` | Text | **no longer referenced anywhere in `Src/`** — safe to delete once the `RequestIDNum` backfill is confirmed; see "Pending manual SharePoint work for delegable request-ID lookups" in `CLAUDE.md` |
+| `RequestIDNum` ⬅ **new** | Number | the actual join key — every screen filters on this. Always the **delivery's** ID, since receiving only ever happens on a delivery |
 | `LineItemID` | Number | plain number copy of `'RM Procurement Line Items'.ID` (not a Lookup — kept delegable for equality filters and simple to `Sum`/`Filter` locally). The **delivery's** line item |
 | `ParentRequestID` ⬅ **new** | Number | copy of the delivery's `ParentRequestID`. Lets the parent gather everything received across all its deliveries in **one** delegable query: `Filter('RM Procurement Receipt Rounds', ParentRequestID = <parent id>)`. Without it you would need `RequestIDText in <list of child ids>`, which does not delegate. Worth indexing |
 | `ParentLineItemID` ⬅ **new** | Number | copy of the delivery line item's `ParentLineItemID`. `RequestDetailScreen` sums on this to fill the parent's "Received" column |
