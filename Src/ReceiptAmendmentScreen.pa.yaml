@@ -562,11 +562,11 @@ Screens:
                         If(
                             CountRows(wChanged) = 0,
                             Notify("No changes to save.", NotificationType.Warning),
-                            ForAll(
-                                wChanged As ra,
-                                Patch(
-                                    'RM Procurement Receipt Rounds',
-                                    {ID: ra.ID},
+                            Patch(
+                                'RM Procurement Receipt Rounds',
+                                ForAll(wChanged As ra, {ID: ra.ID}),
+                                ForAll(
+                                    wChanged As ra,
                                     {
                                         BatchNumber: ra.NewBatchNumber,
                                         ExpiryDate: ra.NewExpiryDate,
