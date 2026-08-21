@@ -1396,11 +1396,11 @@ Screens:
                                                                       If(
                                                                           IsBlank(wBatch.ID),
                                                                           Notify("Failed to create the delivery. Please try again.", NotificationType.Error),
-                                                                          ForAll(
-                                                                              Filter(colBatchEntry, BatchQty > 0) As be,
-                                                                              Patch(
-                                                                                  'RM Procurement Line Items',
-                                                                                  Defaults('RM Procurement Line Items'),
+                                                                          Patch(
+                                                                              'RM Procurement Line Items',
+                                                                              ForAll(Filter(colBatchEntry, BatchQty > 0), Defaults('RM Procurement Line Items')),
+                                                                              ForAll(
+                                                                                  Filter(colBatchEntry, BatchQty > 0) As be,
                                                                                   {
                                                                                       RequestID: {Id: wBatch.ID, Value: wBatch.Title},
                                                                                       RequestIDNum: wBatch.ID,
@@ -1628,11 +1628,11 @@ Screens:
                                                                       If(
                                                                           IsBlank(wBatch.ID),
                                                                           Notify("Failed to create the delivery. Please try again.", NotificationType.Error),
-                                                                          ForAll(
-                                                                              Filter(colBatchEntry, BatchQty > 0) As be,
-                                                                              Patch(
-                                                                                  'RM Procurement Line Items',
-                                                                                  Defaults('RM Procurement Line Items'),
+                                                                          Patch(
+                                                                              'RM Procurement Line Items',
+                                                                              ForAll(Filter(colBatchEntry, BatchQty > 0), Defaults('RM Procurement Line Items')),
+                                                                              ForAll(
+                                                                                  Filter(colBatchEntry, BatchQty > 0) As be,
                                                                                   {
                                                                                       RequestID: {Id: wBatch.ID, Value: wBatch.Title},
                                                                                       RequestIDNum: wBatch.ID,

@@ -846,7 +846,8 @@ Screens:
                               Height: =40
                               InputTextPlaceholder: ="Select an employee"
                               ItemDisplayText: =ThisItem.Title
-                              Items: =Sort(Filter(ForAll(Filter('RM User', IsActive) As ru, With({wEmpId: ru.EmployeeID.Id}, LookUp('Employee List', ID = wEmpId))), Not(IsBlank(ID))), Title, SortOrder.Ascending)
+                              Items: |-
+                                =Sort(Filter(ForAll(Filter('RM User', IsActive) As ru, With({wEmpId: ru.EmployeeID.Id}, LookUp('Employee List', ID = wEmpId))), Not(IsBlank(ID))), Title, SortOrder.Ascending)
                               SelectMultiple: =false
                               Size: =0
                               Width: =Parent.Width
@@ -1797,11 +1798,11 @@ Screens:
                                                               Set(gSFU1LogEntry, wLog);
                                                               EditForm(frmSFU1Log_SFU);
                                                               SubmitForm(frmSFU1Log_SFU);
-                                                              ForAll(
-                                                                  Filter(colRoundEntry, ReceivedQty > 0) As re,
-                                                                  Patch(
-                                                                      'RM Procurement Receipt Rounds',
-                                                                      Defaults('RM Procurement Receipt Rounds'),
+                                                              Patch(
+                                                                  'RM Procurement Receipt Rounds',
+                                                                  ForAll(Filter(colRoundEntry, ReceivedQty > 0), Defaults('RM Procurement Receipt Rounds')),
+                                                                  ForAll(
+                                                                      Filter(colRoundEntry, ReceivedQty > 0) As re,
                                                                       {
                                                                           Title: "R" & gCurrentRound & " - " & re.MaterialName,
                                                                           RequestID: {Id: gSelectedRequest.ID, Value: gSelectedRequest.Title},

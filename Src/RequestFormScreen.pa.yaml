@@ -275,11 +275,11 @@ Screens:
                                                                                                       )
                                                                                                   )
                                                                                               );
-                                                                                              ForAll(
-                                                                                                  colLineItems,
-                                                                                                  Patch(
-                                                                                                      'RM Procurement Line Items',
-                                                                                                      Defaults('RM Procurement Line Items'),
+                                                                                              Patch(
+                                                                                                  'RM Procurement Line Items',
+                                                                                                  ForAll(colLineItems, Defaults('RM Procurement Line Items')),
+                                                                                                  ForAll(
+                                                                                                      colLineItems,
                                                                                                       {
                                                                                                           RequestID: {Id: wNewRequest.ID, Value: gSelectedRequest.Title},
                                                                                                           RequestIDNum: wNewRequest.ID,
