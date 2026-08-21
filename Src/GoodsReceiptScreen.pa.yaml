@@ -371,7 +371,7 @@ Screens:
                               Height: =40
                               InputTextPlaceholder: ="Select an employee"
                               ItemDisplayText: =ThisItem.Title
-                              Items: =Sort(Filter('Employee List', ID in ForAll(Filter('RM User', IsActive), EmployeeID.Id)), Title, SortOrder.Ascending)
+                              Items: =Sort(Filter(ForAll(Filter('RM User', IsActive) As ru, With({wEmpId: ru.EmployeeID.Id}, LookUp('Employee List', ID = wEmpId))), Not(IsBlank(ID))), Title, SortOrder.Ascending)
                               SelectMultiple: =false
                               Size: =0
                               Width: =Parent.Width
