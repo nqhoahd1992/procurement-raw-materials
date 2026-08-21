@@ -370,6 +370,7 @@ Screens:
                       Properties:
                         AlignInContainer: =AlignInContainer.Stretch
                         Fill: =RGBA(241, 239, 232, 0)
+                        FontWeight: =FontWeight.Semibold
                         Height: =36
                         PaddingBottom: =0
                         PaddingLeft: =0

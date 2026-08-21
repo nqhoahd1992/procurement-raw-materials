@@ -28,7 +28,8 @@ Screens:
                             OriginID: a.OriginID,
                             DisplayID: Coalesce(LookUp(colQCRequestsIndex, ID = a.OriginID).DisplayID, "Request #" & a.OriginID),
                             SupplierSummary: Coalesce(LookUp(colQCStep1Index, RequestIDText = Text(a.OriginID)).SupplierSummary, "—"),
-                            QCNumbers: Concat(Filter(wFlatRounds, ParentRequestID = a.OriginID), Coalesce(QCNumber, "—"), ", ")
+                            QCNumbers: Concat(Filter(wFlatRounds, ParentRequestID = a.OriginID), Coalesce(QCNumber, "—"), ", "),
+                            POLink: Coalesce(LookUp(colQCStep1Index, RequestIDText = Text(a.OriginID)).PurchaseOrderLink, "")
                         }
                     )
                 )
@@ -158,7 +159,8 @@ Screens:
                                                         OriginID: a.OriginID,
                                                         DisplayID: Coalesce(LookUp(colQCRequestsIndex, ID = a.OriginID).DisplayID, "Request #" & a.OriginID),
                                                         SupplierSummary: Coalesce(LookUp(colQCStep1Index, RequestIDText = Text(a.OriginID)).SupplierSummary, "—"),
-                                                        QCNumbers: Concat(Filter(wFlatRounds, ParentRequestID = a.OriginID), Coalesce(QCNumber, "—"), ", ")
+                                                        QCNumbers: Concat(Filter(wFlatRounds, ParentRequestID = a.OriginID), Coalesce(QCNumber, "—"), ", "),
+                                                        POLink: Coalesce(LookUp(colQCStep1Index, RequestIDText = Text(a.OriginID)).PurchaseOrderLink, "")
                                                     }
                                                 )
                                             )
@@ -197,7 +199,8 @@ Screens:
                                                         OriginID: a.OriginID,
                                                         DisplayID: Coalesce(LookUp(colQCRequestsIndex, ID = a.OriginID).DisplayID, "Request #" & a.OriginID),
                                                         SupplierSummary: Coalesce(LookUp(colQCStep1Index, RequestIDText = Text(a.OriginID)).SupplierSummary, "—"),
-                                                        QCNumbers: Concat(Filter(wFlatRounds, ParentRequestID = a.OriginID), Coalesce(QCNumber, "—"), ", ")
+                                                        QCNumbers: Concat(Filter(wFlatRounds, ParentRequestID = a.OriginID), Coalesce(QCNumber, "—"), ", "),
+                                                        POLink: Coalesce(LookUp(colQCStep1Index, RequestIDText = Text(a.OriginID)).PurchaseOrderLink, "")
                                                     }
                                                 )
                                             )
@@ -289,6 +292,15 @@ Screens:
                               Size: =9
                               Text: ="SO/PO/INV"
                               Wrap: =false
+                        - lblQCColPOLink_QC:
+                            Control: Label@2.5.1
+                            Properties:
+                              Color: =RGBA(107, 105, 98, 1)
+                              FontWeight: =FontWeight.Semibold
+                              Height: =32
+                              Size: =9
+                              Text: ="PO Link"
+                              Wrap: =false
                         - lblQCColNumbers_QC:
                             Control: Label@2.5.1
                             Properties:
@@ -348,6 +360,17 @@ Screens:
                                     Height: =24
                                     Size: =10
                                     Text: =ThisItem.SupplierSummary
+                                    Wrap: =false
+                              - lblQCItemPOLink_QC:
+                                  Control: Label@2.5.1
+                                  Properties:
+                                    Color: =RGBA(56, 96, 178, 1)
+                                    Height: =24
+                                    OnSelect: =If(Not(IsBlank(ThisItem.POLink)), Launch(ThisItem.POLink, {}, LaunchTarget.New))
+                                    Size: =10
+                                    Text: =If(IsBlank(ThisItem.POLink), "—", "Open PO ↗")
+                                    Tooltip: =ThisItem.POLink
+                                    Underline: =Not(IsBlank(ThisItem.POLink))
                                     Wrap: =false
                               - lblQCItemNumbers_QC:
                                   Control: Label@2.5.1

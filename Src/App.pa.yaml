@@ -92,7 +92,7 @@ App:
       Set(gPendingDirectAttachments, Blank());
       Set(gQCSearched, false);
       Set(gQCFound, false);
-      ClearCollect(colQCResults, {OriginID: 0, DisplayID: "", SupplierSummary: "", QCNumbers: ""});
+      ClearCollect(colQCResults, {OriginID: 0, DisplayID: "", SupplierSummary: "", QCNumbers: "", POLink: ""});
       Clear(colQCResults);
       ClearCollect(colQCAllRounds, FirstN('RM Procurement Receipt Rounds', 1));
       Clear(colQCAllRounds);
