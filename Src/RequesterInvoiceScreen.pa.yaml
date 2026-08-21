@@ -23,7 +23,7 @@ Screens:
             FontWeight: =FontWeight.Bold
             Height: =60
             Size: =14
-            Text: ="Raw  Procurement - Submit Invoice"
+            Text: ="Raw Material Procurement - Submit Invoice"
             Width: =600
             X: =20
       - lblUserInfo_RIS:
