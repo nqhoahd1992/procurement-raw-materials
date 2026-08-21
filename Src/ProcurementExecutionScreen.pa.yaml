@@ -124,6 +124,7 @@ Screens:
                               FontWeight: =FontWeight.Bold
                               Height: =28
                               PaddingLeft: =0
+                              Size: =14
                               Text: ="Request Details"
                               Width: =Parent.Width - 260
                               Wrap: =false
