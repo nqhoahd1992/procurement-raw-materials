@@ -26,7 +26,11 @@ Screens:
                         Filter(wAnchors, IsAnchor) As a,
                         {
                             OriginID: a.OriginID,
-                            DisplayID: Coalesce(LookUp(colQCRequestsIndex, ID = a.OriginID).DisplayID, "Request #" & a.OriginID),
+                            DisplayID: If(
+                                IsBlank(a.OriginID) || a.OriginID = 0,
+                                "⚠ Unlinked round(s) — no ParentRequestID on file",
+                                Coalesce(LookUp(colQCRequestsIndex, ID = a.OriginID).DisplayID, "Request #" & a.OriginID)
+                            ),
                             SupplierSummary: Coalesce(LookUp(colQCStep1Index, RequestIDNum = a.OriginID).SupplierSummary, "—"),
                             QCNumbers: Concat(Filter(wFlatRounds, ParentRequestID = a.OriginID), Coalesce(QCNumber, "—"), ", "),
                             POLink: Coalesce(LookUp(colQCStep1Index, RequestIDNum = a.OriginID).PurchaseOrderLink, "")
@@ -157,7 +161,11 @@ Screens:
                                                     Filter(wAnchors, IsAnchor) As a,
                                                     {
                                                         OriginID: a.OriginID,
-                                                        DisplayID: Coalesce(LookUp(colQCRequestsIndex, ID = a.OriginID).DisplayID, "Request #" & a.OriginID),
+                                                        DisplayID: If(
+                                                            IsBlank(a.OriginID) || a.OriginID = 0,
+                                                            "⚠ Unlinked round(s) — no ParentRequestID on file",
+                                                            Coalesce(LookUp(colQCRequestsIndex, ID = a.OriginID).DisplayID, "Request #" & a.OriginID)
+                                                        ),
                                                         SupplierSummary: Coalesce(LookUp(colQCStep1Index, RequestIDNum = a.OriginID).SupplierSummary, "—"),
                                                         QCNumbers: Concat(Filter(wFlatRounds, ParentRequestID = a.OriginID), Coalesce(QCNumber, "—"), ", "),
                                                         POLink: Coalesce(LookUp(colQCStep1Index, RequestIDNum = a.OriginID).PurchaseOrderLink, "")
@@ -197,7 +205,11 @@ Screens:
                                                     Filter(wAnchors, IsAnchor) As a,
                                                     {
                                                         OriginID: a.OriginID,
-                                                        DisplayID: Coalesce(LookUp(colQCRequestsIndex, ID = a.OriginID).DisplayID, "Request #" & a.OriginID),
+                                                        DisplayID: If(
+                                                            IsBlank(a.OriginID) || a.OriginID = 0,
+                                                            "⚠ Unlinked round(s) — no ParentRequestID on file",
+                                                            Coalesce(LookUp(colQCRequestsIndex, ID = a.OriginID).DisplayID, "Request #" & a.OriginID)
+                                                        ),
                                                         SupplierSummary: Coalesce(LookUp(colQCStep1Index, RequestIDNum = a.OriginID).SupplierSummary, "—"),
                                                         QCNumbers: Concat(Filter(wFlatRounds, ParentRequestID = a.OriginID), Coalesce(QCNumber, "—"), ", "),
                                                         POLink: Coalesce(LookUp(colQCStep1Index, RequestIDNum = a.OriginID).PurchaseOrderLink, "")
