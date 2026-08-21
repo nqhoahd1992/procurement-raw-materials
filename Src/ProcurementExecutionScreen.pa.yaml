@@ -51,7 +51,7 @@ Screens:
             FontWeight: =FontWeight.Bold
             Height: =60
             Size: =14
-            Text: ="Procurement Execution - " & gSelectedRequest.Title
+            Text: ="Raw Material Procurement - Procurement Execution"
             Width: =800
             X: =20
       - conScrollable_PE:
@@ -125,7 +125,7 @@ Screens:
                               Height: =28
                               PaddingLeft: =0
                               Size: =14
-                              Text: ="Request Details"
+                              Text: =gSelectedRequest.Title
                               Width: =Parent.Width - 260
                               Wrap: =false
                         - lblStatusBadge_PE:

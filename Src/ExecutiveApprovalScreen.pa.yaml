@@ -69,6 +69,7 @@ Screens:
                   - lblRequestTitleValue_1:
                       Control: Label@2.5.1
                       Properties:
+                        FillPortions: =1
                         FontWeight: =FontWeight.Bold
                         Height: =36
                         PaddingLeft: =0
@@ -76,6 +77,49 @@ Screens:
                         Size: =14
                         Text: =gSelectedRequest.Title
                         Width: =Parent.Width - 160
+                  - lblStatusBadge_EA:
+                      Control: Label@2.5.1
+                      Properties:
+                        Align: =Align.Center
+                        Color: |-
+                          =Switch(gSelectedRequest.Status.Value,
+                            "Pending Manager", RGBA(146, 84, 14, 1),
+                            "Pending Executive", RGBA(175, 74, 20, 1),
+                            "Pending Procurement", RGBA(122, 108, 10, 1),
+                            "In Delivery", RGBA(83, 74, 183, 1),
+                            "Delivered", RGBA(13, 108, 108, 1),
+                            "Rejected", RGBA(163, 45, 45, 1),
+                            "Goods Receipt", RGBA(37, 92, 178, 1),
+                            "Supplier Follow-up", RGBA(11, 105, 132, 1),
+                            "Pending Invoice", RGBA(124, 58, 173, 1),
+                            "Pending Accounting", RGBA(158, 44, 108, 1),
+                            "Completed", RGBA(15, 110, 86, 1),
+                            "Cancelled", RGBA(148, 87, 87, 1),
+                            RGBA(68, 68, 65, 1)
+                          )
+                        Fill: |-
+                          =Switch(gSelectedRequest.Status.Value,
+                            "Pending Manager", RGBA(253, 242, 216, 1),
+                            "Pending Executive", RGBA(253, 234, 222, 1),
+                            "Pending Procurement", RGBA(247, 245, 210, 1),
+                            "In Delivery", RGBA(228, 225, 250, 1),
+                            "Delivered", RGBA(219, 243, 243, 1),
+                            "Rejected", RGBA(252, 233, 233, 1),
+                            "Goods Receipt", RGBA(223, 234, 252, 1),
+                            "Supplier Follow-up", RGBA(219, 241, 249, 1),
+                            "Pending Invoice", RGBA(240, 228, 252, 1),
+                            "Pending Accounting", RGBA(252, 230, 242, 1),
+                            "Completed", RGBA(222, 245, 236, 1),
+                            "Cancelled", RGBA(243, 235, 235, 1),
+                            RGBA(241, 239, 232, 1)
+                          )
+                        FontWeight: =FontWeight.Semibold
+                        Height: =32
+                        PaddingLeft: =8
+                        PaddingRight: =8
+                        Size: =10
+                        Text: =gSelectedRequest.Status.Value
+                        Width: =220
             - rowRequestInfo_1:
                 Control: GroupContainer@1.5.0
                 Variant: AutoLayout
@@ -582,9 +626,9 @@ Screens:
                 Properties:
                   DropShadow: =DropShadow.None
                   Fill: =RGBA(241, 239, 232, 1)
-                  LayoutAlignItems: =LayoutAlignItems.Center
+                  LayoutAlignItems: =LayoutAlignItems.End
                   LayoutDirection: =LayoutDirection.Horizontal
-                  LayoutMinHeight: =60
+                  LayoutMinHeight: =50
                   PaddingBottom: =4
                   PaddingLeft: =20
                   PaddingRight: =20
@@ -598,7 +642,7 @@ Screens:
                   - lblManagerReviewTitle:
                       Control: Label@2.5.1
                       Properties:
-                        FontWeight: =FontWeight.Bold
+                        FontWeight: =FontWeight.Semibold
                         Height: =28
                         Size: =12
                         Text: ="Manager Review Summary"
